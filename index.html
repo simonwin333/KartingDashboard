@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karting Dashboard - Suivi de Performance</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- En-tête -->
+        <header>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>🏁 Karting Dashboard</h1>
+                    <p>Suivez vos performances sur circuit</p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="header-btn" onclick="dashboard.switchView('profile')" title="Profil">👤</button>
+                    <button class="header-btn" onclick="dashboard.switchView('settings')" title="Réglages">⚙️</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Menu de navigation -->
+        <nav class="main-nav">
+            <button class="nav-btn active" data-view="dashboard">🏠 Dashboard</button>
+            <button class="nav-btn" data-view="add-session">➕ Session</button>
+            <button class="nav-btn" data-view="statistics">📊 Circuits</button>
+            <button class="nav-btn" data-view="history">📋 Historique</button>
+        </nav>
+
+        <!-- Dashboard - Page d'accueil -->
+        <section class="dashboard-home view-section" data-view="dashboard">
+            
+            <!-- Bandeau infos pilote -->
+            <div class="pilot-info-banner">
+                <div class="pilot-info-item">
+                    <span class="pilot-info-label">Pilote</span>
+                    <span class="pilot-info-value" id="bannerPilotName">-</span>
+                </div>
+                <div class="pilot-info-item">
+                    <span class="pilot-info-label">Kart</span>
+                    <span class="pilot-info-value" id="bannerKartType">-</span>
+                </div>
+                <div class="pilot-info-item">
+                    <span class="pilot-info-label">Moteur</span>
+                    <span class="pilot-info-value" id="bannerKartEngine">-</span>
+                </div>
+            </div>
+
+            <!-- Statistiques principales -->
+            <div class="dashboard-stats">
+                <div class="dashboard-stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Sessions totales</div>
+                        <div class="stat-big-value" id="dashTotalSessions">0</div>
+                    </div>
+                </div>
+                <div class="dashboard-stat-card">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Circuit préféré</div>
+                        <div class="stat-big-value" id="dashFavoriteCircuit" style="font-size: 1.3em;">-</div>
+                        <div class="stat-sublabel" id="dashFavoriteCircuitBest">-</div>
+                    </div>
+                </div>
+                <div class="dashboard-stat-card">
+                    <div class="stat-icon">🏁</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Circuits visités</div>
+                        <div class="stat-big-value" id="dashCircuitsCount">0</div>
+                    </div>
+                </div>
+                <div class="dashboard-stat-card">
+                    <div class="stat-icon">🔢</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Tours totaux</div>
+                        <div class="stat-big-value" id="dashTotalLaps">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dernières sessions -->
+            <div class="recent-sessions">
+                <h3>📅 Dernières sessions</h3>
+                <div id="recentSessionsList"></div>
+            </div>
+        </section>
+
+        <!-- Page Ajouter Session (ancien modal) -->
+        <section class="add-session-page view-section" data-view="add-session" style="display: none;">
+            <h2>➕ Ajouter une session</h2>
+                    <form id="sessionForm">
+                <div class="form-group">
+                    <label for="date">Date :</label>
+                    <input type="date" id="date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="circuit">Circuit :</label>
+                    <select id="circuit" required>
+                        <option value="">-- Sélectionnez un circuit --</option>
+                    </select>
+                    <button type="button" class="btn-add-circuit" id="addCircuitBtn">➕ Ajouter un nouveau circuit</button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="bestTime">Meilleur temps (secondes) :</label>
+                    <input type="number" id="bestTime" step="0.001" placeholder="Ex: 45.234" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="lapsCount">Nombre de tours :</label>
+                    <input type="number" id="lapsCount" min="1" placeholder="Ex: 15" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="maxLaps">Tours minutes moteur (max) :</label>
+                        <input type="number" id="maxLaps" min="1" placeholder="Ex: 15000">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="crownUsed">Couronne utilisée :</label>
+                        <input type="text" id="crownUsed" placeholder="Ex: 11/75">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="weather">Météo :</label>
+                        <select id="weather" required>
+                            <option value="">-- Sélectionnez --</option>
+                            <option value="Sec ☀️">Sec ☀️</option>
+                            <option value="Nuageux ⛅">Nuageux ⛅</option>
+                            <option value="Pluie 🌧️">Pluie 🌧️</option>
+                            <option value="Pluie forte 🌧️⚡">Pluie forte 🌧️⚡</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="temperature">Température (°C) :</label>
+                        <input type="number" id="temperature" placeholder="Ex: 18">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tireType">Type de pneus :</label>
+                        <select id="tireType" required>
+                            <option value="">-- Sélectionnez --</option>
+                            <option value="Tendres">Tendres (soft)</option>
+                            <option value="Médiums">Médiums</option>
+                            <option value="Durs">Durs (hard)</option>
+                            <option value="Pluie">Pluie</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tirePressure">Pression pneus (bar) :</label>
+                        <input type="number" id="tirePressure" step="0.01" placeholder="Ex: 0.85">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="notes">Notes (optionnel) :</label>
+                    <textarea id="notes" rows="3" placeholder="Sensations, réglages châssis, trajectoires..."></textarea>
+                </div>
+                
+                <button type="submit" class="btn-primary">📊 Enregistrer la session</button>
+                <button type="button" class="btn-cancel" id="cancelSessionBtn">❌ Annuler</button>
+                <button type="button" class="btn-cancel" id="cancelEditBtn" style="display: none;">❌ Annuler la modification</button>
+                    </form>
+        </section>
+
+        <!-- Page Profil -->
+        <section class="profile-page view-section" data-view="profile" style="display: none;">
+            <h2>👤 Profil du pilote</h2>
+            
+            <form id="profileForm" class="profile-form">
+                <div class="form-group">
+                    <label for="pilotName">Nom du pilote :</label>
+                    <input type="text" id="pilotName" placeholder="Ex: Simon Dupont">
+                </div>
+
+                <div class="form-group">
+                    <label for="kartType">Type de kart :</label>
+                    <input type="text" id="kartType" placeholder="Ex: CRG Road Rebel">
+                </div>
+
+                <div class="form-group">
+                    <label for="kartEngine">Moteur :</label>
+                    <input type="text" id="kartEngine" placeholder="Ex: Rotax Max">
+                </div>
+
+                <div class="form-group">
+                    <label for="kartCategory">Catégorie :</label>
+                    <select id="kartCategory">
+                        <option value="">-- Sélectionnez --</option>
+                        <option value="Loisir">Loisir</option>
+                        <option value="Compétition Régionale">Compétition Régionale</option>
+                        <option value="Compétition Nationale">Compétition Nationale</option>
+                        <option value="Compétition Internationale">Compétition Internationale</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="pilotNumber">Numéro de course :</label>
+                    <input type="text" id="pilotNumber" placeholder="Ex: 42">
+                </div>
+
+                <button type="submit" class="btn-primary">💾 Sauvegarder le profil</button>
+            </form>
+        </section>
+
+        <!-- Page Réglages -->
+        <section class="settings-page view-section" data-view="settings" style="display: none;">
+            <h2>⚙️ Réglages</h2>
+            
+            <div class="settings-section">
+                <h3>🎨 Apparence</h3>
+                
+                <div class="form-group">
+                    <label for="themeMode">Mode :</label>
+                    <select id="themeMode">
+                        <option value="dark">🌙 Sombre (par défaut)</option>
+                        <option value="light">☀️ Clair</option>
+                    </select>
+                </div>
+
+                <button class="btn-primary" id="applyTheme">✅ Appliquer le thème</button>
+            </div>
+
+            <div class="settings-section">
+                <h3>💾 Données</h3>
+                <button class="btn-danger" id="clearAllData">🗑️ Effacer toutes les données</button>
+                <p style="color: #999; margin-top: 10px; font-size: 0.9em;">⚠️ Attention : Cette action est irréversible !</p>
+            </div>
+
+            <div class="settings-section">
+                <h3>ℹ️ À propos</h3>
+                <p style="color: #999;">Version 2.2</p>
+                <p style="color: #999;">Développé par Simon avec Claude AI</p>
+            </div>
+        </section>
+
+        <!-- Section des statistiques par circuit (ancien) - REFAIT -->
+        <section class="stats view-section" data-view="statistics" style="display: none;">
+            <h2>📊 Analyse par Circuit</h2>
+            <div id="circuitsAnalysis"></div>
+        </section>
+
+        <!-- Liste des sessions -->
+        <section class="sessions-list view-section" data-view="history" style="display: none;">
+            <h2>📋 Historique des sessions</h2>
+            <div id="sessionsList"></div>
+        </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
