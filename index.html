@@ -93,9 +93,16 @@
         <section class="add-session-page view-section" data-view="add-session" style="display: none;">
             <h2>➕ Ajouter une session</h2>
                     <form id="sessionForm">
-                <div class="form-group">
-                    <label for="date">Date :</label>
-                    <input type="date" id="date" required>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="date">Date :</label>
+                        <input type="date" id="date" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="time">Heure :</label>
+                        <input type="time" id="time" required>
+                    </div>
                 </div>
                 
                 <div class="form-group">
@@ -170,8 +177,7 @@
                 </div>
                 
                 <button type="submit" class="btn-primary">📊 Enregistrer la session</button>
-                <button type="button" class="btn-cancel" id="cancelSessionBtn">❌ Annuler</button>
-                <button type="button" class="btn-cancel" id="cancelEditBtn" style="display: none;">❌ Annuler la modification</button>
+                <button type="button" class="btn-cancel" id="cancelEditBtn" style="display: none;">❌ Annuler</button>
                     </form>
         </section>
 
@@ -257,6 +263,17 @@
             <h2>📋 Historique des sessions</h2>
             <div id="sessionsList"></div>
         </section>
+
+        <!-- Modal détails session -->
+        <div class="session-modal" id="sessionModal">
+            <div class="session-modal-content">
+                <div class="session-modal-header">
+                    <h3>📊 Détails de la session</h3>
+                    <button class="modal-close-btn" onclick="dashboard.closeSessionDetails()">✕</button>
+                </div>
+                <div id="sessionDetailsContent"></div>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

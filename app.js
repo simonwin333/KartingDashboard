@@ -1,4 +1,8 @@
-// Classe pour gérer les sessions de karting
+// ============================================
+// KARTING DASHBOARD - Version 2.3
+// Application complète de suivi de performances
+// ============================================
+
 class KartingDashboard {
     constructor() {
         this.sessions = this.loadSessions();
@@ -10,12 +14,17 @@ class KartingDashboard {
         this.init();
     }
 
+    // ============================================
+    // INITIALISATION
+    // ============================================
+
     init() {
         this.applyThemeOnLoad();
         this.setupEventListeners();
         this.populateCircuits();
         this.updateDashboard();
         this.setTodayDate();
+        this.setCurrentTime();
         this.displayProfile();
         this.loadThemeSettings();
     }
@@ -26,31 +35,39 @@ class KartingDashboard {
         dateInput.value = today;
     }
 
+    setCurrentTime() {
+        const timeInput = document.getElementById('time');
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        timeInput.value = `${hours}:${minutes}`;
+    }
+
+    // ============================================
+    // GESTION DES ÉVÉNEMENTS
+    // ============================================
+
     setupEventListeners() {
+        // Formulaire d'ajout de session
         const form = document.getElementById('sessionForm');
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             this.addSession();
         });
 
+        // Ajout de circuit
         const addCircuitBtn = document.getElementById('addCircuitBtn');
         addCircuitBtn.addEventListener('click', () => {
             this.addNewCircuit();
         });
 
+        // Annuler modification
         const cancelEditBtn = document.getElementById('cancelEditBtn');
         cancelEditBtn.addEventListener('click', () => {
             this.cancelEdit();
         });
 
-        // Bouton Annuler (retour au dashboard)
-        const cancelSessionBtn = document.getElementById('cancelSessionBtn');
-        cancelSessionBtn.addEventListener('click', () => {
-            this.clearForm();
-            this.switchView('dashboard');
-        });
-
-        // Gestion du menu de navigation
+        // Navigation
         const navBtns = document.querySelectorAll('.nav-btn');
         navBtns.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -59,20 +76,20 @@ class KartingDashboard {
             });
         });
 
-        // Formulaire de profil
+        // Profil
         const profileForm = document.getElementById('profileForm');
         profileForm.addEventListener('submit', (e) => {
             e.preventDefault();
             this.saveProfile();
         });
 
-        // Bouton effacer données
+        // Effacer données
         const clearDataBtn = document.getElementById('clearAllData');
         clearDataBtn.addEventListener('click', () => {
             this.clearAllData();
         });
 
-        // Gestion des thèmes (simplifié)
+        // Thèmes
         const themeMode = document.getElementById('themeMode');
         themeMode.addEventListener('change', () => {
             this.previewTheme();
@@ -84,8 +101,13 @@ class KartingDashboard {
         });
     }
 
+    // ============================================
+    // GESTION DES SESSIONS
+    // ============================================
+
     addSession() {
         const date = document.getElementById('date').value;
+        const time = document.getElementById('time').value;
         const circuit = document.getElementById('circuit').value;
         const bestTime = parseFloat(document.getElementById('bestTime').value);
         const lapsCount = parseInt(document.getElementById('lapsCount').value);
@@ -97,11 +119,12 @@ class KartingDashboard {
         const tirePressure = document.getElementById('tirePressure').value;
         const notes = document.getElementById('notes').value;
 
-        // Si on est en mode édition
         if (this.editingId) {
+            // Mode édition
             const session = this.sessions.find(s => s.id === this.editingId);
             if (session) {
                 session.date = date;
+                session.time = time;
                 session.circuit = circuit;
                 session.bestTime = bestTime;
                 session.lapsCount = lapsCount;
@@ -122,6 +145,7 @@ class KartingDashboard {
             const session = {
                 id: Date.now(),
                 date: date,
+                time: time,
                 circuit: circuit,
                 bestTime: bestTime,
                 lapsCount: lapsCount,
@@ -147,6 +171,7 @@ class KartingDashboard {
         const session = this.sessions.find(s => s.id === id);
         if (session) {
             document.getElementById('date').value = session.date;
+            document.getElementById('time').value = session.time || '14:00';
             document.getElementById('circuit').value = session.circuit;
             document.getElementById('bestTime').value = session.bestTime;
             document.getElementById('lapsCount').value = session.lapsCount || '';
@@ -162,18 +187,9 @@ class KartingDashboard {
             document.querySelector('.btn-primary').textContent = '✏️ Modifier la session';
             document.getElementById('cancelEditBtn').style.display = 'block';
             
-            // Ouvrir la vue add-session
             this.switchView('add-session');
-            
-            // Scroll vers le haut
             window.scrollTo(0, 0);
         }
-    }
-
-    cancelEdit() {
-        this.clearForm();
-        this.switchView('dashboard');
-        this.showNotification('Modification annulée', 'error');
     }
 
     deleteSession(id) {
@@ -184,6 +200,81 @@ class KartingDashboard {
             this.showNotification('Session supprimée', 'error');
         }
     }
+
+    cancelEdit() {
+        this.clearForm();
+        this.switchView('dashboard');
+        this.showNotification('Modification annulée', 'error');
+    }
+
+    showSessionDetails(id) {
+        const session = this.sessions.find(s => s.id === id);
+        if (!session) return;
+
+        const details = `
+            <div class="session-detail-row">
+                <span class="session-detail-label">📅 Date</span>
+                <span class="session-detail-value">${this.formatDate(session.date)}</span>
+            </div>
+            <div class="session-detail-row">
+                <span class="session-detail-label">🕐 Heure</span>
+                <span class="session-detail-value">${session.time || 'Non renseignée'}</span>
+            </div>
+            <div class="session-detail-row">
+                <span class="session-detail-label">🏁 Circuit</span>
+                <span class="session-detail-value">${session.circuit}</span>
+            </div>
+            <div class="session-detail-row">
+                <span class="session-detail-label">⏱️ Meilleur temps</span>
+                <span class="session-detail-value">${this.formatTime(session.bestTime)}</span>
+            </div>
+            <div class="session-detail-row">
+                <span class="session-detail-label">🔢 Tours effectués</span>
+                <span class="session-detail-value">${session.lapsCount || 'Non renseigné'}</span>
+            </div>
+            <div class="session-detail-row">
+                <span class="session-detail-label">🏎️ Tours minutes moteur</span>
+                <span class="session-detail-value">${session.maxLaps || 'Non renseigné'}</span>
+            </div>
+            <div class="session-detail-row">
+                <span class="session-detail-label">⚙️ Couronne</span>
+                <span class="session-detail-value">${session.crownUsed || 'Non renseignée'}</span>
+            </div>
+            <div class="session-detail-row">
+                <span class="session-detail-label">🌦️ Météo</span>
+                <span class="session-detail-value">${session.weather || 'Non renseignée'}</span>
+            </div>
+            <div class="session-detail-row">
+                <span class="session-detail-label">🌡️ Température</span>
+                <span class="session-detail-value">${session.temperature ? session.temperature + '°C' : 'Non renseignée'}</span>
+            </div>
+            <div class="session-detail-row">
+                <span class="session-detail-label">🛞 Type de pneus</span>
+                <span class="session-detail-value">${session.tireType || 'Non renseigné'}</span>
+            </div>
+            <div class="session-detail-row">
+                <span class="session-detail-label">⚡ Pression pneus</span>
+                <span class="session-detail-value">${session.tirePressure ? session.tirePressure + ' bar' : 'Non renseignée'}</span>
+            </div>
+            ${session.notes ? `
+            <div class="session-detail-row">
+                <span class="session-detail-label">📝 Notes</span>
+                <span class="session-detail-value">${session.notes}</span>
+            </div>
+            ` : ''}
+        `;
+
+        document.getElementById('sessionDetailsContent').innerHTML = details;
+        document.getElementById('sessionModal').style.display = 'block';
+    }
+
+    closeSessionDetails() {
+        document.getElementById('sessionModal').style.display = 'none';
+    }
+
+    // ============================================
+    // STOCKAGE LOCAL
+    // ============================================
 
     saveSessions() {
         localStorage.setItem('kartingSessions', JSON.stringify(this.sessions));
@@ -227,8 +318,25 @@ class KartingDashboard {
         this.showNotification('Profil enregistré ! 👤');
     }
 
+    loadTheme() {
+        const mode = localStorage.getItem('themeMode') || 'dark';
+        return { mode };
+    }
+
+    clearAllData() {
+        if (confirm('⚠️ Êtes-vous ABSOLUMENT sûr de vouloir effacer TOUTES vos données ?\n\nCette action est IRRÉVERSIBLE !')) {
+            if (confirm('Dernière confirmation : Toutes vos sessions, circuits et profil seront supprimés définitivement.')) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+    }
+
+    // ============================================
+    // AFFICHAGE PROFIL & THÈME
+    // ============================================
+
     displayProfile() {
-        // Afficher dans le bandeau
         const bannerName = document.getElementById('bannerPilotName');
         const bannerKart = document.getElementById('bannerKartType');
         const bannerEngine = document.getElementById('bannerKartEngine');
@@ -237,17 +345,11 @@ class KartingDashboard {
         if (bannerKart) bannerKart.textContent = this.profile.kartType || '-';
         if (bannerEngine) bannerEngine.textContent = this.profile.kartEngine || '-';
 
-        // Remplir le formulaire profil
         document.getElementById('pilotName').value = this.profile.pilotName || '';
         document.getElementById('kartType').value = this.profile.kartType || '';
         document.getElementById('kartEngine').value = this.profile.kartEngine || '';
         document.getElementById('kartCategory').value = this.profile.kartCategory || '';
         document.getElementById('pilotNumber').value = this.profile.pilotNumber || '';
-    }
-
-    loadTheme() {
-        const mode = localStorage.getItem('themeMode') || 'dark';
-        return { mode };
     }
 
     loadThemeSettings() {
@@ -256,7 +358,6 @@ class KartingDashboard {
 
     applyThemeOnLoad() {
         const body = document.body;
-        
         if (this.theme.mode === 'light') {
             body.style.background = '#f5f5f5';
             body.style.color = '#000';
@@ -281,14 +382,15 @@ class KartingDashboard {
 
     saveTheme() {
         const mode = document.getElementById('themeMode').value;
-        
         this.theme.mode = mode;
-        
         localStorage.setItem('themeMode', mode);
-        
         this.applyThemeOnLoad();
         this.showNotification('Thème enregistré ! ✅', 'success');
     }
+
+    // ============================================
+    // GESTION DES CIRCUITS
+    // ============================================
 
     populateCircuits() {
         const select = document.getElementById('circuit');
@@ -317,38 +419,14 @@ class KartingDashboard {
             this.circuits.push(trimmedName);
             this.saveCircuits();
             this.populateCircuits();
-            
             document.getElementById('circuit').value = trimmedName;
-            
             this.showNotification(`Circuit "${trimmedName}" ajouté ! 🏁`);
         }
     }
 
-    clearAllData() {
-        if (confirm('⚠️ Êtes-vous ABSOLUMENT sûr de vouloir effacer TOUTES vos données ?\n\nCette action est IRRÉVERSIBLE !')) {
-            if (confirm('Dernière confirmation : Toutes vos sessions, circuits et profil seront supprimés définitivement.')) {
-                localStorage.removeItem('kartingSessions');
-                localStorage.removeItem('kartingCircuits');
-                localStorage.removeItem('kartingProfile');
-                
-                this.sessions = [];
-                this.circuits = ['Mariembourg', 'Genk', 'Spa'];
-                this.profile = {
-                    pilotName: '',
-                    kartType: '',
-                    kartEngine: '',
-                    kartCategory: '',
-                    pilotNumber: ''
-                };
-                
-                this.populateCircuits();
-                this.updateDashboard();
-                this.displayProfile();
-                
-                this.showNotification('Toutes les données ont été effacées', 'error');
-            }
-        }
-    }
+    // ============================================
+    // MISE À JOUR DASHBOARD
+    // ============================================
 
     updateDashboard() {
         this.updateDashboardStats();
@@ -369,7 +447,7 @@ class KartingDashboard {
             return;
         }
 
-        // Circuit préféré (celui avec le plus de tours)
+        // Circuit préféré (le plus de tours)
         const circuitLaps = {};
         this.sessions.forEach(s => {
             if (!circuitLaps[s.circuit]) {
@@ -402,34 +480,38 @@ class KartingDashboard {
         const container = document.getElementById('recentSessionsList');
         
         if (this.sessions.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <p>Aucune session pour le moment</p>
-                </div>
-            `;
+            container.innerHTML = '<div class="empty-state"><p>Aucune session pour le moment</p></div>';
             return;
         }
 
+        // Trier par date ET heure (les plus récentes en premier)
         const recentSessions = [...this.sessions]
-            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .sort((a, b) => {
+                const dateA = new Date(a.date + ' ' + (a.time || '00:00'));
+                const dateB = new Date(b.date + ' ' + (b.time || '00:00'));
+                return dateB - dateA;
+            })
             .slice(0, 5);
 
         container.innerHTML = recentSessions.map(session => {
             const details = [];
             if (session.lapsCount) details.push(`${session.lapsCount} tours`);
             if (session.weather) details.push(session.weather);
+            if (session.tireType) details.push(`Pneus: ${session.tireType}`);
+            if (session.tirePressure) details.push(`${session.tirePressure} bar`);
             
             const detailsText = details.length > 0 ? details.join(' • ') : '-';
             
             return `
                 <div class="session-item">
                     <div class="session-info">
-                        <span class="session-date">${this.formatDateShort(session.date)}</span>
+                        <span class="session-date">${this.formatDateShort(session.date)} ${session.time ? session.time : ''}</span>
                         <span class="session-circuit">📍 ${session.circuit}</span>
                         <span class="session-time">${this.formatTime(session.bestTime)}</span>
                         <span class="session-notes">${detailsText}</span>
                     </div>
                     <div class="session-actions">
+                        <button class="btn-details" onclick="dashboard.showSessionDetails(${session.id})" title="Voir détails">👁️</button>
                         <button class="btn-edit" onclick="dashboard.editSession(${session.id})" title="Modifier">✏️</button>
                     </div>
                 </div>
@@ -468,12 +550,15 @@ class KartingDashboard {
             const totalLaps = sessions.reduce((sum, s) => sum + (s.lapsCount || 0), 0);
             const totalSessions = sessions.length;
             
+            // Session avec le meilleur temps
             const bestSession = sessions.find(s => s.bestTime === bestTime);
-            const bestConditions = [];
-            if (bestSession.weather) bestConditions.push(bestSession.weather);
-            if (bestSession.tireType) bestConditions.push(bestSession.tireType);
-            if (bestSession.tirePressure) bestConditions.push(`${bestSession.tirePressure} bar`);
-            const bestConditionsText = bestConditions.join(' • ') || 'Non renseigné';
+            const bestDetails = [];
+            if (bestSession.date) bestDetails.push(this.formatDateShort(bestSession.date));
+            if (bestSession.time) bestDetails.push(bestSession.time);
+            if (bestSession.weather) bestDetails.push(bestSession.weather);
+            if (bestSession.tireType) bestDetails.push(bestSession.tireType);
+            if (bestSession.tirePressure) bestDetails.push(`${bestSession.tirePressure} bar`);
+            const bestDetailsText = bestDetails.join(' • ');
             
             const tileDiv = document.createElement('div');
             tileDiv.className = 'circuit-tile';
@@ -483,7 +568,7 @@ class KartingDashboard {
                     <div style="text-align: right;">
                         <div style="font-size: 0.85em; color: #999; margin-bottom: 5px;">Meilleur tour :</div>
                         <div class="circuit-tile-best">${this.formatTime(bestTime)}</div>
-                        <div style="font-size: 0.75em; color: #999; margin-top: 5px;">${bestConditionsText}</div>
+                        <div style="font-size: 0.75em; color: #999; margin-top: 8px; line-height: 1.4;">${bestDetailsText}</div>
                     </div>
                 </div>
                 <div class="circuit-tile-content">
@@ -555,9 +640,7 @@ class KartingDashboard {
                 responsive: true,
                 maintainAspectRatio: true,
                 plugins: {
-                    legend: {
-                        display: false
-                    },
+                    legend: { display: false },
                     tooltip: {
                         callbacks: {
                             label: (context) => {
@@ -583,17 +666,11 @@ class KartingDashboard {
                             callback: (value) => this.formatTime(value),
                             color: '#999'
                         },
-                        grid: {
-                            color: '#2a2a2a'
-                        }
+                        grid: { color: '#2a2a2a' }
                     },
                     x: {
-                        ticks: {
-                            color: '#999'
-                        },
-                        grid: {
-                            color: '#2a2a2a'
-                        }
+                        ticks: { color: '#999' },
+                        grid: { color: '#2a2a2a' }
                     }
                 }
             }
@@ -613,9 +690,12 @@ class KartingDashboard {
             return;
         }
 
-        const sortedSessions = [...this.sessions].sort((a, b) => 
-            new Date(b.date) - new Date(a.date)
-        );
+        // Trier par date ET heure (les plus récentes en premier)
+        const sortedSessions = [...this.sessions].sort((a, b) => {
+            const dateA = new Date(a.date + ' ' + (a.time || '00:00'));
+            const dateB = new Date(b.date + ' ' + (b.time || '00:00'));
+            return dateB - dateA;
+        });
 
         container.innerHTML = sortedSessions.map(session => {
             const details = [];
@@ -631,12 +711,15 @@ class KartingDashboard {
             return `
             <div class="session-item">
                 <div class="session-info">
-                    <span class="session-date">${this.formatDateShort(session.date)}</span>
+                    <span class="session-date">${this.formatDateShort(session.date)} ${session.time ? session.time : ''}</span>
                     <span class="session-circuit">📍 ${session.circuit}</span>
                     <span class="session-time">${this.formatTime(session.bestTime)}</span>
                     <span class="session-notes" title="${detailsText}">${detailsText}</span>
                 </div>
                 <div class="session-actions">
+                    <button class="btn-details" onclick="dashboard.showSessionDetails(${session.id})" title="Voir détails">
+                        👁️ Détails
+                    </button>
                     <button class="btn-edit" onclick="dashboard.editSession(${session.id})" title="Modifier">
                         ✏️ Modifier
                     </button>
@@ -648,6 +731,10 @@ class KartingDashboard {
         `;
         }).join('');
     }
+
+    // ============================================
+    // NAVIGATION & UTILITAIRES
+    // ============================================
 
     switchView(view) {
         document.querySelectorAll('.view-section').forEach(section => {
@@ -694,6 +781,7 @@ class KartingDashboard {
     clearForm() {
         document.getElementById('sessionForm').reset();
         this.setTodayDate();
+        this.setCurrentTime();
         this.editingId = null;
         document.querySelector('.btn-primary').textContent = '📊 Enregistrer la session';
         document.getElementById('cancelEditBtn').style.display = 'none';
@@ -732,6 +820,10 @@ class KartingDashboard {
         }, 3000);
     }
 }
+
+// ============================================
+// INITIALISATION DE L'APPLICATION
+// ============================================
 
 let dashboard;
 document.addEventListener('DOMContentLoaded', () => {
