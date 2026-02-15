@@ -35,6 +35,52 @@
             <button class="nav-btn" data-view="history">📋 Historique</button>
         </nav>
 
+        <!-- Bandeau Firebase (si non connecté) -->
+        <div id="firebaseBanner" class="firebase-banner" style="display: none;">
+            <span>💾 Données en local. <a href="#" id="showLoginLink">Se connecter</a> pour synchroniser sur le cloud.</span>
+        </div>
+
+        <!-- Modal Connexion Firebase -->
+        <div class="auth-modal" id="authModal" style="display: none;">
+            <div class="auth-modal-content">
+                <div class="auth-modal-header">
+                    <h3>🔐 Connexion / Inscription</h3>
+                    <button class="modal-close-btn" onclick="dashboard.closeAuthModal()">✕</button>
+                </div>
+                <div class="auth-modal-body">
+                    <p style="color: #999; margin-bottom: 20px; font-size: 0.9em;">
+                        Connectez-vous pour synchroniser vos données sur tous vos appareils
+                    </p>
+
+                    <button class="btn-google-signin" id="googleSignInBtn">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width: 18px; margin-right: 8px;">
+                        Continuer avec Google
+                    </button>
+
+                    <div class="divider">
+                        <span>OU</span>
+                    </div>
+
+                    <form id="authForm">
+                        <div class="form-group">
+                            <label for="authEmail">E-mail :</label>
+                            <input type="email" id="authEmail" required placeholder="votre@email.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="authPassword">Mot de passe :</label>
+                            <input type="password" id="authPassword" required placeholder="••••••••" minlength="6">
+                        </div>
+                        <button type="submit" class="btn-primary" id="authSubmitBtn">Se connecter</button>
+                        <button type="button" class="btn-secondary" id="authToggleBtn">Créer un compte</button>
+                    </form>
+
+                    <p style="color: #666; font-size: 0.8em; margin-top: 15px;">
+                        🔒 Vos données restent privées et sécurisées
+                    </p>
+                </div>
+            </div>
+        </div>
+
         <!-- Dashboard - Page d'accueil -->
         <section class="dashboard-home view-section" data-view="dashboard">
             
@@ -255,7 +301,15 @@
         </div>
     </div>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- App principal -->
     <script src="app.js"></script>
 </body>
 </html>
