@@ -417,17 +417,71 @@ class KartingDashboard {
                 document.getElementById('cancelEditBtn').style.display = 'none';
             }
         } else {
+            // Vérifier si c'est un record AVANT d'ajouter
+            const isNewRecord = this.checkIfNewRecord(circuit, bestTime);
+            
             const session = {
                 id: Date.now(),
                 date, time, circuit, bestTime, lapsCount, maxLaps, crownUsed,
                 weather, temperature, tireType, tirePressure, notes
             };
             this.sessions.push(session);
-            this.showNotification('Session ajoutée ! 🎉');
+            
+            // Si record, popup spécial !
+            if (isNewRecord) {
+                this.showRecordPopup(circuit, bestTime);
+            } else {
+                this.showNotification('Session ajoutée ! 🎉');
+            }
         }
 
         this.saveSessions();
         this.updateDashboard();
+        this.populateCircuitFilter();
+        this.clearForm();
+        this.switchView('dashboard');
+    }
+
+    checkIfNewRecord(circuit, newTime) {
+        // Trouver toutes les sessions sur ce circuit (sauf la nouvelle)
+        const circuitSessions = this.sessions.filter(s => s.circuit === circuit);
+        
+        // Si première session sur ce circuit = record automatique
+        if (circuitSessions.length === 0) {
+            return true;
+        }
+        
+        // Trouver l'ancien record
+        const oldRecord = Math.min(...circuitSessions.map(s => s.bestTime));
+        
+        // Nouveau record si temps inférieur
+        return newTime < oldRecord;
+    }
+
+    showRecordPopup(circuit, time) {
+        const formattedTime = this.formatTime(time);
+        
+        // Créer popup personnalisée
+        const popup = document.createElement('div');
+        popup.className = 'record-popup';
+        popup.innerHTML = `
+            <div class="record-popup-content">
+                <div class="record-popup-icon">🏆</div>
+                <h2>NOUVEAU RECORD !</h2>
+                <p class="record-circuit">🏁 ${circuit}</p>
+                <p class="record-time">${formattedTime}</p>
+                <p class="record-message">Félicitations ! Vous avez battu votre meilleur temps ! 🎉</p>
+                <button class="btn-primary" onclick="this.parentElement.parentElement.remove()">✅ Super !</button>
+            </div>
+        `;
+        
+        document.body.appendChild(popup);
+        
+        // Supprimer automatiquement après 5 secondes
+        setTimeout(() => {
+            if (popup.parentElement) popup.remove();
+        }, 5000);
+    }
         this.populateCircuitFilter();
         this.clearForm();
         this.switchView('dashboard');
@@ -1070,6 +1124,11 @@ Voulez-vous continuer ?`)) {
         // Mettre à jour l'heure si on va dans add-session
         if (view === 'add-session') {
             this.setCurrentTime();
+        }
+        
+        // Afficher le profil si on va dans settings
+        if (view === 'settings') {
+            this.displayProfile();
         }
     }
 
