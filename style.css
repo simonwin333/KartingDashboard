@@ -596,6 +596,56 @@ section h2 {
     margin-bottom: 15px;
 }
 
+/* Styles uniformes pour Réglages */
+.settings-select {
+    width: 100%;
+    max-width: 400px;
+    padding: 12px;
+    background: #0f0f0f;
+    color: #fff;
+    border: 2px solid #2a2a2a;
+    border-radius: 8px;
+    font-size: 1em;
+    cursor: pointer;
+}
+
+.btn-settings {
+    width: 100%;
+    max-width: 400px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: #667eea;
+    color: white;
+}
+
+.btn-settings:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-danger-settings {
+    background: #ff4757;
+}
+
+.btn-danger-settings:hover {
+    background: #ee5a6f;
+    box-shadow: 0 4px 12px rgba(255, 71, 87, 0.4);
+}
+
+.btn-donate {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.btn-donate:hover {
+    background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+    box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+}
+
 .btn-danger {
     background: #ff4757;
     color: white;

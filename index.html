@@ -267,7 +267,7 @@
                 
                 <div class="form-group">
                     <label for="themeMode">Mode :</label>
-                    <select id="themeMode">
+                    <select id="themeMode" class="settings-select">
                         <option value="dark">🌙 Sombre (par défaut)</option>
                         <option value="light">☀️ Clair</option>
                     </select>
@@ -278,15 +278,27 @@
             <!-- Section Compte -->
             <div class="settings-section">
                 <h3>🔐 Compte</h3>
-                <button class="btn-secondary" id="logoutBtn" style="width: 100%;">🚪 Se déconnecter</button>
+                <button class="btn-settings" id="logoutBtn">🚪 Se déconnecter</button>
                 <p style="color: #999; margin-top: 10px; font-size: 0.9em;">Vous serez redirigé vers la page de connexion</p>
             </div>
 
             <!-- Section Données -->
             <div class="settings-section">
                 <h3>💾 Données</h3>
-                <button class="btn-danger" id="clearAllData">🗑️ Effacer toutes les données</button>
-                <p style="color: #999; margin-top: 10px; font-size: 0.9em;">⚠️ Attention : Cette action est irréversible !</p>
+                <button class="btn-settings btn-danger-settings" id="clearAllData">⚠️ Supprimer définitivement mon compte</button>
+                <p style="color: #999; margin-top: 10px; font-size: 0.9em;">
+                    ⚠️ Attention : Supprime toutes vos sessions, votre profil et vos circuits.<br>
+                    <strong>Action irréversible !</strong>
+                </p>
+            </div>
+
+            <!-- Section Soutien -->
+            <div class="settings-section">
+                <h3>❤️ Soutenir le projet</h3>
+                <a href="https://paypal.me/VOTRE_LIEN" target="_blank" rel="noopener">
+                    <button class="btn-settings btn-donate">☕ Offrir un café au créateur</button>
+                </a>
+                <p style="color: #999; margin-top: 10px; font-size: 0.9em;">Votre soutien aide à améliorer l'app !</p>
             </div>
 
             <!-- Section À propos -->

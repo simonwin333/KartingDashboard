@@ -650,25 +650,59 @@ class KartingDashboard {
         return { mode };
     }
 
-    clearAllData() {
-        if (confirm('⚠️ Effacer TOUTES les données cloud ?')) {
-            if (confirm('Dernière confirmation ! Cette action supprime tout de Firebase.')) {
-                if (this.currentUser && db) {
-                    const userId = this.currentUser.uid;
-                    // Supprimer toutes les sessions
-                    db.collection('users').doc(userId).collection('sessions').get().then(snapshot => {
-                        snapshot.forEach(doc => doc.ref.delete());
-                    });
-                    // Supprimer profil
-                    db.collection('users').doc(userId).collection('profile').doc('data').delete();
-                    // Supprimer circuits
-                    db.collection('users').doc(userId).collection('settings').doc('circuits').delete();
-                    
-                    this.showNotification('Données supprimées ! Déconnexion...', 'error');
-                    setTimeout(() => {
-                        auth.signOut().then(() => location.reload());
-                    }, 2000);
-                }
+    async clearAllData() {
+        // Compteur de sessions
+        const sessionCount = this.sessions.length;
+        
+        // Premier warning avec compteur
+        if (!confirm(`⚠️ SUPPRIMER DÉFINITIVEMENT MON COMPTE ?
+
+Cette action va supprimer :
+• ${sessionCount} session${sessionCount > 1 ? 's' : ''}
+• Votre profil pilote
+• Vos circuits personnalisés
+
+⚠️ IMPOSSIBLE À ANNULER - PERTE DÉFINITIVE
+
+Voulez-vous continuer ?`)) {
+            return;
+        }
+        
+        // Demander confirmation par nom
+        const confirmation = prompt('Pour confirmer, tapez votre nom de pilote :');
+        if (confirmation !== this.profile.pilotName) {
+            this.showNotification('❌ Nom incorrect. Suppression annulée.', 'error');
+            return;
+        }
+        
+        // Suppression
+        if (this.currentUser && db) {
+            try {
+                const userId = this.currentUser.uid;
+                
+                this.showNotification('🗑️ Suppression en cours...', 'error');
+                
+                // Supprimer toutes les sessions
+                const sessionsRef = await db.collection('users').doc(userId).collection('sessions').get();
+                const deletePromises = [];
+                sessionsRef.forEach(doc => {
+                    deletePromises.push(doc.ref.delete());
+                });
+                await Promise.all(deletePromises);
+                
+                // Supprimer profil et circuits
+                await db.collection('users').doc(userId).collection('profile').doc('data').delete();
+                await db.collection('users').doc(userId).collection('settings').doc('circuits').delete();
+                
+                this.showNotification('✅ Compte supprimé. Déconnexion...', 'success');
+                
+                setTimeout(() => {
+                    auth.signOut().then(() => location.reload());
+                }, 2000);
+                
+            } catch (error) {
+                console.error('❌ Erreur suppression:', error);
+                this.showNotification('❌ Erreur lors de la suppression', 'error');
             }
         }
     }
@@ -682,9 +716,14 @@ class KartingDashboard {
         if (headerKart) headerKart.textContent = this.profile.kartType || '-';
         if (headerEngine) headerEngine.textContent = this.profile.kartEngine || '-';
 
-        document.getElementById('pilotName').value = this.profile.pilotName || '';
-        document.getElementById('kartType').value = this.profile.kartType || '';
-        document.getElementById('kartEngine').value = this.profile.kartEngine || '';
+        // Remplir les champs du formulaire profil (dans Réglages)
+        const pilotNameInput = document.getElementById('pilotName');
+        const kartTypeInput = document.getElementById('kartType');
+        const kartEngineInput = document.getElementById('kartEngine');
+        
+        if (pilotNameInput) pilotNameInput.value = this.profile.pilotName || '';
+        if (kartTypeInput) kartTypeInput.value = this.profile.kartType || '';
+        if (kartEngineInput) kartEngineInput.value = this.profile.kartEngine || '';
     }
 
     loadThemeSettings() {
