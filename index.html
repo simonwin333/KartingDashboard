@@ -10,14 +10,19 @@
     <div class="container">
         <!-- En-tête -->
         <header>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
+            <div class="header-content">
+                <div class="header-left">
                     <h1>🏁 Karting Dashboard</h1>
-                    <p>Suivez vos performances sur circuit</p>
+                    <p class="header-subtitle">Suivez vos performances sur circuit</p>
+                    <p class="header-pilot-info">
+                        <span id="headerPilotName">-</span> • 
+                        <span id="headerKartType">-</span> • 
+                        <span id="headerKartEngine">-</span>
+                    </p>
                 </div>
-                <div style="display: flex; gap: 10px;">
-                    <button class="header-btn" onclick="dashboard.switchView('profile')" title="Profil">👤</button>
-                    <button class="header-btn" onclick="dashboard.switchView('settings')" title="Réglages">⚙️</button>
+                <div class="header-buttons">
+                    <button class="header-btn-small" onclick="dashboard.switchView('profile')" title="Profil">👤</button>
+                    <button class="header-btn-small" onclick="dashboard.switchView('settings')" title="Réglages">⚙️</button>
                 </div>
             </div>
         </header>
@@ -33,51 +38,35 @@
         <!-- Dashboard - Page d'accueil -->
         <section class="dashboard-home view-section" data-view="dashboard">
             
-            <!-- Bandeau infos pilote -->
-            <div class="pilot-info-banner">
-                <div class="pilot-info-item">
-                    <span class="pilot-info-label">Pilote</span>
-                    <span class="pilot-info-value" id="bannerPilotName">-</span>
-                </div>
-                <div class="pilot-info-item">
-                    <span class="pilot-info-label">Kart</span>
-                    <span class="pilot-info-value" id="bannerKartType">-</span>
-                </div>
-                <div class="pilot-info-item">
-                    <span class="pilot-info-label">Moteur</span>
-                    <span class="pilot-info-value" id="bannerKartEngine">-</span>
-                </div>
-            </div>
-
-            <!-- Statistiques principales -->
-            <div class="dashboard-stats">
-                <div class="dashboard-stat-card">
+            <!-- Statistiques principales en grille -->
+            <div class="dashboard-stats-grid">
+                <div class="stat-box">
                     <div class="stat-icon">📊</div>
-                    <div class="stat-info">
+                    <div class="stat-content">
                         <div class="stat-label">Sessions totales</div>
-                        <div class="stat-big-value" id="dashTotalSessions">0</div>
+                        <div class="stat-value" id="dashTotalSessions">0</div>
                     </div>
                 </div>
-                <div class="dashboard-stat-card">
+                <div class="stat-box">
                     <div class="stat-icon">🏆</div>
-                    <div class="stat-info">
+                    <div class="stat-content">
                         <div class="stat-label">Circuit préféré</div>
-                        <div class="stat-big-value" id="dashFavoriteCircuit" style="font-size: 1.3em;">-</div>
-                        <div class="stat-sublabel" id="dashFavoriteCircuitBest">-</div>
+                        <div class="stat-value" id="dashFavoriteCircuit">-</div>
+                        <div class="stat-subvalue" id="dashFavoriteCircuitBest">-</div>
                     </div>
                 </div>
-                <div class="dashboard-stat-card">
+                <div class="stat-box">
                     <div class="stat-icon">🏁</div>
-                    <div class="stat-info">
+                    <div class="stat-content">
                         <div class="stat-label">Circuits visités</div>
-                        <div class="stat-big-value" id="dashCircuitsCount">0</div>
+                        <div class="stat-value" id="dashCircuitsCount">0</div>
                     </div>
                 </div>
-                <div class="dashboard-stat-card">
+                <div class="stat-box">
                     <div class="stat-icon">🔢</div>
-                    <div class="stat-info">
+                    <div class="stat-content">
                         <div class="stat-label">Tours totaux</div>
-                        <div class="stat-big-value" id="dashTotalLaps">0</div>
+                        <div class="stat-value" id="dashTotalLaps">0</div>
                     </div>
                 </div>
             </div>
@@ -89,10 +78,10 @@
             </div>
         </section>
 
-        <!-- Page Ajouter Session (ancien modal) -->
+        <!-- Page Ajouter Session -->
         <section class="add-session-page view-section" data-view="add-session" style="display: none;">
             <h2>➕ Ajouter une session</h2>
-                    <form id="sessionForm">
+            <form id="sessionForm">
                 <div class="form-row">
                     <div class="form-group">
                         <label for="date">Date :</label>
@@ -176,9 +165,9 @@
                     <textarea id="notes" rows="3" placeholder="Sensations, réglages châssis, trajectoires..."></textarea>
                 </div>
                 
-                <button type="submit" class="btn-primary">📊 Enregistrer la session</button>
-                <button type="button" class="btn-cancel" id="cancelEditBtn" style="display: none;">❌ Annuler</button>
-                    </form>
+                <button type="submit" class="btn-primary" id="submitBtn">📊 Enregistrer la session</button>
+                <button type="button" class="btn-cancel" id="cancelEditBtn" style="display: none;">❌ Annuler la modification</button>
+            </form>
         </section>
 
         <!-- Page Profil -->
@@ -247,14 +236,21 @@
 
             <div class="settings-section">
                 <h3>ℹ️ À propos</h3>
-                <p style="color: #999;">Version 2.2</p>
+                <p style="color: #999;">Version 2.4</p>
                 <p style="color: #999;">Développé par Simon avec Claude AI</p>
             </div>
         </section>
 
-        <!-- Section des statistiques par circuit (ancien) - REFAIT -->
+        <!-- Section des statistiques par circuit -->
         <section class="stats view-section" data-view="statistics" style="display: none;">
-            <h2>📊 Analyse par Circuit</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">📊 Analyse par Circuit</h2>
+                <div>
+                    <select id="circuitFilter" class="circuit-filter">
+                        <option value="all">Tous les circuits</option>
+                    </select>
+                </div>
+            </div>
             <div id="circuitsAnalysis"></div>
         </section>
 

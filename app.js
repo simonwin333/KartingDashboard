@@ -1,6 +1,6 @@
 // ============================================
-// KARTING DASHBOARD - Version 2.3
-// Application complète de suivi de performances
+// KARTING DASHBOARD - Version 2.4
+// Toutes les améliorations demandées
 // ============================================
 
 class KartingDashboard {
@@ -11,17 +11,15 @@ class KartingDashboard {
         this.theme = this.loadTheme();
         this.circuitCharts = {};
         this.editingId = null;
+        this.selectedCircuit = 'all';
         this.init();
     }
-
-    // ============================================
-    // INITIALISATION
-    // ============================================
 
     init() {
         this.applyThemeOnLoad();
         this.setupEventListeners();
         this.populateCircuits();
+        this.populateCircuitFilter();
         this.updateDashboard();
         this.setTodayDate();
         this.setCurrentTime();
@@ -44,30 +42,43 @@ class KartingDashboard {
     }
 
     // ============================================
-    // GESTION DES ÉVÉNEMENTS
+    // FORMAT DE TEMPS mm:ss.ms
+    // ============================================
+    
+    formatTime(seconds) {
+        if (seconds >= 60) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            const ms = Math.floor((seconds % 1) * 1000);
+            return `${minutes}:${String(secs).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
+        } else {
+            const secs = Math.floor(seconds);
+            const ms = Math.floor((seconds % 1) * 1000);
+            return `${secs}.${String(ms).padStart(3, '0')}s`;
+        }
+    }
+
+    // ============================================
+    // ÉVÉNEMENTS
     // ============================================
 
     setupEventListeners() {
-        // Formulaire d'ajout de session
         const form = document.getElementById('sessionForm');
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             this.addSession();
         });
 
-        // Ajout de circuit
         const addCircuitBtn = document.getElementById('addCircuitBtn');
         addCircuitBtn.addEventListener('click', () => {
             this.addNewCircuit();
         });
 
-        // Annuler modification
         const cancelEditBtn = document.getElementById('cancelEditBtn');
         cancelEditBtn.addEventListener('click', () => {
             this.cancelEdit();
         });
 
-        // Navigation
         const navBtns = document.querySelectorAll('.nav-btn');
         navBtns.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -76,20 +87,17 @@ class KartingDashboard {
             });
         });
 
-        // Profil
         const profileForm = document.getElementById('profileForm');
         profileForm.addEventListener('submit', (e) => {
             e.preventDefault();
             this.saveProfile();
         });
 
-        // Effacer données
         const clearDataBtn = document.getElementById('clearAllData');
         clearDataBtn.addEventListener('click', () => {
             this.clearAllData();
         });
 
-        // Thèmes
         const themeMode = document.getElementById('themeMode');
         themeMode.addEventListener('change', () => {
             this.previewTheme();
@@ -99,10 +107,17 @@ class KartingDashboard {
         applyThemeBtn.addEventListener('click', () => {
             this.saveTheme();
         });
+
+        // Filtre circuit
+        const circuitFilter = document.getElementById('circuitFilter');
+        circuitFilter.addEventListener('change', (e) => {
+            this.selectedCircuit = e.target.value;
+            this.updateCircuitsAnalysis();
+        });
     }
 
     // ============================================
-    // GESTION DES SESSIONS
+    // SESSIONS
     // ============================================
 
     addSession() {
@@ -120,7 +135,6 @@ class KartingDashboard {
         const notes = document.getElementById('notes').value;
 
         if (this.editingId) {
-            // Mode édition
             const session = this.sessions.find(s => s.id === this.editingId);
             if (session) {
                 session.date = date;
@@ -137,11 +151,10 @@ class KartingDashboard {
                 session.notes = notes;
                 this.showNotification('Session modifiée avec succès ! ✏️');
                 this.editingId = null;
-                document.querySelector('.btn-primary').textContent = '📊 Enregistrer la session';
+                document.getElementById('submitBtn').textContent = '📊 Enregistrer la session';
                 document.getElementById('cancelEditBtn').style.display = 'none';
             }
         } else {
-            // Mode ajout
             const session = {
                 id: Date.now(),
                 date: date,
@@ -163,6 +176,7 @@ class KartingDashboard {
 
         this.saveSessions();
         this.updateDashboard();
+        this.populateCircuitFilter();
         this.clearForm();
         this.switchView('dashboard');
     }
@@ -184,7 +198,7 @@ class KartingDashboard {
             document.getElementById('notes').value = session.notes || '';
             
             this.editingId = id;
-            document.querySelector('.btn-primary').textContent = '✏️ Modifier la session';
+            document.getElementById('submitBtn').textContent = '✏️ Enregistrer les modifications';
             document.getElementById('cancelEditBtn').style.display = 'block';
             
             this.switchView('add-session');
@@ -197,6 +211,7 @@ class KartingDashboard {
             this.sessions = this.sessions.filter(session => session.id !== id);
             this.saveSessions();
             this.updateDashboard();
+            this.populateCircuitFilter();
             this.showNotification('Session supprimée', 'error');
         }
     }
@@ -273,7 +288,7 @@ class KartingDashboard {
     }
 
     // ============================================
-    // STOCKAGE LOCAL
+    // STOCKAGE
     // ============================================
 
     saveSessions() {
@@ -333,17 +348,17 @@ class KartingDashboard {
     }
 
     // ============================================
-    // AFFICHAGE PROFIL & THÈME
+    // AFFICHAGE
     // ============================================
 
     displayProfile() {
-        const bannerName = document.getElementById('bannerPilotName');
-        const bannerKart = document.getElementById('bannerKartType');
-        const bannerEngine = document.getElementById('bannerKartEngine');
+        const headerName = document.getElementById('headerPilotName');
+        const headerKart = document.getElementById('headerKartType');
+        const headerEngine = document.getElementById('headerKartEngine');
         
-        if (bannerName) bannerName.textContent = this.profile.pilotName || '-';
-        if (bannerKart) bannerKart.textContent = this.profile.kartType || '-';
-        if (bannerEngine) bannerEngine.textContent = this.profile.kartEngine || '-';
+        if (headerName) headerName.textContent = this.profile.pilotName || '-';
+        if (headerKart) headerKart.textContent = this.profile.kartType || '-';
+        if (headerEngine) headerEngine.textContent = this.profile.kartEngine || '-';
 
         document.getElementById('pilotName').value = this.profile.pilotName || '';
         document.getElementById('kartType').value = this.profile.kartType || '';
@@ -389,7 +404,7 @@ class KartingDashboard {
     }
 
     // ============================================
-    // GESTION DES CIRCUITS
+    // CIRCUITS
     // ============================================
 
     populateCircuits() {
@@ -398,6 +413,19 @@ class KartingDashboard {
         
         const sortedCircuits = [...this.circuits].sort();
         sortedCircuits.forEach(circuit => {
+            const option = document.createElement('option');
+            option.value = circuit;
+            option.textContent = circuit;
+            select.appendChild(option);
+        });
+    }
+
+    populateCircuitFilter() {
+        const select = document.getElementById('circuitFilter');
+        select.innerHTML = '<option value="all">Tous les circuits</option>';
+        
+        const usedCircuits = [...new Set(this.sessions.map(s => s.circuit))].sort();
+        usedCircuits.forEach(circuit => {
             const option = document.createElement('option');
             option.value = circuit;
             option.textContent = circuit;
@@ -425,7 +453,7 @@ class KartingDashboard {
     }
 
     // ============================================
-    // MISE À JOUR DASHBOARD
+    // DASHBOARD
     // ============================================
 
     updateDashboard() {
@@ -447,7 +475,6 @@ class KartingDashboard {
             return;
         }
 
-        // Circuit préféré (le plus de tours)
         const circuitLaps = {};
         this.sessions.forEach(s => {
             if (!circuitLaps[s.circuit]) {
@@ -467,11 +494,9 @@ class KartingDashboard {
         document.getElementById('dashFavoriteCircuitBest').textContent = 
             `Meilleur: ${this.formatTime(circuitLaps[favoriteCircuit].bestTime)}`;
 
-        // Circuits visités
         const uniqueCircuits = new Set(this.sessions.map(s => s.circuit));
         document.getElementById('dashCircuitsCount').textContent = uniqueCircuits.size;
 
-        // Tours totaux
         const totalLaps = this.sessions.reduce((sum, s) => sum + (s.lapsCount || 0), 0);
         document.getElementById('dashTotalLaps').textContent = totalLaps;
     }
@@ -484,7 +509,6 @@ class KartingDashboard {
             return;
         }
 
-        // Trier par date ET heure (les plus récentes en premier)
         const recentSessions = [...this.sessions]
             .sort((a, b) => {
                 const dateA = new Date(a.date + ' ' + (a.time || '00:00'));
@@ -497,7 +521,6 @@ class KartingDashboard {
             const details = [];
             if (session.lapsCount) details.push(`${session.lapsCount} tours`);
             if (session.weather) details.push(session.weather);
-            if (session.tireType) details.push(`Pneus: ${session.tireType}`);
             if (session.tirePressure) details.push(`${session.tirePressure} bar`);
             
             const detailsText = details.length > 0 ? details.join(' • ') : '-';
@@ -505,13 +528,13 @@ class KartingDashboard {
             return `
                 <div class="session-item">
                     <div class="session-info">
-                        <span class="session-date">${this.formatDateShort(session.date)} ${session.time ? session.time : ''}</span>
+                        <span class="session-date">${this.formatDateShort(session.date)} ${session.time || ''}</span>
                         <span class="session-circuit">📍 ${session.circuit}</span>
                         <span class="session-time">${this.formatTime(session.bestTime)}</span>
                         <span class="session-notes">${detailsText}</span>
                     </div>
                     <div class="session-actions">
-                        <button class="btn-details" onclick="dashboard.showSessionDetails(${session.id})" title="Voir détails">👁️</button>
+                        <button class="btn-details" onclick="dashboard.showSessionDetails(${session.id})" title="Détails">👁️</button>
                         <button class="btn-edit" onclick="dashboard.editSession(${session.id})" title="Modifier">✏️</button>
                     </div>
                 </div>
@@ -523,12 +546,7 @@ class KartingDashboard {
         const container = document.getElementById('circuitsAnalysis');
         
         if (this.sessions.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <p>🏎️ Aucune donnée disponible</p>
-                    <p style="font-size: 0.9em;">Ajoutez des sessions pour voir l'analyse par circuit !</p>
-                </div>
-            `;
+            container.innerHTML = '<div class="empty-state"><p>🏎️ Aucune donnée disponible</p></div>';
             return;
         }
 
@@ -540,8 +558,14 @@ class KartingDashboard {
             circuitData[session.circuit].push(session);
         });
 
+        // Filtrer si nécessaire
+        let circuits = Object.keys(circuitData).sort();
+        if (this.selectedCircuit !== 'all') {
+            circuits = circuits.filter(c => c === this.selectedCircuit);
+        }
+
         container.innerHTML = '';
-        Object.keys(circuitData).sort().forEach(circuit => {
+        circuits.forEach(circuit => {
             const sessions = circuitData[circuit];
             const sortedSessions = sessions.sort((a, b) => new Date(a.date) - new Date(b.date));
             
@@ -550,7 +574,6 @@ class KartingDashboard {
             const totalLaps = sessions.reduce((sum, s) => sum + (s.lapsCount || 0), 0);
             const totalSessions = sessions.length;
             
-            // Session avec le meilleur temps
             const bestSession = sessions.find(s => s.bestTime === bestTime);
             const bestDetails = [];
             if (bestSession.date) bestDetails.push(this.formatDateShort(bestSession.date));
@@ -558,6 +581,7 @@ class KartingDashboard {
             if (bestSession.weather) bestDetails.push(bestSession.weather);
             if (bestSession.tireType) bestDetails.push(bestSession.tireType);
             if (bestSession.tirePressure) bestDetails.push(`${bestSession.tirePressure} bar`);
+            if (bestSession.lapsCount) bestDetails.push(`${bestSession.lapsCount} tours`);
             const bestDetailsText = bestDetails.join(' • ');
             
             const tileDiv = document.createElement('div');
@@ -566,10 +590,14 @@ class KartingDashboard {
                 <div class="circuit-tile-header">
                     <div class="circuit-tile-name">🏁 ${circuit}</div>
                     <div style="text-align: right;">
-                        <div style="font-size: 0.85em; color: #999; margin-bottom: 5px;">Meilleur tour :</div>
+                        <div style="font-size: 0.8em; color: #999; margin-bottom: 5px;">Meilleur tour :</div>
                         <div class="circuit-tile-best">${this.formatTime(bestTime)}</div>
-                        <div style="font-size: 0.75em; color: #999; margin-top: 8px; line-height: 1.4;">${bestDetailsText}</div>
+                        <button class="btn-details" onclick="dashboard.showSessionDetails(${bestSession.id})" style="margin-top: 10px; width: 100%;">👁️ Voir détails du record</button>
                     </div>
+                </div>
+                <div class="best-lap-details">
+                    <h4>📊 Conditions du meilleur tour :</h4>
+                    <div class="best-lap-info">${bestDetailsText}</div>
                 </div>
                 <div class="circuit-tile-content">
                     <div class="circuit-tile-chart">
@@ -681,16 +709,10 @@ class KartingDashboard {
         const container = document.getElementById('sessionsList');
         
         if (this.sessions.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <p>🏎️ Aucune session enregistrée</p>
-                    <p style="font-size: 0.9em;">Ajoutez votre première session !</p>
-                </div>
-            `;
+            container.innerHTML = '<div class="empty-state"><p>🏎️ Aucune session enregistrée</p></div>';
             return;
         }
 
-        // Trier par date ET heure (les plus récentes en premier)
         const sortedSessions = [...this.sessions].sort((a, b) => {
             const dateA = new Date(a.date + ' ' + (a.time || '00:00'));
             const dateB = new Date(b.date + ' ' + (b.time || '00:00'));
@@ -701,31 +723,22 @@ class KartingDashboard {
             const details = [];
             if (session.lapsCount) details.push(`${session.lapsCount} tours`);
             if (session.weather) details.push(session.weather);
-            if (session.temperature) details.push(`${session.temperature}°C`);
-            if (session.tireType) details.push(`Pneus: ${session.tireType}`);
             if (session.tirePressure) details.push(`${session.tirePressure} bar`);
-            if (session.crownUsed) details.push(`Couronne: ${session.crownUsed}`);
             
             const detailsText = details.length > 0 ? details.join(' • ') : '-';
             
             return `
             <div class="session-item">
                 <div class="session-info">
-                    <span class="session-date">${this.formatDateShort(session.date)} ${session.time ? session.time : ''}</span>
+                    <span class="session-date">${this.formatDateShort(session.date)} ${session.time || ''}</span>
                     <span class="session-circuit">📍 ${session.circuit}</span>
                     <span class="session-time">${this.formatTime(session.bestTime)}</span>
-                    <span class="session-notes" title="${detailsText}">${detailsText}</span>
+                    <span class="session-notes">${detailsText}</span>
                 </div>
                 <div class="session-actions">
-                    <button class="btn-details" onclick="dashboard.showSessionDetails(${session.id})" title="Voir détails">
-                        👁️ Détails
-                    </button>
-                    <button class="btn-edit" onclick="dashboard.editSession(${session.id})" title="Modifier">
-                        ✏️ Modifier
-                    </button>
-                    <button class="btn-delete" onclick="dashboard.deleteSession(${session.id})" title="Supprimer">
-                        🗑️ Supprimer
-                    </button>
+                    <button class="btn-details" onclick="dashboard.showSessionDetails(${session.id})" title="Détails">👁️</button>
+                    <button class="btn-edit" onclick="dashboard.editSession(${session.id})" title="Modifier">✏️</button>
+                    <button class="btn-delete" onclick="dashboard.deleteSession(${session.id})" title="Supprimer">🗑️</button>
                 </div>
             </div>
         `;
@@ -733,7 +746,7 @@ class KartingDashboard {
     }
 
     // ============================================
-    // NAVIGATION & UTILITAIRES
+    // UTILITAIRES
     // ============================================
 
     switchView(view) {
@@ -753,10 +766,6 @@ class KartingDashboard {
                 element.classList.add('active');
             }
         });
-    }
-
-    formatTime(seconds) {
-        return seconds.toFixed(3) + 's';
     }
 
     formatDate(dateString) {
@@ -783,7 +792,7 @@ class KartingDashboard {
         this.setTodayDate();
         this.setCurrentTime();
         this.editingId = null;
-        document.querySelector('.btn-primary').textContent = '📊 Enregistrer la session';
+        document.getElementById('submitBtn').textContent = '📊 Enregistrer la session';
         document.getElementById('cancelEditBtn').style.display = 'none';
     }
 
@@ -798,7 +807,7 @@ class KartingDashboard {
             padding: 15px 25px;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            z-index: 1000;
+            z-index: 1001;
             animation: slideIn 0.3s ease-out;
         `;
         notification.textContent = message;
@@ -820,10 +829,6 @@ class KartingDashboard {
         }, 3000);
     }
 }
-
-// ============================================
-// INITIALISATION DE L'APPLICATION
-// ============================================
 
 let dashboard;
 document.addEventListener('DOMContentLoaded', () => {
