@@ -26,15 +26,16 @@ try {
 
 class KartingDashboard {
     constructor() {
-        this.sessions = this.loadSessions();
-        this.circuits = this.loadCircuits();
-        this.profile = this.loadProfile();
-        this.theme = this.loadTheme();
+        this.sessions = [];  // Vide au départ
+        this.circuits = [];  // Vide au départ
+        this.profile = { pilotName: '', kartType: '', kartEngine: '' };  // Vide au départ
+        this.theme = this.loadTheme();  // Le thème reste local
         this.circuitCharts = {};
         this.editingId = null;
         this.selectedCircuit = 'all';
         this.currentUser = null;
         this.isAuthMode = true; // true = connexion, false = inscription
+        this.isInitialized = false;
         this.init();
     }
 
@@ -42,13 +43,8 @@ class KartingDashboard {
         this.applyThemeOnLoad();
         this.setupEventListeners();
         this.setupFirebaseAuth();
-        this.populateCircuits();
-        this.populateCircuitFilter();
-        this.updateDashboard();
-        this.setTodayDate();
-        this.setCurrentTime();
-        this.displayProfile();
         this.loadThemeSettings();
+        // Les autres initialisations se feront APRÈS connexion
     }
 
     setTodayDate() {
@@ -128,23 +124,22 @@ class KartingDashboard {
 
     // Firebase Auth Setup
     setupFirebaseAuth() {
-        if (!auth) return;
+        if (!auth) {
+            alert('Erreur : Firebase non disponible. Vérifiez votre connexion Internet.');
+            return;
+        }
 
         // Observer l'état d'authentification
         auth.onAuthStateChanged((user) => {
             this.currentUser = user;
             if (user) {
-                document.getElementById('firebaseBanner').style.display = 'none';
-                this.loadFromFirebase();
+                // Utilisateur connecté - Charger l'app
+                this.closeAuthModal();
+                this.initializeApp();
             } else {
-                document.getElementById('firebaseBanner').style.display = 'block';
+                // Utilisateur NON connecté - Afficher popup obligatoire
+                this.showMandatoryLogin();
             }
-        });
-
-        // Lien "Se connecter"
-        document.getElementById('showLoginLink')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.openAuthModal();
         });
 
         // Bouton Google Sign-In
@@ -164,13 +159,63 @@ class KartingDashboard {
         });
     }
 
+    showMandatoryLogin() {
+        // Cacher le contenu de l'app
+        document.querySelectorAll('.view-section').forEach(s => s.style.display = 'none');
+        document.querySelector('.main-nav').style.display = 'none';
+        
+        // Afficher la modal de connexion (non fermable)
+        const modal = document.getElementById('authModal');
+        modal.style.display = 'block';
+        
+        // Cacher le bouton de fermeture
+        const closeBtn = modal.querySelector('.modal-close-btn');
+        if (closeBtn) closeBtn.style.display = 'none';
+        
+        // Changer le texte
+        const title = modal.querySelector('h3');
+        if (title) title.textContent = '🔐 Connexion Requise';
+        
+        const description = modal.querySelector('.auth-modal-body p');
+        if (description) {
+            description.textContent = '⚠️ Vous devez vous connecter pour utiliser Karting Dashboard';
+            description.style.color = '#ff6b6b';
+        }
+    }
+
+    initializeApp() {
+        if (this.isInitialized) return;
+        
+        // Montrer l'app
+        document.querySelector('.main-nav').style.display = 'flex';
+        document.querySelector('[data-view="dashboard"]').style.display = 'block';
+        
+        // Charger TOUT depuis Firebase
+        this.loadFromFirebase().then(() => {
+            this.populateCircuits();
+            this.populateCircuitFilter();
+            this.updateDashboard();
+            this.setTodayDate();
+            this.setCurrentTime();
+            this.displayProfile();
+            this.isInitialized = true;
+        });
+    }
+
     openAuthModal() {
         document.getElementById('authModal').style.display = 'block';
     }
 
     closeAuthModal() {
+        // Ne fermer que si l'utilisateur est connecté
+        if (!this.currentUser) return;
+        
         document.getElementById('authModal').style.display = 'none';
         document.getElementById('authForm')?.reset();
+        
+        // Réafficher le bouton close
+        const closeBtn = document.querySelector('.modal-close-btn');
+        if (closeBtn) closeBtn.style.display = 'block';
     }
 
     toggleAuthMode() {
@@ -213,7 +258,6 @@ class KartingDashboard {
             } else {
                 await auth.createUserWithEmailAndPassword(email, password);
                 this.showNotification('Compte créé ! 🎉', 'success');
-                await this.syncLocalToFirebase();
             }
             this.closeAuthModal();
         } catch (error) {
@@ -263,6 +307,9 @@ class KartingDashboard {
                 this.profile = profileDoc.data();
             }
 
+            // Charger les circuits
+            await this.loadCircuitsFromFirebase();
+
             this.updateDashboard();
             this.displayProfile();
             this.populateCircuitFilter();
@@ -271,12 +318,6 @@ class KartingDashboard {
         } catch (error) {
             console.error('Erreur chargement Firebase:', error);
         }
-    }
-
-    async syncLocalToFirebase() {
-        if (!this.currentUser || this.sessions.length === 0) return;
-        await this.saveToFirebase();
-        this.showNotification('Données locales synchronisées ! ☁️', 'success');
     }
 
     addSession() {
@@ -437,27 +478,60 @@ class KartingDashboard {
     }
 
     saveSessions() {
-        localStorage.setItem('kartingSessions', JSON.stringify(this.sessions));
+        // Plus de localStorage - uniquement Firebase
         if (this.currentUser) this.saveToFirebase();
     }
 
     loadSessions() {
-        const saved = localStorage.getItem('kartingSessions');
-        return saved ? JSON.parse(saved) : [];
+        // Chargé depuis Firebase uniquement
+        return [];
     }
 
     loadCircuits() {
-        const saved = localStorage.getItem('kartingCircuits');
-        return saved ? JSON.parse(saved) : ['Mariembourg', 'Genk', 'Spa'];
+        // Chargé depuis Firebase uniquement
+        return [];
     }
 
     saveCircuits() {
-        localStorage.setItem('kartingCircuits', JSON.stringify(this.circuits));
+        // Plus de localStorage - uniquement Firebase
+        if (this.currentUser) this.saveCircuitsToFirebase();
+    }
+
+    async saveCircuitsToFirebase() {
+        if (!this.currentUser || !db) return;
+        try {
+            const userId = this.currentUser.uid;
+            await db.collection('users').doc(userId).collection('settings').doc('circuits').set({
+                list: this.circuits
+            });
+        } catch (error) {
+            console.error('Erreur sauvegarde circuits Firebase:', error);
+        }
+    }
+
+    async loadCircuitsFromFirebase() {
+        if (!this.currentUser || !db) return;
+        try {
+            const userId = this.currentUser.uid;
+            const circuitsDoc = await db.collection('users').doc(userId).collection('settings').doc('circuits').get();
+            
+            if (circuitsDoc.exists) {
+                this.circuits = circuitsDoc.data().list || [];
+            } else {
+                // Première connexion - circuits par défaut
+                this.circuits = ['Mariembourg', 'Genk', 'Spa'];
+                await this.saveCircuitsToFirebase();
+            }
+            this.populateCircuits();
+            console.log('✅ Circuits chargés depuis Firebase');
+        } catch (error) {
+            console.error('Erreur chargement circuits Firebase:', error);
+        }
     }
 
     loadProfile() {
-        const saved = localStorage.getItem('kartingProfile');
-        return saved ? JSON.parse(saved) : { pilotName: '', kartType: '', kartEngine: '' };
+        // Chargé depuis Firebase uniquement
+        return { pilotName: '', kartType: '', kartEngine: '' };
     }
 
     saveProfile() {
@@ -465,7 +539,7 @@ class KartingDashboard {
         this.profile.kartType = document.getElementById('kartType').value;
         this.profile.kartEngine = document.getElementById('kartEngine').value;
 
-        localStorage.setItem('kartingProfile', JSON.stringify(this.profile));
+        // Plus de localStorage - uniquement Firebase
         this.displayProfile();
         this.showNotification('Profil enregistré ! 👤');
         if (this.currentUser) this.saveToFirebase();
@@ -477,10 +551,24 @@ class KartingDashboard {
     }
 
     clearAllData() {
-        if (confirm('⚠️ Effacer TOUTES les données ?')) {
-            if (confirm('Dernière confirmation !')) {
-                localStorage.clear();
-                location.reload();
+        if (confirm('⚠️ Effacer TOUTES les données cloud ?')) {
+            if (confirm('Dernière confirmation ! Cette action supprime tout de Firebase.')) {
+                if (this.currentUser && db) {
+                    const userId = this.currentUser.uid;
+                    // Supprimer toutes les sessions
+                    db.collection('users').doc(userId).collection('sessions').get().then(snapshot => {
+                        snapshot.forEach(doc => doc.ref.delete());
+                    });
+                    // Supprimer profil
+                    db.collection('users').doc(userId).collection('profile').doc('data').delete();
+                    // Supprimer circuits
+                    db.collection('users').doc(userId).collection('settings').doc('circuits').delete();
+                    
+                    this.showNotification('Données supprimées ! Déconnexion...', 'error');
+                    setTimeout(() => {
+                        auth.signOut().then(() => location.reload());
+                    }, 2000);
+                }
             }
         }
     }
@@ -674,6 +762,14 @@ class KartingDashboard {
             
             const bestSession = sessions.find(s => s.bestTime === bestTime);
             
+            // Créer résumé conditions
+            const conditions = [];
+            if (bestSession.weather) conditions.push(bestSession.weather);
+            if (bestSession.tireType) conditions.push(`Pneus: ${bestSession.tireType}`);
+            if (bestSession.tirePressure) conditions.push(`${bestSession.tirePressure} bar`);
+            if (bestSession.maxLaps) conditions.push(`${bestSession.maxLaps} tours moteur`);
+            const conditionsText = conditions.join(' • ');
+            
             const tile = document.createElement('div');
             tile.className = 'circuit-tile';
             tile.innerHTML = `
@@ -685,6 +781,7 @@ class KartingDashboard {
                             <span class="circuit-best-time-value">${this.formatTime(bestTime)}</span>
                             <button class="btn-view-record-inline" onclick="dashboard.showSessionDetails(${bestSession.id})">👁️ Détails</button>
                         </div>
+                        <div class="circuit-conditions-summary">${conditionsText}</div>
                     </div>
                 </div>
                 <div class="circuit-tile-content">
