@@ -4,10 +4,21 @@
 
 Application web de suivi de performances en karting. Permet d'enregistrer vos sessions, analyser vos temps au tour et suivre votre progression.
 
-**Version actuelle :** 2.1  
-**Dernière mise à jour :** 14 février 2026  
+**Version actuelle :** 2.5  
+**Dernière mise à jour :** 15 février 2026  
 **Développeur :** Simon  
 **Assistant IA :** Claude (Anthropic)
+
+## 📊 Statistiques Techniques
+
+- **Lignes de code totales :** ~2 000 lignes
+- **HTML :** 261 lignes
+- **CSS :** 944 lignes (dont ~200 responsive)
+- **JavaScript :** 814 lignes
+- **Technologies :** Vanilla JS (ES6), Chart.js, localStorage
+- **Responsive :** ✅ Optimisé PC et Mobile
+- **Taille totale :** ~60 KB (non minifié)
+- **Navigateurs :** Chrome, Firefox, Safari, Edge
 
 ---
 

@@ -100,12 +100,7 @@ class KartingDashboard {
 
         const themeMode = document.getElementById('themeMode');
         themeMode.addEventListener('change', () => {
-            this.previewTheme();
-        });
-
-        const applyThemeBtn = document.getElementById('applyTheme');
-        applyThemeBtn.addEventListener('click', () => {
-            this.saveTheme();
+            this.saveTheme(); // Direct sans prévisualisation
         });
 
         // Filtre circuit
@@ -315,9 +310,7 @@ class KartingDashboard {
         return saved ? JSON.parse(saved) : {
             pilotName: '',
             kartType: '',
-            kartEngine: '',
-            kartCategory: '',
-            pilotNumber: ''
+            kartEngine: ''
         };
     }
 
@@ -325,8 +318,6 @@ class KartingDashboard {
         this.profile.pilotName = document.getElementById('pilotName').value;
         this.profile.kartType = document.getElementById('kartType').value;
         this.profile.kartEngine = document.getElementById('kartEngine').value;
-        this.profile.kartCategory = document.getElementById('kartCategory').value;
-        this.profile.pilotNumber = document.getElementById('pilotNumber').value;
 
         localStorage.setItem('kartingProfile', JSON.stringify(this.profile));
         this.displayProfile();
@@ -363,8 +354,6 @@ class KartingDashboard {
         document.getElementById('pilotName').value = this.profile.pilotName || '';
         document.getElementById('kartType').value = this.profile.kartType || '';
         document.getElementById('kartEngine').value = this.profile.kartEngine || '';
-        document.getElementById('kartCategory').value = this.profile.kartCategory || '';
-        document.getElementById('pilotNumber').value = this.profile.pilotNumber || '';
     }
 
     loadThemeSettings() {
@@ -382,25 +371,12 @@ class KartingDashboard {
         }
     }
 
-    previewTheme() {
-        const mode = document.getElementById('themeMode').value;
-        const body = document.body;
-        
-        if (mode === 'light') {
-            body.style.background = '#f5f5f5';
-            body.style.color = '#000';
-        } else {
-            body.style.background = '#0a0a0a';
-            body.style.color = '#fff';
-        }
-    }
-
     saveTheme() {
         const mode = document.getElementById('themeMode').value;
         this.theme.mode = mode;
         localStorage.setItem('themeMode', mode);
         this.applyThemeOnLoad();
-        this.showNotification('Thème enregistré ! ✅', 'success');
+        this.showNotification('Thème appliqué ! ✅', 'success');
     }
 
     // ============================================
@@ -588,16 +564,18 @@ class KartingDashboard {
             tileDiv.className = 'circuit-tile';
             tileDiv.innerHTML = `
                 <div class="circuit-tile-header">
-                    <div class="circuit-tile-name">🏁 ${circuit}</div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 0.8em; color: #999; margin-bottom: 5px;">Meilleur tour :</div>
-                        <div class="circuit-tile-best">${this.formatTime(bestTime)}</div>
-                        <button class="btn-details" onclick="dashboard.showSessionDetails(${bestSession.id})" style="margin-top: 10px; width: 100%;">👁️ Voir détails du record</button>
+                    <div class="circuit-tile-left">
+                        <div class="circuit-tile-name">🏁 ${circuit}</div>
+                        <div class="circuit-best-conditions">
+                            <strong>Conditions du record :</strong><br>
+                            ${bestDetailsText}
+                        </div>
                     </div>
-                </div>
-                <div class="best-lap-details">
-                    <h4>📊 Conditions du meilleur tour :</h4>
-                    <div class="best-lap-info">${bestDetailsText}</div>
+                    <div class="circuit-tile-right">
+                        <div style="font-size: 0.75em; color: #999; margin-bottom: 5px;">Meilleur tour</div>
+                        <div class="circuit-tile-best">${this.formatTime(bestTime)}</div>
+                        <button class="btn-view-record" onclick="dashboard.showSessionDetails(${bestSession.id})">👁️ Voir détails</button>
+                    </div>
                 </div>
                 <div class="circuit-tile-content">
                     <div class="circuit-tile-chart">
