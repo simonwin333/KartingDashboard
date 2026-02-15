@@ -55,6 +55,9 @@ class KartingDashboard {
 
     setCurrentTime() {
         const timeInput = document.getElementById('time');
+        if (!timeInput) return;
+        
+        // Toujours mettre l'heure ACTUELLE (pas l'heure de connexion)
         const now = new Date();
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
@@ -66,7 +69,7 @@ class KartingDashboard {
             const minutes = Math.floor(seconds / 60);
             const secs = Math.floor(seconds % 60);
             const ms = Math.floor((seconds % 1) * 1000);
-            return `${minutes}:${String(secs).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
+            return `${minutes}:${String(secs).padStart(2, '0')}.${String(ms).padStart(3, '0')}m`;
         } else {
             const secs = Math.floor(seconds);
             const ms = Math.floor((seconds % 1) * 1000);
@@ -120,6 +123,14 @@ class KartingDashboard {
             this.selectedCircuit = e.target.value;
             this.updateCircuitsAnalysis();
         });
+
+        // Bouton Déconnexion
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                this.logout();
+            });
+        }
     }
 
     // Firebase Auth Setup
@@ -199,7 +210,58 @@ class KartingDashboard {
             this.setCurrentTime();
             this.displayProfile();
             this.isInitialized = true;
+            
+            // Vérifier si profil vide → forcer remplissage
+            this.checkProfileCompletion();
         });
+    }
+
+    checkProfileCompletion() {
+        if (!this.profile.pilotName || !this.profile.kartType || !this.profile.kartEngine) {
+            // Profil incomplet - afficher modale obligatoire
+            this.showMandatoryProfile();
+        }
+    }
+
+    showMandatoryProfile() {
+        this.switchView('settings');
+        const settingsSection = document.querySelector('[data-view="settings"]');
+        
+        // Ajouter message d'avertissement
+        const existingWarning = settingsSection.querySelector('.profile-warning');
+        if (!existingWarning) {
+            const warning = document.createElement('div');
+            warning.className = 'profile-warning';
+            warning.innerHTML = `
+                <p style="background: #ff6b6b; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    ⚠️ <strong>Veuillez compléter votre profil pour continuer</strong><br>
+                    <small>Ces informations sont nécessaires pour personnaliser votre dashboard</small>
+                </p>
+            `;
+            settingsSection.insertBefore(warning, settingsSection.querySelector('.settings-section'));
+        }
+        
+        // Désactiver navigation tant que profil non rempli
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+        });
+    }
+
+    enableNavigation() {
+        // Réactiver navigation
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+        });
+        
+        // Supprimer warning
+        const warning = document.querySelector('.profile-warning');
+        if (warning) warning.remove();
+        
+        this.switchView('dashboard');
     }
 
     openAuthModal() {
@@ -396,10 +458,22 @@ class KartingDashboard {
         }
     }
 
-    deleteSession(id) {
+    async deleteSession(id) {
         if (confirm('Supprimer cette session ?')) {
+            // Supprimer localement
             this.sessions = this.sessions.filter(s => s.id !== id);
-            this.saveSessions();
+            
+            // Supprimer dans Firebase
+            if (this.currentUser && db) {
+                try {
+                    const userId = this.currentUser.uid;
+                    await db.collection('users').doc(userId).collection('sessions').doc(String(id)).delete();
+                    console.log('✅ Session supprimée de Firebase');
+                } catch (error) {
+                    console.error('❌ Erreur suppression Firebase:', error);
+                }
+            }
+            
             this.updateDashboard();
             this.populateCircuitFilter();
             this.showNotification('Session supprimée', 'error');
@@ -477,9 +551,24 @@ class KartingDashboard {
         document.getElementById('sessionModal').style.display = 'none';
     }
 
-    saveSessions() {
-        // Plus de localStorage - uniquement Firebase
-        if (this.currentUser) this.saveToFirebase();
+    async logout() {
+        if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
+            try {
+                await auth.signOut();
+                this.showNotification('Déconnexion réussie', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } catch (error) {
+                console.error('Erreur déconnexion:', error);
+                this.showNotification('Erreur lors de la déconnexion', 'error');
+            }
+        }
+    }
+
+    async saveSessions() {
+        // Sauvegarder dans Firebase
+        if (this.currentUser && db) {
+            await this.saveToFirebase();
+        }
     }
 
     loadSessions() {
@@ -539,10 +628,21 @@ class KartingDashboard {
         this.profile.kartType = document.getElementById('kartType').value;
         this.profile.kartEngine = document.getElementById('kartEngine').value;
 
-        // Plus de localStorage - uniquement Firebase
+        // Vérifier que tout est rempli
+        if (!this.profile.pilotName || !this.profile.kartType || !this.profile.kartEngine) {
+            this.showNotification('⚠️ Veuillez remplir tous les champs !', 'error');
+            return;
+        }
+
+        // Sauvegarder dans Firebase
         this.displayProfile();
         this.showNotification('Profil enregistré ! 👤');
-        if (this.currentUser) this.saveToFirebase();
+        if (this.currentUser) {
+            this.saveToFirebase().then(() => {
+                // Réactiver navigation si c'était le premier remplissage
+                this.enableNavigation();
+            });
+        }
     }
 
     loadTheme() {
@@ -927,6 +1027,11 @@ class KartingDashboard {
             if (el.classList.contains('view-section')) el.style.display = 'block';
             if (el.classList.contains('nav-btn')) el.classList.add('active');
         });
+        
+        // Mettre à jour l'heure si on va dans add-session
+        if (view === 'add-session') {
+            this.setCurrentTime();
+        }
     }
 
     formatDate(dateString) {

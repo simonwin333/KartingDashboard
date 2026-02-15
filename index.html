@@ -21,7 +21,6 @@
                     </p>
                 </div>
                 <div class="header-buttons">
-                    <button class="header-btn-small" onclick="dashboard.switchView('profile')" title="Profil">👤</button>
                     <button class="header-btn-small" onclick="dashboard.switchView('settings')" title="Réglages">⚙️</button>
                 </div>
             </div>
@@ -235,10 +234,34 @@
             </form>
         </section>
 
-        <!-- Page Réglages -->
+        <!-- Page Réglages (avec Profil fusionné) -->
         <section class="settings-page view-section" data-view="settings" style="display: none;">
             <h2>⚙️ Réglages</h2>
             
+            <!-- Section Profil -->
+            <div class="settings-section">
+                <h3>👤 Profil du pilote</h3>
+                <form id="profileForm" class="profile-form">
+                    <div class="form-group">
+                        <label for="pilotName">Nom du pilote :</label>
+                        <input type="text" id="pilotName" placeholder="Ex: Simon Dupont">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="kartType">Type de kart :</label>
+                        <input type="text" id="kartType" placeholder="Ex: CRG Road Rebel">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="kartEngine">Moteur :</label>
+                        <input type="text" id="kartEngine" placeholder="Ex: Rotax Max">
+                    </div>
+
+                    <button type="submit" class="btn-primary">💾 Sauvegarder le profil</button>
+                </form>
+            </div>
+            
+            <!-- Section Apparence -->
             <div class="settings-section">
                 <h3>🎨 Apparence</h3>
                 
@@ -252,15 +275,24 @@
                 </div>
             </div>
 
+            <!-- Section Compte -->
+            <div class="settings-section">
+                <h3>🔐 Compte</h3>
+                <button class="btn-secondary" id="logoutBtn" style="width: 100%;">🚪 Se déconnecter</button>
+                <p style="color: #999; margin-top: 10px; font-size: 0.9em;">Vous serez redirigé vers la page de connexion</p>
+            </div>
+
+            <!-- Section Données -->
             <div class="settings-section">
                 <h3>💾 Données</h3>
                 <button class="btn-danger" id="clearAllData">🗑️ Effacer toutes les données</button>
                 <p style="color: #999; margin-top: 10px; font-size: 0.9em;">⚠️ Attention : Cette action est irréversible !</p>
             </div>
 
+            <!-- Section À propos -->
             <div class="settings-section">
                 <h3>ℹ️ À propos</h3>
-                <p style="color: #999;">Version 2.4</p>
+                <p style="color: #999;">Version 3.1</p>
                 <p style="color: #999;">Développé par Simon avec Claude AI</p>
             </div>
         </section>
