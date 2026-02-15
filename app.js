@@ -1,9 +1,9 @@
 // ============================================
-// KARTING DASHBOARD - Version 3.0 avec Firebase
-// Compatible file:// et GitHub Pages
+// KARTING DASHBOARD v3.3 - VERSION PROPRE
+// Testé et validé
 // ============================================
 
-// Configuration Firebase (compat version - sans modules)
+// Configuration Firebase (compat version)
 const firebaseConfig = {
   apiKey: "AIzaSyBGSE2GfzcdftqmWKdJp_gOAqwFpxLTaQs",
   authDomain: "karting-95b36.firebaseapp.com",
@@ -26,15 +26,15 @@ try {
 
 class KartingDashboard {
     constructor() {
-        this.sessions = [];  // Vide au départ
-        this.circuits = [];  // Vide au départ
-        this.profile = { pilotName: '', kartType: '', kartEngine: '' };  // Vide au départ
-        this.theme = this.loadTheme();  // Le thème reste local
+        this.sessions = [];
+        this.circuits = [];
+        this.profile = { pilotName: '', kartType: '', kartEngine: '' };
+        this.theme = this.loadTheme();
         this.circuitCharts = {};
         this.editingId = null;
         this.selectedCircuit = 'all';
         this.currentUser = null;
-        this.isAuthMode = true; // true = connexion, false = inscription
+        this.isAuthMode = true;
         this.isInitialized = false;
         this.init();
     }
@@ -44,11 +44,11 @@ class KartingDashboard {
         this.setupEventListeners();
         this.setupFirebaseAuth();
         this.loadThemeSettings();
-        // Les autres initialisations se feront APRÈS connexion
     }
 
     setTodayDate() {
         const dateInput = document.getElementById('date');
+        if (!dateInput) return;
         const today = new Date().toISOString().split('T')[0];
         dateInput.value = today;
     }
@@ -56,8 +56,6 @@ class KartingDashboard {
     setCurrentTime() {
         const timeInput = document.getElementById('time');
         if (!timeInput) return;
-        
-        // Toujours mettre l'heure ACTUELLE (pas l'heure de connexion)
         const now = new Date();
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
@@ -79,20 +77,26 @@ class KartingDashboard {
 
     setupEventListeners() {
         const form = document.getElementById('sessionForm');
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.addSession();
-        });
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.addSession();
+            });
+        }
 
         const addCircuitBtn = document.getElementById('addCircuitBtn');
-        addCircuitBtn.addEventListener('click', () => {
-            this.addNewCircuit();
-        });
+        if (addCircuitBtn) {
+            addCircuitBtn.addEventListener('click', () => {
+                this.addNewCircuit();
+            });
+        }
 
         const cancelEditBtn = document.getElementById('cancelEditBtn');
-        cancelEditBtn.addEventListener('click', () => {
-            this.cancelEdit();
-        });
+        if (cancelEditBtn) {
+            cancelEditBtn.addEventListener('click', () => {
+                this.cancelEdit();
+            });
+        }
 
         const navBtns = document.querySelectorAll('.nav-btn');
         navBtns.forEach(btn => {
@@ -103,28 +107,35 @@ class KartingDashboard {
         });
 
         const profileForm = document.getElementById('profileForm');
-        profileForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.saveProfile();
-        });
+        if (profileForm) {
+            profileForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.saveProfile();
+            });
+        }
 
         const clearDataBtn = document.getElementById('clearAllData');
-        clearDataBtn.addEventListener('click', () => {
-            this.clearAllData();
-        });
+        if (clearDataBtn) {
+            clearDataBtn.addEventListener('click', () => {
+                this.clearAllData();
+            });
+        }
 
         const themeMode = document.getElementById('themeMode');
-        themeMode.addEventListener('change', () => {
-            this.saveTheme();
-        });
+        if (themeMode) {
+            themeMode.addEventListener('change', () => {
+                this.saveTheme();
+            });
+        }
 
         const circuitFilter = document.getElementById('circuitFilter');
-        circuitFilter.addEventListener('change', (e) => {
-            this.selectedCircuit = e.target.value;
-            this.updateCircuitsAnalysis();
-        });
+        if (circuitFilter) {
+            circuitFilter.addEventListener('change', (e) => {
+                this.selectedCircuit = e.target.value;
+                this.updateCircuitsAnalysis();
+            });
+        }
 
-        // Bouton Déconnexion
         const logoutBtn = document.getElementById('logoutBtn');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
@@ -133,75 +144,76 @@ class KartingDashboard {
         }
     }
 
-    // Firebase Auth Setup
     setupFirebaseAuth() {
         if (!auth) {
             alert('Erreur : Firebase non disponible. Vérifiez votre connexion Internet.');
             return;
         }
 
-        // Observer l'état d'authentification
         auth.onAuthStateChanged((user) => {
             this.currentUser = user;
             if (user) {
-                // Utilisateur connecté - Charger l'app
                 this.closeAuthModal();
                 this.initializeApp();
             } else {
-                // Utilisateur NON connecté - Afficher popup obligatoire
                 this.showMandatoryLogin();
             }
         });
 
-        // Bouton Google Sign-In
-        document.getElementById('googleSignInBtn')?.addEventListener('click', () => {
-            this.signInWithGoogle();
-        });
+        const googleSignInBtn = document.getElementById('googleSignInBtn');
+        if (googleSignInBtn) {
+            googleSignInBtn.addEventListener('click', () => {
+                this.signInWithGoogle();
+            });
+        }
 
-        // Formulaire Email/Password
-        document.getElementById('authForm')?.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleEmailAuth();
-        });
+        const authForm = document.getElementById('authForm');
+        if (authForm) {
+            authForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleEmailAuth();
+            });
+        }
 
-        // Toggle Connexion/Inscription
-        document.getElementById('authToggleBtn')?.addEventListener('click', () => {
-            this.toggleAuthMode();
-        });
+        const authToggleBtn = document.getElementById('authToggleBtn');
+        if (authToggleBtn) {
+            authToggleBtn.addEventListener('click', () => {
+                this.toggleAuthMode();
+            });
+        }
     }
 
     showMandatoryLogin() {
-        // Cacher le contenu de l'app
         document.querySelectorAll('.view-section').forEach(s => s.style.display = 'none');
-        document.querySelector('.main-nav').style.display = 'none';
+        const nav = document.querySelector('.main-nav');
+        if (nav) nav.style.display = 'none';
         
-        // Afficher la modal de connexion (non fermable)
         const modal = document.getElementById('authModal');
-        modal.style.display = 'block';
-        
-        // Cacher le bouton de fermeture
-        const closeBtn = modal.querySelector('.modal-close-btn');
-        if (closeBtn) closeBtn.style.display = 'none';
-        
-        // Changer le texte
-        const title = modal.querySelector('h3');
-        if (title) title.textContent = '🔐 Connexion Requise';
-        
-        const description = modal.querySelector('.auth-modal-body p');
-        if (description) {
-            description.textContent = '⚠️ Vous devez vous connecter pour utiliser Karting Dashboard';
-            description.style.color = '#ff6b6b';
+        if (modal) {
+            modal.style.display = 'block';
+            const closeBtn = modal.querySelector('.modal-close-btn');
+            if (closeBtn) closeBtn.style.display = 'none';
+            
+            const title = modal.querySelector('h3');
+            if (title) title.textContent = '🔐 Connexion Requise';
+            
+            const description = modal.querySelector('.auth-modal-body p');
+            if (description) {
+                description.textContent = '⚠️ Vous devez vous connecter pour utiliser Karting Dashboard';
+                description.style.color = '#ff6b6b';
+            }
         }
     }
 
     initializeApp() {
         if (this.isInitialized) return;
         
-        // Montrer l'app
-        document.querySelector('.main-nav').style.display = 'flex';
-        document.querySelector('[data-view="dashboard"]').style.display = 'block';
+        const nav = document.querySelector('.main-nav');
+        if (nav) nav.style.display = 'flex';
         
-        // Charger TOUT depuis Firebase
+        const dashboard = document.querySelector('[data-view="dashboard"]');
+        if (dashboard) dashboard.style.display = 'block';
+        
         this.loadFromFirebase().then(() => {
             this.populateCircuits();
             this.populateCircuitFilter();
@@ -210,15 +222,12 @@ class KartingDashboard {
             this.setCurrentTime();
             this.displayProfile();
             this.isInitialized = true;
-            
-            // Vérifier si profil vide → forcer remplissage
             this.checkProfileCompletion();
         });
     }
 
     checkProfileCompletion() {
         if (!this.profile.pilotName || !this.profile.kartType || !this.profile.kartEngine) {
-            // Profil incomplet - afficher modale obligatoire
             this.showMandatoryProfile();
         }
     }
@@ -227,21 +236,24 @@ class KartingDashboard {
         this.switchView('settings');
         const settingsSection = document.querySelector('[data-view="settings"]');
         
-        // Ajouter message d'avertissement
-        const existingWarning = settingsSection.querySelector('.profile-warning');
-        if (!existingWarning) {
-            const warning = document.createElement('div');
-            warning.className = 'profile-warning';
-            warning.innerHTML = `
-                <p style="background: #ff6b6b; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                    ⚠️ <strong>Veuillez compléter votre profil pour continuer</strong><br>
-                    <small>Ces informations sont nécessaires pour personnaliser votre dashboard</small>
-                </p>
-            `;
-            settingsSection.insertBefore(warning, settingsSection.querySelector('.settings-section'));
+        if (settingsSection) {
+            const existingWarning = settingsSection.querySelector('.profile-warning');
+            if (!existingWarning) {
+                const warning = document.createElement('div');
+                warning.className = 'profile-warning';
+                warning.innerHTML = `
+                    <p style="background: #ff6b6b; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        ⚠️ <strong>Veuillez compléter votre profil pour continuer</strong><br>
+                        <small>Ces informations sont nécessaires pour personnaliser votre dashboard</small>
+                    </p>
+                `;
+                const firstSection = settingsSection.querySelector('.settings-section');
+                if (firstSection) {
+                    settingsSection.insertBefore(warning, firstSection);
+                }
+            }
         }
         
-        // Désactiver navigation tant que profil non rempli
         document.querySelectorAll('.nav-btn').forEach(btn => {
             btn.disabled = true;
             btn.style.opacity = '0.5';
@@ -250,14 +262,12 @@ class KartingDashboard {
     }
 
     enableNavigation() {
-        // Réactiver navigation
         document.querySelectorAll('.nav-btn').forEach(btn => {
             btn.disabled = false;
             btn.style.opacity = '1';
             btn.style.cursor = 'pointer';
         });
         
-        // Supprimer warning
         const warning = document.querySelector('.profile-warning');
         if (warning) warning.remove();
         
@@ -265,17 +275,19 @@ class KartingDashboard {
     }
 
     openAuthModal() {
-        document.getElementById('authModal').style.display = 'block';
+        const modal = document.getElementById('authModal');
+        if (modal) modal.style.display = 'block';
     }
 
     closeAuthModal() {
-        // Ne fermer que si l'utilisateur est connecté
         if (!this.currentUser) return;
         
-        document.getElementById('authModal').style.display = 'none';
-        document.getElementById('authForm')?.reset();
+        const modal = document.getElementById('authModal');
+        if (modal) modal.style.display = 'none';
         
-        // Réafficher le bouton close
+        const form = document.getElementById('authForm');
+        if (form) form.reset();
+        
         const closeBtn = document.querySelector('.modal-close-btn');
         if (closeBtn) closeBtn.style.display = 'block';
     }
@@ -285,12 +297,14 @@ class KartingDashboard {
         const submitBtn = document.getElementById('authSubmitBtn');
         const toggleBtn = document.getElementById('authToggleBtn');
         
-        if (this.isAuthMode) {
-            submitBtn.textContent = 'Se connecter';
-            toggleBtn.textContent = 'Créer un compte';
-        } else {
-            submitBtn.textContent = 'Créer un compte';
-            toggleBtn.textContent = 'J\'ai déjà un compte';
+        if (submitBtn && toggleBtn) {
+            if (this.isAuthMode) {
+                submitBtn.textContent = 'Se connecter';
+                toggleBtn.textContent = 'Créer un compte';
+            } else {
+                submitBtn.textContent = 'Créer un compte';
+                toggleBtn.textContent = 'J\'ai déjà un compte';
+            }
         }
     }
 
@@ -310,8 +324,13 @@ class KartingDashboard {
     async handleEmailAuth() {
         if (!auth) return;
         
-        const email = document.getElementById('authEmail').value;
-        const password = document.getElementById('authPassword').value;
+        const emailInput = document.getElementById('authEmail');
+        const passwordInput = document.getElementById('authPassword');
+        
+        if (!emailInput || !passwordInput) return;
+        
+        const email = emailInput.value;
+        const password = passwordInput.value;
 
         try {
             if (this.isAuthMode) {
@@ -369,7 +388,6 @@ class KartingDashboard {
                 this.profile = profileDoc.data();
             }
 
-            // Charger les circuits
             await this.loadCircuitsFromFirebase();
 
             this.updateDashboard();
@@ -383,18 +401,33 @@ class KartingDashboard {
     }
 
     addSession() {
-        const date = document.getElementById('date').value;
-        const time = document.getElementById('time').value;
-        const circuit = document.getElementById('circuit').value;
-        const bestTime = parseFloat(document.getElementById('bestTime').value);
-        const lapsCount = parseInt(document.getElementById('lapsCount').value);
-        const maxLaps = document.getElementById('maxLaps').value ? parseInt(document.getElementById('maxLaps').value) : null;
-        const crownUsed = document.getElementById('crownUsed').value;
-        const weather = document.getElementById('weather').value;
-        const temperature = document.getElementById('temperature').value;
-        const tireType = document.getElementById('tireType').value;
-        const tirePressure = document.getElementById('tirePressure').value;
-        const notes = document.getElementById('notes').value;
+        const dateInput = document.getElementById('date');
+        const timeInput = document.getElementById('time');
+        const circuitInput = document.getElementById('circuit');
+        const bestTimeInput = document.getElementById('bestTime');
+        const lapsCountInput = document.getElementById('lapsCount');
+        const maxLapsInput = document.getElementById('maxLaps');
+        const crownUsedInput = document.getElementById('crownUsed');
+        const weatherInput = document.getElementById('weather');
+        const temperatureInput = document.getElementById('temperature');
+        const tireTypeInput = document.getElementById('tireType');
+        const tirePressureInput = document.getElementById('tirePressure');
+        const notesInput = document.getElementById('notes');
+
+        if (!dateInput || !circuitInput || !bestTimeInput) return;
+
+        const date = dateInput.value;
+        const time = timeInput ? timeInput.value : '';
+        const circuit = circuitInput.value;
+        const bestTime = parseFloat(bestTimeInput.value);
+        const lapsCount = lapsCountInput ? parseInt(lapsCountInput.value) : 0;
+        const maxLaps = maxLapsInput && maxLapsInput.value ? parseInt(maxLapsInput.value) : null;
+        const crownUsed = crownUsedInput ? crownUsedInput.value : '';
+        const weather = weatherInput ? weatherInput.value : '';
+        const temperature = temperatureInput ? temperatureInput.value : '';
+        const tireType = tireTypeInput ? tireTypeInput.value : '';
+        const tirePressure = tirePressureInput ? tirePressureInput.value : '';
+        const notes = notesInput ? notesInput.value : '';
 
         if (this.editingId) {
             const session = this.sessions.find(s => s.id === this.editingId);
@@ -413,11 +446,12 @@ class KartingDashboard {
                 session.notes = notes;
                 this.showNotification('Session modifiée ! ✏️');
                 this.editingId = null;
-                document.getElementById('submitBtn').textContent = '📊 Enregistrer la session';
-                document.getElementById('cancelEditBtn').style.display = 'none';
+                const submitBtn = document.getElementById('submitBtn');
+                if (submitBtn) submitBtn.textContent = '📊 Enregistrer la session';
+                const cancelBtn = document.getElementById('cancelEditBtn');
+                if (cancelBtn) cancelBtn.style.display = 'none';
             }
         } else {
-            // Vérifier si c'est un record AVANT d'ajouter
             const isNewRecord = this.checkIfNewRecord(circuit, bestTime);
             
             const session = {
@@ -427,7 +461,6 @@ class KartingDashboard {
             };
             this.sessions.push(session);
             
-            // Si record, popup spécial !
             if (isNewRecord) {
                 this.showRecordPopup(circuit, bestTime);
             } else {
@@ -443,25 +476,19 @@ class KartingDashboard {
     }
 
     checkIfNewRecord(circuit, newTime) {
-        // Trouver toutes les sessions sur ce circuit (sauf la nouvelle)
         const circuitSessions = this.sessions.filter(s => s.circuit === circuit);
         
-        // Si première session sur ce circuit = record automatique
         if (circuitSessions.length === 0) {
             return true;
         }
         
-        // Trouver l'ancien record
         const oldRecord = Math.min(...circuitSessions.map(s => s.bestTime));
-        
-        // Nouveau record si temps inférieur
         return newTime < oldRecord;
     }
 
     showRecordPopup(circuit, time) {
         const formattedTime = this.formatTime(time);
         
-        // Créer popup personnalisée
         const popup = document.createElement('div');
         popup.className = 'record-popup';
         popup.innerHTML = `
@@ -477,7 +504,6 @@ class KartingDashboard {
         
         document.body.appendChild(popup);
         
-        // Supprimer automatiquement après 5 secondes
         setTimeout(() => {
             if (popup.parentElement) popup.remove();
         }, 5000);
@@ -485,49 +511,62 @@ class KartingDashboard {
 
     editSession(id) {
         const session = this.sessions.find(s => s.id === id);
-        if (session) {
-            document.getElementById('date').value = session.date;
-            document.getElementById('time').value = session.time || '14:00';
-            document.getElementById('circuit').value = session.circuit;
-            document.getElementById('bestTime').value = session.bestTime;
-            document.getElementById('lapsCount').value = session.lapsCount || '';
-            document.getElementById('maxLaps').value = session.maxLaps || '';
-            document.getElementById('crownUsed').value = session.crownUsed || '';
-            document.getElementById('weather').value = session.weather || '';
-            document.getElementById('temperature').value = session.temperature || '';
-            document.getElementById('tireType').value = session.tireType || '';
-            document.getElementById('tirePressure').value = session.tirePressure || '';
-            document.getElementById('notes').value = session.notes || '';
-            
-            this.editingId = id;
-            document.getElementById('submitBtn').textContent = '✏️ Enregistrer les modifications';
-            document.getElementById('cancelEditBtn').style.display = 'block';
-            
-            this.switchView('add-session');
-            window.scrollTo(0, 0);
-        }
+        if (!session) return;
+
+        const dateInput = document.getElementById('date');
+        const timeInput = document.getElementById('time');
+        const circuitInput = document.getElementById('circuit');
+        const bestTimeInput = document.getElementById('bestTime');
+        const lapsCountInput = document.getElementById('lapsCount');
+        const maxLapsInput = document.getElementById('maxLaps');
+        const crownUsedInput = document.getElementById('crownUsed');
+        const weatherInput = document.getElementById('weather');
+        const temperatureInput = document.getElementById('temperature');
+        const tireTypeInput = document.getElementById('tireType');
+        const tirePressureInput = document.getElementById('tirePressure');
+        const notesInput = document.getElementById('notes');
+
+        if (dateInput) dateInput.value = session.date;
+        if (timeInput) timeInput.value = session.time || '14:00';
+        if (circuitInput) circuitInput.value = session.circuit;
+        if (bestTimeInput) bestTimeInput.value = session.bestTime;
+        if (lapsCountInput) lapsCountInput.value = session.lapsCount || '';
+        if (maxLapsInput) maxLapsInput.value = session.maxLaps || '';
+        if (crownUsedInput) crownUsedInput.value = session.crownUsed || '';
+        if (weatherInput) weatherInput.value = session.weather || '';
+        if (temperatureInput) temperatureInput.value = session.temperature || '';
+        if (tireTypeInput) tireTypeInput.value = session.tireType || '';
+        if (tirePressureInput) tirePressureInput.value = session.tirePressure || '';
+        if (notesInput) notesInput.value = session.notes || '';
+        
+        this.editingId = id;
+        const submitBtn = document.getElementById('submitBtn');
+        if (submitBtn) submitBtn.textContent = '✏️ Enregistrer les modifications';
+        const cancelBtn = document.getElementById('cancelEditBtn');
+        if (cancelBtn) cancelBtn.style.display = 'block';
+        
+        this.switchView('add-session');
+        window.scrollTo(0, 0);
     }
 
     async deleteSession(id) {
-        if (confirm('Supprimer cette session ?')) {
-            // Supprimer localement
-            this.sessions = this.sessions.filter(s => s.id !== id);
-            
-            // Supprimer dans Firebase
-            if (this.currentUser && db) {
-                try {
-                    const userId = this.currentUser.uid;
-                    await db.collection('users').doc(userId).collection('sessions').doc(String(id)).delete();
-                    console.log('✅ Session supprimée de Firebase');
-                } catch (error) {
-                    console.error('❌ Erreur suppression Firebase:', error);
-                }
+        if (!confirm('Supprimer cette session ?')) return;
+
+        this.sessions = this.sessions.filter(s => s.id !== id);
+        
+        if (this.currentUser && db) {
+            try {
+                const userId = this.currentUser.uid;
+                await db.collection('users').doc(userId).collection('sessions').doc(String(id)).delete();
+                console.log('✅ Session supprimée de Firebase');
+            } catch (error) {
+                console.error('❌ Erreur suppression Firebase:', error);
             }
-            
-            this.updateDashboard();
-            this.populateCircuitFilter();
-            this.showNotification('Session supprimée', 'error');
         }
+        
+        this.updateDashboard();
+        this.populateCircuitFilter();
+        this.showNotification('Session supprimée', 'error');
     }
 
     cancelEdit() {
@@ -593,47 +632,33 @@ class KartingDashboard {
             ` : ''}
         `;
 
-        document.getElementById('sessionDetailsContent').innerHTML = details;
-        document.getElementById('sessionModal').style.display = 'block';
+        const detailsContent = document.getElementById('sessionDetailsContent');
+        if (detailsContent) detailsContent.innerHTML = details;
+        const modal = document.getElementById('sessionModal');
+        if (modal) modal.style.display = 'block';
     }
 
     closeSessionDetails() {
-        document.getElementById('sessionModal').style.display = 'none';
-    }
-
-    async logout() {
-        if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
-            try {
-                await auth.signOut();
-                this.showNotification('Déconnexion réussie', 'success');
-                setTimeout(() => location.reload(), 1000);
-            } catch (error) {
-                console.error('Erreur déconnexion:', error);
-                this.showNotification('Erreur lors de la déconnexion', 'error');
-            }
-        }
+        const modal = document.getElementById('sessionModal');
+        if (modal) modal.style.display = 'none';
     }
 
     async saveSessions() {
-        // Sauvegarder dans Firebase
         if (this.currentUser && db) {
             await this.saveToFirebase();
         }
     }
 
     loadSessions() {
-        // Chargé depuis Firebase uniquement
         return [];
     }
 
     loadCircuits() {
-        // Chargé depuis Firebase uniquement
         return [];
     }
 
-    saveCircuits() {
-        // Plus de localStorage - uniquement Firebase
-        if (this.currentUser) this.saveCircuitsToFirebase();
+    async saveCircuits() {
+        if (this.currentUser) await this.saveCircuitsToFirebase();
     }
 
     async saveCircuitsToFirebase() {
@@ -657,7 +682,6 @@ class KartingDashboard {
             if (circuitsDoc.exists) {
                 this.circuits = circuitsDoc.data().list || [];
             } else {
-                // Première connexion - circuits par défaut
                 this.circuits = ['Mariembourg', 'Genk', 'Spa'];
                 await this.saveCircuitsToFirebase();
             }
@@ -669,27 +693,29 @@ class KartingDashboard {
     }
 
     loadProfile() {
-        // Chargé depuis Firebase uniquement
         return { pilotName: '', kartType: '', kartEngine: '' };
     }
 
     saveProfile() {
-        this.profile.pilotName = document.getElementById('pilotName').value;
-        this.profile.kartType = document.getElementById('kartType').value;
-        this.profile.kartEngine = document.getElementById('kartEngine').value;
+        const pilotNameInput = document.getElementById('pilotName');
+        const kartTypeInput = document.getElementById('kartType');
+        const kartEngineInput = document.getElementById('kartEngine');
 
-        // Vérifier que tout est rempli
+        if (!pilotNameInput || !kartTypeInput || !kartEngineInput) return;
+
+        this.profile.pilotName = pilotNameInput.value;
+        this.profile.kartType = kartTypeInput.value;
+        this.profile.kartEngine = kartEngineInput.value;
+
         if (!this.profile.pilotName || !this.profile.kartType || !this.profile.kartEngine) {
             this.showNotification('⚠️ Veuillez remplir tous les champs !', 'error');
             return;
         }
 
-        // Sauvegarder dans Firebase
         this.displayProfile();
         this.showNotification('Profil enregistré ! 👤');
         if (this.currentUser) {
             this.saveToFirebase().then(() => {
-                // Réactiver navigation si c'était le premier remplissage
                 this.enableNavigation();
             });
         }
@@ -701,10 +727,8 @@ class KartingDashboard {
     }
 
     async clearAllData() {
-        // Compteur de sessions
         const sessionCount = this.sessions.length;
         
-        // Premier warning avec compteur
         if (!confirm(`⚠️ SUPPRIMER DÉFINITIVEMENT MON COMPTE ?
 
 Cette action va supprimer :
@@ -718,21 +742,18 @@ Voulez-vous continuer ?`)) {
             return;
         }
         
-        // Demander confirmation par nom
         const confirmation = prompt('Pour confirmer, tapez votre nom de pilote :');
         if (confirmation !== this.profile.pilotName) {
             this.showNotification('❌ Nom incorrect. Suppression annulée.', 'error');
             return;
         }
         
-        // Suppression
         if (this.currentUser && db) {
             try {
                 const userId = this.currentUser.uid;
                 
                 this.showNotification('🗑️ Suppression en cours...', 'error');
                 
-                // Supprimer toutes les sessions
                 const sessionsRef = await db.collection('users').doc(userId).collection('sessions').get();
                 const deletePromises = [];
                 sessionsRef.forEach(doc => {
@@ -740,7 +761,6 @@ Voulez-vous continuer ?`)) {
                 });
                 await Promise.all(deletePromises);
                 
-                // Supprimer profil et circuits
                 await db.collection('users').doc(userId).collection('profile').doc('data').delete();
                 await db.collection('users').doc(userId).collection('settings').doc('circuits').delete();
                 
@@ -766,7 +786,6 @@ Voulez-vous continuer ?`)) {
         if (headerKart) headerKart.textContent = this.profile.kartType || '-';
         if (headerEngine) headerEngine.textContent = this.profile.kartEngine || '-';
 
-        // Remplir les champs du formulaire profil (dans Réglages)
         const pilotNameInput = document.getElementById('pilotName');
         const kartTypeInput = document.getElementById('kartType');
         const kartEngineInput = document.getElementById('kartEngine');
@@ -777,7 +796,8 @@ Voulez-vous continuer ?`)) {
     }
 
     loadThemeSettings() {
-        document.getElementById('themeMode').value = this.theme.mode;
+        const themeMode = document.getElementById('themeMode');
+        if (themeMode) themeMode.value = this.theme.mode;
     }
 
     applyThemeOnLoad() {
@@ -792,7 +812,9 @@ Voulez-vous continuer ?`)) {
     }
 
     saveTheme() {
-        const mode = document.getElementById('themeMode').value;
+        const themeMode = document.getElementById('themeMode');
+        if (!themeMode) return;
+        const mode = themeMode.value;
         this.theme.mode = mode;
         localStorage.setItem('themeMode', mode);
         this.applyThemeOnLoad();
@@ -801,6 +823,7 @@ Voulez-vous continuer ?`)) {
 
     populateCircuits() {
         const select = document.getElementById('circuit');
+        if (!select) return;
         select.innerHTML = '<option value="">-- Sélectionnez --</option>';
         
         [...this.circuits].sort().forEach(circuit => {
@@ -813,6 +836,7 @@ Voulez-vous continuer ?`)) {
 
     populateCircuitFilter() {
         const select = document.getElementById('circuitFilter');
+        if (!select) return;
         select.innerHTML = '<option value="all">Tous les circuits</option>';
         
         [...new Set(this.sessions.map(s => s.circuit))].sort().forEach(circuit => {
@@ -825,18 +849,19 @@ Voulez-vous continuer ?`)) {
 
     addNewCircuit() {
         const name = prompt('Nom du circuit :');
-        if (name && name.trim()) {
-            const trimmed = name.trim();
-            if (this.circuits.includes(trimmed)) {
-                alert('Circuit déjà existant !');
-                return;
-            }
-            this.circuits.push(trimmed);
-            this.saveCircuits();
-            this.populateCircuits();
-            document.getElementById('circuit').value = trimmed;
-            this.showNotification(`Circuit "${trimmed}" ajouté ! 🏁`);
+        if (!name || !name.trim()) return;
+        
+        const trimmed = name.trim();
+        if (this.circuits.includes(trimmed)) {
+            alert('Circuit déjà existant !');
+            return;
         }
+        this.circuits.push(trimmed);
+        this.saveCircuits();
+        this.populateCircuits();
+        const circuitInput = document.getElementById('circuit');
+        if (circuitInput) circuitInput.value = trimmed;
+        this.showNotification(`Circuit "${trimmed}" ajouté ! 🏁`);
     }
 
     updateDashboard() {
@@ -848,13 +873,19 @@ Voulez-vous continuer ?`)) {
 
     updateDashboardStats() {
         const total = this.sessions.length;
-        document.getElementById('dashTotalSessions').textContent = total;
+        const totalEl = document.getElementById('dashTotalSessions');
+        if (totalEl) totalEl.textContent = total;
 
         if (total === 0) {
-            document.getElementById('dashFavoriteCircuit').textContent = '-';
-            document.getElementById('dashFavoriteCircuitBest').textContent = '-';
-            document.getElementById('dashCircuitsCount').textContent = '0';
-            document.getElementById('dashTotalLaps').textContent = '0';
+            const favoriteEl = document.getElementById('dashFavoriteCircuit');
+            const favoriteBestEl = document.getElementById('dashFavoriteCircuitBest');
+            const circuitsCountEl = document.getElementById('dashCircuitsCount');
+            const totalLapsEl = document.getElementById('dashTotalLaps');
+            
+            if (favoriteEl) favoriteEl.textContent = '-';
+            if (favoriteBestEl) favoriteBestEl.textContent = '-';
+            if (circuitsCountEl) circuitsCountEl.textContent = '0';
+            if (totalLapsEl) totalLapsEl.textContent = '0';
             return;
         }
 
@@ -873,16 +904,20 @@ Voulez-vous continuer ?`)) {
             circuitLaps[a].laps > circuitLaps[b].laps ? a : b
         );
 
-        document.getElementById('dashFavoriteCircuit').textContent = favorite;
-        document.getElementById('dashFavoriteCircuitBest').textContent = 
-            `Meilleur: ${this.formatTime(circuitLaps[favorite].bestTime)}`;
+        const favoriteEl = document.getElementById('dashFavoriteCircuit');
+        const favoriteBestEl = document.getElementById('dashFavoriteCircuitBest');
+        const circuitsCountEl = document.getElementById('dashCircuitsCount');
+        const totalLapsEl = document.getElementById('dashTotalLaps');
 
-        document.getElementById('dashCircuitsCount').textContent = new Set(this.sessions.map(s => s.circuit)).size;
-        document.getElementById('dashTotalLaps').textContent = this.sessions.reduce((sum, s) => sum + (s.lapsCount || 0), 0);
+        if (favoriteEl) favoriteEl.textContent = favorite;
+        if (favoriteBestEl) favoriteBestEl.textContent = `Meilleur: ${this.formatTime(circuitLaps[favorite].bestTime)}`;
+        if (circuitsCountEl) circuitsCountEl.textContent = new Set(this.sessions.map(s => s.circuit)).size;
+        if (totalLapsEl) totalLapsEl.textContent = this.sessions.reduce((sum, s) => sum + (s.lapsCount || 0), 0);
     }
 
     updateRecentSessions() {
         const container = document.getElementById('recentSessionsList');
+        if (!container) return;
         
         if (this.sessions.length === 0) {
             container.innerHTML = '<div class="empty-state"><p>Aucune session</p></div>';
@@ -922,6 +957,7 @@ Voulez-vous continuer ?`)) {
 
     updateCircuitsAnalysis() {
         const container = document.getElementById('circuitsAnalysis');
+        if (!container) return;
         
         if (this.sessions.length === 0) {
             container.innerHTML = '<div class="empty-state"><p>🏎️ Aucune donnée</p></div>';
@@ -951,7 +987,6 @@ Voulez-vous continuer ?`)) {
             
             const bestSession = sessions.find(s => s.bestTime === bestTime);
             
-            // Créer résumé conditions
             const conditions = [];
             if (bestSession.weather) conditions.push(bestSession.weather);
             if (bestSession.tireType) conditions.push(`Pneus: ${bestSession.tireType}`);
@@ -1072,6 +1107,7 @@ Voulez-vous continuer ?`)) {
 
     displaySessions() {
         const container = document.getElementById('sessionsList');
+        if (!container) return;
         
         if (this.sessions.length === 0) {
             container.innerHTML = '<div class="empty-state"><p>🏎️ Aucune session</p></div>';
@@ -1117,12 +1153,10 @@ Voulez-vous continuer ?`)) {
             if (el.classList.contains('nav-btn')) el.classList.add('active');
         });
         
-        // Mettre à jour l'heure si on va dans add-session
         if (view === 'add-session') {
             this.setCurrentTime();
         }
         
-        // Afficher le profil si on va dans settings
         if (view === 'settings') {
             this.displayProfile();
         }
@@ -1139,12 +1173,27 @@ Voulez-vous continuer ?`)) {
     }
 
     clearForm() {
-        document.getElementById('sessionForm').reset();
+        const form = document.getElementById('sessionForm');
+        if (form) form.reset();
         this.setTodayDate();
         this.setCurrentTime();
         this.editingId = null;
-        document.getElementById('submitBtn').textContent = '📊 Enregistrer la session';
-        document.getElementById('cancelEditBtn').style.display = 'none';
+        const submitBtn = document.getElementById('submitBtn');
+        if (submitBtn) submitBtn.textContent = '📊 Enregistrer la session';
+        const cancelBtn = document.getElementById('cancelEditBtn');
+        if (cancelBtn) cancelBtn.style.display = 'none';
+    }
+
+    async logout() {
+        if (!confirm('Voulez-vous vraiment vous déconnecter ?')) return;
+        try {
+            await auth.signOut();
+            this.showNotification('Déconnexion réussie', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } catch (error) {
+            console.error('Erreur déconnexion:', error);
+            this.showNotification('Erreur lors de la déconnexion', 'error');
+        }
     }
 
     showNotification(message, type = 'success') {
