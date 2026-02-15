@@ -482,10 +482,6 @@ class KartingDashboard {
             if (popup.parentElement) popup.remove();
         }, 5000);
     }
-        this.populateCircuitFilter();
-        this.clearForm();
-        this.switchView('dashboard');
-    }
 
     editSession(id) {
         const session = this.sessions.find(s => s.id === id);
