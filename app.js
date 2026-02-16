@@ -228,20 +228,26 @@ class KartingDashboard {
     }
 
     checkProfileCompletion() {
-        console.log('🔍 checkProfileCompletion appelé:', this.profile);
+        console.log('🔍 checkProfileCompletion appelé');
+        console.log('  - Profil:', this.profile);
+        console.log('  - profileCompleted:', this.profileCompleted);
         
-        // Ne pas bloquer si déjà complété
+        // Si déjà marqué comme complété, ne rien faire
         if (this.profileCompleted) {
-            console.log('✅ Profil déjà complété - skip check');
+            console.log('✅ Skip - déjà complété');
             return;
         }
         
-        const hasName = this.profile.pilotName && this.profile.pilotName.trim();
-        const hasKart = this.profile.kartType && this.profile.kartType.trim();
-        const hasEngine = this.profile.kartEngine && this.profile.kartEngine.trim();
+        const hasName = this.profile.pilotName && this.profile.pilotName.trim().length > 0;
+        const hasKart = this.profile.kartType && this.profile.kartType.trim().length > 0;
+        const hasEngine = this.profile.kartEngine && this.profile.kartEngine.trim().length > 0;
+        
+        console.log('  - hasName:', hasName, '("' + this.profile.pilotName + '")');
+        console.log('  - hasKart:', hasKart, '("' + this.profile.kartType + '")');
+        console.log('  - hasEngine:', hasEngine, '("' + this.profile.kartEngine + '")');
         
         if (!hasName || !hasKart || !hasEngine) {
-            console.log('❌ Profil incomplet - affichage warning');
+            console.log('❌ Profil incomplet - blocage navigation');
             this.showMandatoryProfile();
         } else {
             console.log('✅ Profil complet - déblocage navigation');
@@ -715,12 +721,14 @@ class KartingDashboard {
     }
 
     saveProfile() {
+        console.log('📝 saveProfile() appelé');
+        
         const pilotNameInput = document.getElementById('pilotName');
         const kartTypeInput = document.getElementById('kartType');
         const kartEngineInput = document.getElementById('kartEngine');
 
         if (!pilotNameInput || !kartTypeInput || !kartEngineInput) {
-            console.error('Inputs profil introuvables');
+            console.error('❌ Inputs profil introuvables');
             return;
         }
 
@@ -728,30 +736,54 @@ class KartingDashboard {
         this.profile.kartType = kartTypeInput.value.trim();
         this.profile.kartEngine = kartEngineInput.value.trim();
 
+        console.log('📊 Valeurs récupérées:');
+        console.log('  - pilotName:', this.profile.pilotName);
+        console.log('  - kartType:', this.profile.kartType);
+        console.log('  - kartEngine:', this.profile.kartEngine);
+
         if (!this.profile.pilotName || !this.profile.kartType || !this.profile.kartEngine) {
+            console.error('❌ Champs vides détectés');
             this.showNotification('⚠️ Veuillez remplir tous les champs !', 'error');
             return;
         }
 
-        console.log('✅ Profil validé:', this.profile);
+        console.log('✅ Profil validé');
         
-        // Marquer comme complété AVANT tout
+        // FORCER le marquage comme complété
         this.profileCompleted = true;
+        console.log('✅ profileCompleted = true');
         
         // Afficher immédiatement
         this.displayProfile();
         this.showNotification('Profil enregistré ! 👤', 'success');
         
-        // Débloquer navigation IMMÉDIATEMENT (ne pas attendre Firebase)
+        // Débloquer navigation IMMÉDIATEMENT
+        console.log('🔓 Déblocage navigation...');
         this.enableNavigation();
         
-        // Sauvegarder Firebase en arrière-plan
+        // Sauvegarder Firebase - VERSION DIRECTE
         if (this.currentUser && db) {
-            this.saveToFirebase().then(() => {
-                console.log('✅ Profil sauvegardé Firebase');
-            }).catch(error => {
-                console.error('❌ Erreur sauvegarde Firebase:', error);
-                // Navigation déjà débloquée, pas grave
+            console.log('☁️ Sauvegarde Firebase...');
+            console.log('  - userId:', this.currentUser.uid);
+            console.log('  - profile:', this.profile);
+            
+            const userId = this.currentUser.uid;
+            db.collection('users')
+              .doc(userId)
+              .collection('profile')
+              .doc('data')
+              .set(this.profile)
+              .then(() => {
+                  console.log('✅ Profil sauvegardé Firebase avec succès');
+              })
+              .catch(error => {
+                  console.error('❌ Erreur sauvegarde Firebase:', error);
+                  this.showNotification('⚠️ Erreur sauvegarde cloud', 'error');
+              });
+        } else {
+            console.error('❌ Pas de currentUser ou db:', {
+                currentUser: !!this.currentUser,
+                db: !!db
             });
         }
     }
@@ -1194,6 +1226,30 @@ Voulez-vous continuer ?`)) {
         
         if (view === 'settings') {
             this.displayProfile();
+            // Re-attacher l'event listener du formulaire profil
+            setTimeout(() => this.attachProfileFormListener(), 100);
+        }
+    }
+
+    attachProfileFormListener() {
+        const profileForm = document.getElementById('profileForm');
+        if (profileForm) {
+            console.log('🔗 Attachement event listener profileForm...');
+            
+            // Cloner pour enlever anciens listeners
+            const newForm = profileForm.cloneNode(true);
+            profileForm.parentNode.replaceChild(newForm, profileForm);
+            
+            // Ajouter nouveau listener
+            newForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                console.log('🎯 Form submit intercepté !');
+                this.saveProfile();
+            });
+            
+            console.log('✅ Event listener attaché');
+        } else {
+            console.error('❌ profileForm introuvable');
         }
     }
 
