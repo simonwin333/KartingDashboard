@@ -109,10 +109,57 @@ class KartingDashboard {
 
         const profileForm = document.getElementById('profileForm');
         if (profileForm) {
-            profileForm.addEventListener('submit', (e) => {
+            // Version ULTRA-SIMPLE - attachement direct
+            const self = this;
+            profileForm.addEventListener('submit', function(e) {
                 e.preventDefault();
-                this.saveProfile();
+                console.log('🎯 FORM SUBMIT CAPTÉ !');
+                
+                const pilotNameInput = document.getElementById('pilotName');
+                const kartTypeInput = document.getElementById('kartType');
+                const kartEngineInput = document.getElementById('kartEngine');
+                
+                if (!pilotNameInput || !kartTypeInput || !kartEngineInput) {
+                    console.error('❌ Inputs introuvables');
+                    return;
+                }
+                
+                const pilotName = pilotNameInput.value.trim();
+                const kartType = kartTypeInput.value.trim();
+                const kartEngine = kartEngineInput.value.trim();
+                
+                console.log('📊 Valeurs récupérées:', {pilotName, kartType, kartEngine});
+                
+                if (!pilotName || !kartType || !kartEngine) {
+                    alert('⚠️ Veuillez remplir tous les champs !');
+                    return;
+                }
+                
+                self.profile.pilotName = pilotName;
+                self.profile.kartType = kartType;
+                self.profile.kartEngine = kartEngine;
+                self.profileCompleted = true;
+                
+                console.log('✅ Profil mis à jour:', self.profile);
+                
+                self.displayProfile();
+                self.showNotification('Profil enregistré ! 👤', 'success');
+                self.enableNavigation();
+                
+                if (self.currentUser && db) {
+                    const userId = self.currentUser.uid;
+                    console.log('☁️ Sauvegarde Firebase...', userId);
+                    db.collection('users').doc(userId).collection('profile').doc('data')
+                        .set(self.profile)
+                        .then(() => {
+                            console.log('✅ Profil sauvegardé Firebase');
+                        })
+                        .catch(error => {
+                            console.error('❌ Erreur Firebase:', error);
+                        });
+                }
             });
+            console.log('✅ Event listener profileForm attaché (submit)');
         }
 
         const clearDataBtn = document.getElementById('clearAllData');
@@ -1226,30 +1273,6 @@ Voulez-vous continuer ?`)) {
         
         if (view === 'settings') {
             this.displayProfile();
-            // Re-attacher l'event listener du formulaire profil
-            setTimeout(() => this.attachProfileFormListener(), 100);
-        }
-    }
-
-    attachProfileFormListener() {
-        const profileForm = document.getElementById('profileForm');
-        if (profileForm) {
-            console.log('🔗 Attachement event listener profileForm...');
-            
-            // Supprimer tous les anciens listeners en remplaçant l'attribut onsubmit
-            profileForm.onsubmit = null;
-            
-            // Ajouter le nouveau listener directement (sans cloner)
-            profileForm.onsubmit = (e) => {
-                e.preventDefault();
-                console.log('🎯 Form submit intercepté !');
-                this.saveProfile();
-                return false;
-            };
-            
-            console.log('✅ Event listener attaché (onsubmit)');
-        } else {
-            console.error('❌ profileForm introuvable');
         }
     }
 
