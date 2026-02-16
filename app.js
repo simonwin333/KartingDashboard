@@ -270,80 +270,14 @@ class KartingDashboard {
             this.setCurrentTime();
             this.displayProfile();
             this.isInitialized = true;
-            this.checkProfileCompletion();
+            
+            console.log('✅ App initialisée - Navigation libre');
         });
     }
 
-    checkProfileCompletion() {
-        console.log('🔍 checkProfileCompletion appelé');
-        console.log('  - Profil:', this.profile);
-        console.log('  - profileCompleted:', this.profileCompleted);
-        
-        // Si déjà marqué comme complété, ne rien faire
-        if (this.profileCompleted) {
-            console.log('✅ Skip - déjà complété');
-            return;
-        }
-        
-        const hasName = this.profile.pilotName && this.profile.pilotName.trim().length > 0;
-        const hasKart = this.profile.kartType && this.profile.kartType.trim().length > 0;
-        const hasEngine = this.profile.kartEngine && this.profile.kartEngine.trim().length > 0;
-        
-        console.log('  - hasName:', hasName, '("' + this.profile.pilotName + '")');
-        console.log('  - hasKart:', hasKart, '("' + this.profile.kartType + '")');
-        console.log('  - hasEngine:', hasEngine, '("' + this.profile.kartEngine + '")');
-        
-        if (!hasName || !hasKart || !hasEngine) {
-            console.log('❌ Profil incomplet - blocage navigation');
-            this.showMandatoryProfile();
-        } else {
-            console.log('✅ Profil complet - déblocage navigation');
-            this.profileCompleted = true;
-            this.enableNavigation();
-        }
-    }
-
-    showMandatoryProfile() {
-        this.switchView('settings');
-        const settingsSection = document.querySelector('[data-view="settings"]');
-        
-        if (settingsSection) {
-            const existingWarning = settingsSection.querySelector('.profile-warning');
-            if (!existingWarning) {
-                const warning = document.createElement('div');
-                warning.className = 'profile-warning';
-                warning.innerHTML = `
-                    <p style="background: #ff6b6b; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                        ⚠️ <strong>Veuillez compléter votre profil pour continuer</strong><br>
-                        <small>Ces informations sont nécessaires pour personnaliser votre dashboard</small>
-                    </p>
-                `;
-                const firstSection = settingsSection.querySelector('.settings-section');
-                if (firstSection) {
-                    settingsSection.insertBefore(warning, firstSection);
-                }
-            }
-        }
-        
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.disabled = true;
-            btn.style.opacity = '0.5';
-            btn.style.cursor = 'not-allowed';
-        });
-    }
-
-    enableNavigation() {
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.disabled = false;
-            btn.style.opacity = '1';
-            btn.style.cursor = 'pointer';
-        });
-        
-        const warning = document.querySelector('.profile-warning');
-        if (warning) warning.remove();
-        
-        this.switchView('dashboard');
-    }
+    // === BLOCAGE PROFIL SUPPRIMÉ ===
+    // Plus d'obligation de remplir le profil
+    // L'utilisateur peut utiliser l'app librement
 
     openAuthModal() {
         const modal = document.getElementById('authModal');
@@ -796,17 +730,9 @@ class KartingDashboard {
 
         console.log('✅ Profil validé');
         
-        // FORCER le marquage comme complété
-        this.profileCompleted = true;
-        console.log('✅ profileCompleted = true');
-        
         // Afficher immédiatement
         this.displayProfile();
         this.showNotification('Profil enregistré ! 👤', 'success');
-        
-        // Débloquer navigation IMMÉDIATEMENT
-        console.log('🔓 Déblocage navigation...');
-        this.enableNavigation();
         
         // Sauvegarder Firebase - VERSION DIRECTE
         if (this.currentUser && db) {
