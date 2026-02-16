@@ -1236,18 +1236,18 @@ Voulez-vous continuer ?`)) {
         if (profileForm) {
             console.log('🔗 Attachement event listener profileForm...');
             
-            // Cloner pour enlever anciens listeners
-            const newForm = profileForm.cloneNode(true);
-            profileForm.parentNode.replaceChild(newForm, profileForm);
+            // Supprimer tous les anciens listeners en remplaçant l'attribut onsubmit
+            profileForm.onsubmit = null;
             
-            // Ajouter nouveau listener
-            newForm.addEventListener('submit', (e) => {
+            // Ajouter le nouveau listener directement (sans cloner)
+            profileForm.onsubmit = (e) => {
                 e.preventDefault();
                 console.log('🎯 Form submit intercepté !');
                 this.saveProfile();
-            });
+                return false;
+            };
             
-            console.log('✅ Event listener attaché');
+            console.log('✅ Event listener attaché (onsubmit)');
         } else {
             console.error('❌ profileForm introuvable');
         }
