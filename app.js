@@ -36,6 +36,7 @@ class KartingDashboard {
         this.currentUser = null;
         this.isAuthMode = true;
         this.isInitialized = false;
+        this.profileCompleted = false;
         this.init();
     }
 
@@ -227,8 +228,25 @@ class KartingDashboard {
     }
 
     checkProfileCompletion() {
-        if (!this.profile.pilotName || !this.profile.kartType || !this.profile.kartEngine) {
+        console.log('🔍 checkProfileCompletion appelé:', this.profile);
+        
+        // Ne pas bloquer si déjà complété
+        if (this.profileCompleted) {
+            console.log('✅ Profil déjà complété - skip check');
+            return;
+        }
+        
+        const hasName = this.profile.pilotName && this.profile.pilotName.trim();
+        const hasKart = this.profile.kartType && this.profile.kartType.trim();
+        const hasEngine = this.profile.kartEngine && this.profile.kartEngine.trim();
+        
+        if (!hasName || !hasKart || !hasEngine) {
+            console.log('❌ Profil incomplet - affichage warning');
             this.showMandatoryProfile();
+        } else {
+            console.log('✅ Profil complet - déblocage navigation');
+            this.profileCompleted = true;
+            this.enableNavigation();
         }
     }
 
@@ -701,22 +719,39 @@ class KartingDashboard {
         const kartTypeInput = document.getElementById('kartType');
         const kartEngineInput = document.getElementById('kartEngine');
 
-        if (!pilotNameInput || !kartTypeInput || !kartEngineInput) return;
+        if (!pilotNameInput || !kartTypeInput || !kartEngineInput) {
+            console.error('Inputs profil introuvables');
+            return;
+        }
 
-        this.profile.pilotName = pilotNameInput.value;
-        this.profile.kartType = kartTypeInput.value;
-        this.profile.kartEngine = kartEngineInput.value;
+        this.profile.pilotName = pilotNameInput.value.trim();
+        this.profile.kartType = kartTypeInput.value.trim();
+        this.profile.kartEngine = kartEngineInput.value.trim();
 
         if (!this.profile.pilotName || !this.profile.kartType || !this.profile.kartEngine) {
             this.showNotification('⚠️ Veuillez remplir tous les champs !', 'error');
             return;
         }
 
+        console.log('✅ Profil validé:', this.profile);
+        
+        // Marquer comme complété AVANT tout
+        this.profileCompleted = true;
+        
+        // Afficher immédiatement
         this.displayProfile();
-        this.showNotification('Profil enregistré ! 👤');
-        if (this.currentUser) {
+        this.showNotification('Profil enregistré ! 👤', 'success');
+        
+        // Débloquer navigation IMMÉDIATEMENT (ne pas attendre Firebase)
+        this.enableNavigation();
+        
+        // Sauvegarder Firebase en arrière-plan
+        if (this.currentUser && db) {
             this.saveToFirebase().then(() => {
-                this.enableNavigation();
+                console.log('✅ Profil sauvegardé Firebase');
+            }).catch(error => {
+                console.error('❌ Erreur sauvegarde Firebase:', error);
+                // Navigation déjà débloquée, pas grave
             });
         }
     }
