@@ -2,353 +2,300 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Karting Dashboard - Suivi de Performance</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="KartDash">
+    <title>Karting Dashboard</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="icon" type="image/png" href="icon-192.png">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <!-- En-tête -->
-        <header>
-            <div class="header-content">
-                <div class="header-left">
-                    <h1>🏁 Karting Dashboard</h1>
-                    <p class="header-subtitle">Suivez vos performances sur circuit</p>
-                    <p class="header-pilot-info">
-                        <span id="headerPilotName">-</span> • 
-                        <span id="headerKartType">-</span> • 
-                        <span id="headerKartEngine">-</span>
-                    </p>
-                </div>
-                <div class="header-buttons">
-                    <button class="header-btn-small" onclick="dashboard.switchView('settings')" title="Réglages">⚙️</button>
-                </div>
-            </div>
-        </header>
 
-        <!-- Menu de navigation -->
-        <nav class="main-nav">
-            <button class="nav-btn active" data-view="dashboard">🏠 Dashboard</button>
-            <button class="nav-btn" data-view="add-session">➕ Session</button>
-            <button class="nav-btn" data-view="statistics">📊 Circuits</button>
-            <button class="nav-btn" data-view="history">📋 Historique</button>
-        </nav>
-
-        <!-- Modal Connexion Firebase -->
-        <div class="auth-modal" id="authModal" style="display: none;">
-            <div class="auth-modal-content">
-                <div class="auth-modal-header">
-                    <h3>🔐 Connexion / Inscription</h3>
-                    <button class="modal-close-btn" onclick="dashboard.closeAuthModal()">✕</button>
-                </div>
-                <div class="auth-modal-body">
-                    <p style="color: #999; margin-bottom: 20px; font-size: 0.9em;">
-                        Connectez-vous pour synchroniser vos données sur tous vos appareils
-                    </p>
-
-                    <button class="btn-google-signin" id="googleSignInBtn">
-                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width: 18px; margin-right: 8px;">
-                        Continuer avec Google
-                    </button>
-
-                    <div class="divider">
-                        <span>OU</span>
-                    </div>
-
-                    <form id="authForm">
-                        <div class="form-group">
-                            <label for="authEmail">E-mail :</label>
-                            <input type="email" id="authEmail" required placeholder="votre@email.com">
-                        </div>
-                        <div class="form-group">
-                            <label for="authPassword">Mot de passe :</label>
-                            <input type="password" id="authPassword" required placeholder="••••••••" minlength="6">
-                        </div>
-                        <button type="submit" class="btn-primary" id="authSubmitBtn">Se connecter</button>
-                        <button type="button" class="btn-secondary" id="authToggleBtn">Créer un compte</button>
-                    </form>
-
-                    <p style="color: #666; font-size: 0.8em; margin-top: 15px;">
-                        🔒 Vos données restent privées et sécurisées
-                    </p>
-                </div>
-            </div>
+<!-- MODAL CONNEXION -->
+<div class="modal-overlay" id="authModal" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-header">
+            <div class="modal-logo">🏁</div>
+            <h2>Karting Dashboard</h2>
+            <p>Connectez-vous pour accéder à vos données</p>
         </div>
-
-        <!-- Dashboard - Page d'accueil -->
-        <section class="dashboard-home view-section" data-view="dashboard">
-            
-            <!-- Statistiques principales en grille -->
-            <div class="dashboard-stats-grid">
-                <div class="stat-box">
-                    <div class="stat-icon">📊</div>
-                    <div class="stat-content">
-                        <div class="stat-label">Sessions totales</div>
-                        <div class="stat-value" id="dashTotalSessions">0</div>
-                    </div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-icon">🏆</div>
-                    <div class="stat-content">
-                        <div class="stat-label">Circuit préféré</div>
-                        <div class="stat-value" id="dashFavoriteCircuit">-</div>
-                        <div class="stat-subvalue" id="dashFavoriteCircuitBest">-</div>
-                    </div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-icon">🏁</div>
-                    <div class="stat-content">
-                        <div class="stat-label">Circuits visités</div>
-                        <div class="stat-value" id="dashCircuitsCount">0</div>
-                    </div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-icon">🔢</div>
-                    <div class="stat-content">
-                        <div class="stat-label">Tours totaux</div>
-                        <div class="stat-value" id="dashTotalLaps">0</div>
-                    </div>
-                </div>
+        <div class="modal-body">
+            <button class="btn-google" id="googleSignInBtn">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" alt="G">
+                Continuer avec Google
+            </button>
+            <div class="divider"><span>OU</span></div>
+            <div class="form-group">
+                <label>E-mail</label>
+                <input type="email" id="authEmail" placeholder="votre@email.com">
             </div>
-
-            <!-- Dernières sessions -->
-            <div class="recent-sessions">
-                <h3>📅 Dernières sessions</h3>
-                <div id="recentSessionsList"></div>
+            <div class="form-group">
+                <label>Mot de passe</label>
+                <input type="password" id="authPassword" placeholder="min. 6 caractères">
             </div>
-        </section>
-
-        <!-- Page Ajouter Session -->
-        <section class="add-session-page view-section" data-view="add-session" style="display: none;">
-            <h2>➕ Ajouter une session</h2>
-            <form id="sessionForm">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="date">Date :</label>
-                        <input type="date" id="date" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="time">Heure :</label>
-                        <input type="time" id="time" required>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="circuit">Circuit :</label>
-                    <select id="circuit" required>
-                        <option value="">-- Sélectionnez un circuit --</option>
-                    </select>
-                    <button type="button" class="btn-add-circuit" id="addCircuitBtn">➕ Ajouter un nouveau circuit</button>
-                </div>
-                
-                <div class="form-group">
-                    <label for="bestTime">Meilleur temps (secondes) :</label>
-                    <input type="number" id="bestTime" step="0.001" placeholder="Ex: 45.234" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="lapsCount">Nombre de tours :</label>
-                    <input type="number" id="lapsCount" min="1" placeholder="Ex: 15" required>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="maxLaps">Tours minutes moteur (max) :</label>
-                        <input type="number" id="maxLaps" min="1" placeholder="Ex: 15000">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="crownUsed">Couronne utilisée :</label>
-                        <input type="text" id="crownUsed" placeholder="Ex: 11/75">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="weather">Météo :</label>
-                        <select id="weather" required>
-                            <option value="">-- Sélectionnez --</option>
-                            <option value="Sec ☀️">Sec ☀️</option>
-                            <option value="Nuageux ⛅">Nuageux ⛅</option>
-                            <option value="Pluie 🌧️">Pluie 🌧️</option>
-                            <option value="Pluie forte 🌧️⚡">Pluie forte 🌧️⚡</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="temperature">Température (°C) :</label>
-                        <input type="number" id="temperature" placeholder="Ex: 18">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="tireType">Type de pneus :</label>
-                        <select id="tireType" required>
-                            <option value="">-- Sélectionnez --</option>
-                            <option value="Tendres">Tendres (soft)</option>
-                            <option value="Médiums">Médiums</option>
-                            <option value="Durs">Durs (hard)</option>
-                            <option value="Pluie">Pluie</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="tirePressure">Pression pneus (bar) :</label>
-                        <input type="number" id="tirePressure" step="0.01" placeholder="Ex: 0.85">
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="notes">Notes (optionnel) :</label>
-                    <textarea id="notes" rows="3" placeholder="Sensations, réglages châssis, trajectoires..."></textarea>
-                </div>
-                
-                <button type="submit" class="btn-primary" id="submitBtn">📊 Enregistrer la session</button>
-                <button type="button" class="btn-cancel" id="cancelEditBtn" style="display: none;">❌ Annuler la modification</button>
-            </form>
-        </section>
-
-        <!-- Page Profil -->
-        <section class="profile-page view-section" data-view="profile" style="display: none;">
-            <h2>👤 Profil du pilote</h2>
-            
-            <form id="profileForm" class="profile-form">
-                <div class="form-group">
-                    <label for="pilotName">Nom du pilote :</label>
-                    <input type="text" id="pilotName" placeholder="Ex: Simon Dupont">
-                </div>
-
-                <div class="form-group">
-                    <label for="kartType">Type de kart :</label>
-                    <input type="text" id="kartType" placeholder="Ex: CRG Road Rebel">
-                </div>
-
-                <div class="form-group">
-                    <label for="kartEngine">Moteur :</label>
-                    <input type="text" id="kartEngine" placeholder="Ex: Rotax Max">
-                </div>
-
-                <button type="submit" class="btn-primary">💾 Sauvegarder le profil</button>
-            </form>
-        </section>
-
-        <!-- Page Réglages (avec Profil fusionné) -->
-        <section class="settings-page view-section" data-view="settings" style="display: none;">
-            <h2>⚙️ Réglages</h2>
-            
-            <!-- Section Profil -->
-            <div class="settings-section">
-                <h3>👤 Profil du pilote</h3>
-                <form id="profileForm" class="profile-form">
-                    <div class="form-group">
-                        <label for="pilotName">Nom du pilote :</label>
-                        <input type="text" id="pilotName" placeholder="Ex: Simon Dupont" class="settings-input">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="kartType">Type de kart :</label>
-                        <input type="text" id="kartType" placeholder="Ex: CRG Road Rebel" class="settings-input">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="kartEngine">Moteur :</label>
-                        <input type="text" id="kartEngine" placeholder="Ex: Rotax Max" class="settings-input">
-                    </div>
-
-                    <button type="submit" class="btn-settings">💾 Sauvegarder le profil</button>
-                </form>
-            </div>
-            
-            <!-- Section Soutien -->
-            <div class="settings-section">
-                <h3>❤️ Soutenir le projet</h3>
-                <a href="https://paypal.me/VOTRE_LIEN" target="_blank" rel="noopener">
-                    <button class="btn-settings btn-donate">☕ Offrir un café au créateur</button>
-                </a>
-                <p style="color: #999; margin-top: 10px; font-size: 0.9em;">Votre soutien aide à améliorer l'app !</p>
-            </div>
-            
-            <!-- Section Apparence -->
-            <div class="settings-section">
-                <h3>🎨 Apparence</h3>
-                
-                <div class="form-group">
-                    <label for="themeMode">Mode :</label>
-                    <select id="themeMode" class="settings-select">
-                        <option value="dark">🌙 Sombre (par défaut)</option>
-                        <option value="light">☀️ Clair</option>
-                    </select>
-                    <p style="color: #999; font-size: 0.85em; margin-top: 8px;">Le thème s'applique automatiquement</p>
-                </div>
-            </div>
-
-            <!-- Section Compte -->
-            <div class="settings-section">
-                <h3>🔐 Compte</h3>
-                <button class="btn-settings" id="logoutBtn">🚪 Se déconnecter</button>
-                <p style="color: #999; margin-top: 10px; font-size: 0.9em;">Vous serez redirigé vers la page de connexion</p>
-            </div>
-
-            <!-- Section Données -->
-            <div class="settings-section">
-                <h3>💾 Données</h3>
-                <button class="btn-settings btn-danger-settings" id="clearAllData">⚠️ Supprimer définitivement mon compte</button>
-                <p style="color: #999; margin-top: 10px; font-size: 0.9em;">
-                    ⚠️ Attention : Supprime toutes vos sessions, votre profil et vos circuits.<br>
-                    <strong>Action irréversible !</strong>
-                </p>
-            </div>
-
-            <!-- Section À propos -->
-            <div class="settings-section">
-                <h3>ℹ️ À propos</h3>
-                <p style="color: #999;">Version 3.1</p>
-                <p style="color: #999;">Développé par Simon avec Claude AI</p>
-            </div>
-        </section>
-
-        <!-- Section des statistiques par circuit -->
-        <section class="stats view-section" data-view="statistics" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="margin: 0;">📊 Analyse par Circuit</h2>
-                <div>
-                    <select id="circuitFilter" class="circuit-filter">
-                        <option value="all">Tous les circuits</option>
-                    </select>
-                </div>
-            </div>
-            <div id="circuitsAnalysis"></div>
-        </section>
-
-        <!-- Liste des sessions -->
-        <section class="sessions-list view-section" data-view="history" style="display: none;">
-            <h2>📋 Historique des sessions</h2>
-            <div id="sessionsList"></div>
-        </section>
-
-        <!-- Modal détails session -->
-        <div class="session-modal" id="sessionModal">
-            <div class="session-modal-content">
-                <div class="session-modal-header">
-                    <h3>📊 Détails de la session</h3>
-                    <button class="modal-close-btn" onclick="dashboard.closeSessionDetails()">✕</button>
-                </div>
-                <div id="sessionDetailsContent"></div>
-            </div>
+            <button type="button" class="btn-primary" id="authSubmitBtn">Se connecter</button>
+            <button type="button" class="btn-secondary" id="authToggleBtn">Créer un compte</button>
         </div>
     </div>
+</div>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- App principal -->
-    <script src="app.js"></script>
+<!-- MODAL PROFIL OBLIGATOIRE -->
+<div class="modal-overlay" id="profileModal" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-header">
+            <div class="modal-logo">🏎️</div>
+            <h2>Bienvenue !</h2>
+            <p>Complétez votre profil pilote pour commencer</p>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Nom du pilote *</label>
+                <input type="text" id="regPilotName" placeholder="Ex: Simon Dupont">
+            </div>
+            <div class="form-group">
+                <label>Type de kart *</label>
+                <input type="text" id="regKartType" placeholder="Ex: CRG Road Rebel">
+            </div>
+            <div class="form-group">
+                <label>Moteur *</label>
+                <input type="text" id="regKartEngine" placeholder="Ex: Rotax Max">
+            </div>
+            <div class="form-group">
+                <label>E-mail</label>
+                <input type="email" id="regEmail" readonly style="opacity:0.6;">
+            </div>
+            <div class="cgu-box">
+                <label class="cgu-label">
+                    <input type="checkbox" id="regCGU">
+                    <span>J'accepte les <a href="#" id="cguLink">conditions d'utilisation</a></span>
+                </label>
+            </div>
+            <div id="profileError" class="error-msg" style="display:none;"></div>
+            <button type="button" class="btn-primary" id="saveProfileBtn">✅ Commencer</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CGU -->
+<div class="modal-overlay" id="cguModal" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2>📄 Conditions d'utilisation</h2>
+        </div>
+        <div class="modal-body cgu-text">
+            <h3>1. Utilisation</h3>
+            <p>Karting Dashboard est une application personnelle de suivi de performances en karting, fournie "en l'état" pour usage personnel.</p>
+            <h3>2. Données personnelles</h3>
+            <p>Vos données sont stockées sur Firebase (Google). Nous ne partageons jamais vos données avec des tiers.</p>
+            <h3>3. Authentification</h3>
+            <p>Votre e-mail sert uniquement à l'authentification. Vous êtes responsable de la sécurité de votre compte.</p>
+            <h3>4. Responsabilité</h3>
+            <p>L'application ne peut être tenue responsable des décisions prises sur la base des données affichées.</p>
+            <h3>5. Suppression</h3>
+            <p>Vous pouvez supprimer votre compte et toutes vos données à tout moment dans les Réglages.</p>
+            <p class="settings-hint">Dernière mise à jour : 17 février 2026</p>
+        </div>
+        <div style="padding:20px;text-align:center;">
+            <button class="btn-primary" id="closeCguBtn">✅ J'ai compris</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DÉTAILS SESSION -->
+<div class="modal-overlay" id="sessionModal" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2>📋 Détails</h2>
+            <button class="btn-close" id="closeSessionBtn">✕</button>
+        </div>
+        <div class="modal-body" id="sessionDetailsContent"></div>
+    </div>
+</div>
+
+<!-- MODAL FAQ -->
+<div class="modal-overlay" id="faqModal" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2>❓ Questions fréquentes</h2>
+            <button class="btn-close" id="closeFaqBtn">✕</button>
+        </div>
+        <div class="modal-body faq-body">
+            <div class="faq-item"><div class="faq-q">Comment ajouter une session ?</div><div class="faq-a">Appuyez sur "➕ Session", remplissez les champs et validez. La session apparaît immédiatement dans le dashboard.</div></div>
+            <div class="faq-item"><div class="faq-q">Comment est calculé mon meilleur temps ?</div><div class="faq-a">C'est le temps minimum parmi toutes vos sessions sur un circuit. Il s'affiche en vert dans l'analyse des circuits.</div></div>
+            <div class="faq-item"><div class="faq-q">Comment ajouter un circuit ?</div><div class="faq-a">Dans le formulaire de session, appuyez sur "➕" à côté du champ Circuit, entrez le nom et confirmez.</div></div>
+            <div class="faq-item"><div class="faq-q">Puis-je utiliser l'app sur plusieurs appareils ?</div><div class="faq-a">Oui ! Connectez-vous avec le même compte sur tous vos appareils. Les données se synchronisent automatiquement.</div></div>
+            <div class="faq-item"><div class="faq-q">Comment installer l'app sur mon smartphone ?</div><div class="faq-a">Réglages → "📲 Installer l'app". Sur iOS Safari : Partager → Sur l'écran d'accueil.</div></div>
+            <div class="faq-item"><div class="faq-q">Comment modifier ou supprimer une session ?</div><div class="faq-a">Dans l'Historique, utilisez ✏️ pour modifier et 🗑️ pour supprimer.</div></div>
+            <div class="faq-item"><div class="faq-q">Pourquoi enregistrer la météo ?</div><div class="faq-a">La météo influence les temps. En la comparant, vous analysez mieux vos vraies performances.</div></div>
+            <div class="faq-item"><div class="faq-q">Mes données sont-elles sécurisées ?</div><div class="faq-a">Oui. Stockées sur Firebase (Google), seul votre compte y a accès.</div></div>
+            <div class="faq-item"><div class="faq-q">Comment supprimer mon compte ?</div><div class="faq-a">Réglages → "⚠️ Supprimer mon compte". Confirmez avec votre nom. Suppression définitive.</div></div>
+            <div class="faq-item"><div class="faq-q">Comment soutenir le projet ?</div><div class="faq-a">Offrez un café sur buymeacoffee.com/kartdashboard ☕ Merci pour votre soutien !</div></div>
+        </div>
+    </div>
+</div>
+
+<!-- POPUP RECORD -->
+<div class="record-popup" id="recordPopup" style="display:none;">
+    <div class="record-popup-content">
+        <div class="record-icon">🏆</div>
+        <h2>NOUVEAU RECORD !</h2>
+        <p id="recordCircuit" class="record-circuit"></p>
+        <p id="recordTime" class="record-time"></p>
+        <p class="record-msg">Félicitations ! Vous avez battu votre meilleur temps ! 🎉</p>
+        <button class="btn-primary" id="closeRecordBtn">✅ Super !</button>
+    </div>
+</div>
+
+<!-- APP PRINCIPALE -->
+<div id="appContainer" style="display:none;">
+    <header class="app-header">
+        <div class="header-left">
+            <div class="header-logo">🏁</div>
+            <div>
+                <h1>Karting Dashboard</h1>
+                <p id="headerPilotName" class="header-subtitle">-</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <a href="https://buymeacoffee.com/kartdashboard" target="_blank" class="coffee-badge" title="Soutenir le projet">☕</a>
+            <button class="btn-icon nav-btn" data-view="settings">⚙️</button>
+        </div>
+    </header>
+
+    <nav class="main-nav">
+        <button class="nav-btn active" data-view="dashboard">🏠<br><span>Dashboard</span></button>
+        <button class="nav-btn" data-view="add-session">➕<br><span>Session</span></button>
+        <button class="nav-btn" data-view="statistics">📊<br><span>Circuits</span></button>
+        <button class="nav-btn" data-view="history">📋<br><span>Historique</span></button>
+    </nav>
+
+    <!-- DASHBOARD -->
+    <section class="view-section" data-view="dashboard">
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-icon">🏎️</div><div class="stat-value" id="dashTotalSessions">0</div><div class="stat-label">Sessions</div></div>
+            <div class="stat-card"><div class="stat-icon">🏁</div><div class="stat-value" id="dashCircuitsCount">0</div><div class="stat-label">Circuits</div></div>
+            <div class="stat-card"><div class="stat-icon">🔄</div><div class="stat-value" id="dashTotalLaps">0</div><div class="stat-label">Tours</div></div>
+            <div class="stat-card stat-card-wide"><div class="stat-icon">⭐</div><div class="stat-value" id="dashFavoriteCircuit">-</div><div class="stat-label" id="dashFavoriteCircuitBest">Circuit favori</div></div>
+        </div>
+        <div class="section-header"><h2>🕐 10 dernières sessions</h2></div>
+        <div id="recentSessionsList" class="sessions-list"></div>
+    </section>
+
+    <!-- AJOUTER SESSION -->
+    <section class="view-section" data-view="add-session" style="display:none;">
+        <h2>➕ Nouvelle session</h2>
+        <form id="sessionForm">
+            <div class="form-row">
+                <div class="form-group"><label>📅 Date</label><input type="date" id="date" required></div>
+                <div class="form-group"><label>🕐 Heure</label><input type="time" id="time"></div>
+            </div>
+            <div class="form-group">
+                <label>🏁 Circuit</label>
+                <div class="circuit-select-row">
+                    <select id="circuit" required><option value="">-- Sélectionnez --</option></select>
+                    <button type="button" class="btn-add-circuit" id="addCircuitBtn">➕</button>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>⏱️ Meilleur temps (sec)</label><input type="number" id="bestTime" step="0.001" min="0" placeholder="Ex: 65.412" required></div>
+                <div class="form-group"><label>🔢 Tours</label><input type="number" id="lapsCount" min="0" placeholder="Ex: 20"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>⚙️ Couronne</label><input type="number" id="crownUsed" min="0" placeholder="Ex: 82"></div>
+                <div class="form-group"><label>🏎️ Tours moteur</label><input type="number" id="maxLaps" min="0" placeholder="Ex: 500"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>🌦️ Météo</label>
+                    <select id="weather"><option value="">--</option><option>☀️ Sec</option><option>🌤️ Nuageux</option><option>🌧️ Pluie</option><option>🌩️ Orage</option></select>
+                </div>
+                <div class="form-group"><label>🌡️ Température (°C)</label><input type="number" id="temperature" min="-20" max="50" placeholder="Ex: 18"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>🛞 Pneus</label>
+                    <select id="tireType"><option value="">--</option><option>Slick</option><option>Pluie</option><option>Intermédiaire</option></select>
+                </div>
+                <div class="form-group"><label>⚡ Pression (bar)</label><input type="number" id="tirePressure" step="0.1" min="0" max="5" placeholder="Ex: 0.8"></div>
+            </div>
+            <div class="form-group"><label>📝 Notes</label><textarea id="notes" rows="3" placeholder="Observations, réglages..."></textarea></div>
+            <div class="form-actions">
+                <button type="submit" class="btn-primary" id="submitBtn">📊 Enregistrer la session</button>
+                <button type="button" class="btn-secondary" id="cancelEditBtn" style="display:none;">✕ Annuler</button>
+            </div>
+        </form>
+    </section>
+
+    <!-- CIRCUITS -->
+    <section class="view-section" data-view="statistics" style="display:none;">
+        <div class="section-header">
+            <h2>📊 Analyse par circuit</h2>
+            <select id="circuitFilter"><option value="all">Tous les circuits</option></select>
+        </div>
+        <div id="circuitsAnalysis"></div>
+    </section>
+
+    <!-- HISTORIQUE -->
+    <section class="view-section" data-view="history" style="display:none;">
+        <h2>📋 Historique complet</h2>
+        <div id="sessionsList" class="sessions-list"></div>
+    </section>
+
+    <!-- RÉGLAGES -->
+    <section class="view-section" data-view="settings" style="display:none;">
+        <h2>⚙️ Réglages</h2>
+        <div class="settings-section">
+            <h3>👤 Profil du pilote</h3>
+            <div class="form-group"><label>Nom</label><input type="text" id="pilotName" class="settings-input" placeholder="Votre nom"></div>
+            <div class="form-group"><label>Type de kart</label><input type="text" id="kartType" class="settings-input" placeholder="Ex: CRG Road Rebel"></div>
+            <div class="form-group"><label>Moteur</label><input type="text" id="kartEngine" class="settings-input" placeholder="Ex: Rotax Max"></div>
+            <button class="btn-settings" id="saveProfileSettingsBtn">💾 Sauvegarder le profil</button>
+        </div>
+        <div class="settings-section">
+            <h3>❤️ Soutenir le projet</h3>
+            <a href="https://buymeacoffee.com/kartdashboard" target="_blank" rel="noopener">
+                <button class="btn-settings btn-donate">☕ Offrir un café au créateur</button>
+            </a>
+            <p class="settings-hint">Votre soutien aide à améliorer l'app !</p>
+        </div>
+        <div class="settings-section">
+            <h3>📲 Installation smartphone</h3>
+            <button class="btn-settings" id="installBtn" style="display:none;">📲 Installer sur l'écran d'accueil</button>
+            <div id="pwaInstructions" class="settings-hint"></div>
+        </div>
+        <div class="settings-section">
+            <h3>🎨 Apparence</h3>
+            <select class="settings-select" id="themeMode">
+                <option value="dark">🌙 Sombre</option>
+                <option value="light">☀️ Clair</option>
+            </select>
+        </div>
+        <div class="settings-section">
+            <h3>ℹ️ Aide</h3>
+            <button class="btn-settings" id="faqBtn">❓ FAQ - Questions fréquentes</button>
+        </div>
+        <div class="settings-section">
+            <h3>🔐 Compte</h3>
+            <p id="settingsUserEmail" class="settings-hint"></p>
+            <button class="btn-settings" id="logoutBtn">🚪 Se déconnecter</button>
+        </div>
+        <div class="settings-section">
+            <h3>💾 Données</h3>
+            <button class="btn-settings btn-danger" id="clearDataBtn">⚠️ Supprimer définitivement mon compte</button>
+            <p class="settings-hint">⚠️ Action irréversible</p>
+        </div>
+        <div class="settings-section">
+            <p class="settings-hint" style="text-align:center;">Karting Dashboard v4.0 ❤️</p>
+        </div>
+    </section>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
