@@ -678,17 +678,58 @@ class KartingDashboard {
     setPwaInstructions() {
         const inst = document.getElementById('pwaInstructions');
         const btn = document.getElementById('installBtn');
-        if (!inst || !btn) return;
+        if (!inst) return;
+        
         const ua = navigator.userAgent;
         const isIOS = /iPhone|iPad|iPod/.test(ua);
         const isAndroid = /Android/.test(ua);
-        if (isIOS) {
-            inst.innerHTML = '📱 <strong>iOS :</strong> Appuyez sur <strong>Partager</strong> (📤) puis <strong>"Sur l\'écran d\'accueil"</strong>';
-            btn.style.display = 'none';
-        } else if (isAndroid && !deferredPrompt) {
-            inst.innerHTML = '📱 <strong>Android :</strong> Menu navigateur → <strong>"Ajouter à l\'écran d\'accueil"</strong>';
-        } else if (!deferredPrompt) {
-            inst.innerHTML = '💻 <strong>Desktop :</strong> Icône d\'installation dans la barre d\'adresse';
+        const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua);
+        
+        // iOS Safari
+        if (isIOS || isSafari) {
+            inst.innerHTML = `
+                <div style="background:#1a1a1a; border-radius:8px; padding:15px; border:1px solid #2a2a2a;">
+                    <p style="color:#667eea; font-weight:600; margin:0 0 10px;">📱 Installation iOS/Safari :</p>
+                    <ol style="color:#ccc; font-size:0.85em; margin:0; padding-left:20px; line-height:1.6;">
+                        <li>Appuyez sur le bouton <strong>Partager</strong> (📤) en bas</li>
+                        <li>Faites défiler et sélectionnez <strong>"Sur l'écran d'accueil"</strong></li>
+                        <li>Appuyez sur <strong>"Ajouter"</strong></li>
+                    </ol>
+                </div>`;
+            if (btn) btn.style.display = 'none';
+        } 
+        // Android Chrome avec prompt disponible
+        else if (isAndroid && deferredPrompt && btn) {
+            inst.innerHTML = '<p style="color:#10b981; font-size:0.9em;">✅ Prêt à installer</p>';
+            btn.style.display = 'block';
+        }
+        // Android Chrome sans prompt (déjà installé ou pas prêt)
+        else if (isAndroid) {
+            inst.innerHTML = `
+                <div style="background:#1a1a1a; border-radius:8px; padding:15px; border:1px solid #2a2a2a;">
+                    <p style="color:#667eea; font-weight:600; margin:0 0 10px;">📱 Installation Android :</p>
+                    <ol style="color:#ccc; font-size:0.85em; margin:0; padding-left:20px; line-height:1.6;">
+                        <li>Appuyez sur les <strong>3 points</strong> (⋮) du menu Chrome</li>
+                        <li>Sélectionnez <strong>"Ajouter à l'écran d'accueil"</strong></li>
+                        <li>Confirmez avec <strong>"Ajouter"</strong></li>
+                    </ol>
+                </div>`;
+            if (btn) btn.style.display = 'none';
+        }
+        // Desktop
+        else {
+            inst.innerHTML = `
+                <div style="background:#1a1a1a; border-radius:8px; padding:15px; border:1px solid #2a2a2a;">
+                    <p style="color:#667eea; font-weight:600; margin:0 0 10px;">💻 Installation Desktop :</p>
+                    <p style="color:#ccc; font-size:0.85em; margin:0; line-height:1.6;">
+                        Cherchez l'icône <strong>⊕</strong> ou <strong>🖥️</strong> dans la barre d'adresse (à droite) et cliquez dessus pour installer l'application.
+                    </p>
+                </div>`;
+            if (btn && deferredPrompt) {
+                btn.style.display = 'block';
+            } else if (btn) {
+                btn.style.display = 'none';
+            }
         }
     }
 
