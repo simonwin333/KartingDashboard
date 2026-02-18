@@ -29,7 +29,6 @@ let deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    console.log('✅ PWA installable détecté');
     // Attendre que le dashboard soit prêt
     setTimeout(() => {
         if (window.dashboard) {
@@ -688,17 +687,14 @@ class KartingDashboard {
         const isAndroid = /Android/.test(ua);
         const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua);
         
-        console.log('PWA Instructions - iOS:', isIOS, 'Android:', isAndroid, 'deferredPrompt:', !!deferredPrompt);
-        
-        // Si on a deferredPrompt (Android Chrome prêt), afficher le bouton
+        // Si PWA détectée (Android Chrome), afficher le bouton
         if (deferredPrompt && btn) {
-            console.log('✅ Affichage bouton Install');
             btn.style.display = 'block';
             inst.innerHTML = '<p style="color:#10b981; font-size:0.9em; margin-bottom:10px;">✅ Prêt à installer sur votre écran d\'accueil</p>';
             return;
         }
         
-        // iOS Safari
+        // iOS Safari - Instructions manuelles
         if (isIOS || isSafari) {
             inst.innerHTML = `
                 <div style="background:#1a1a1a; border-radius:8px; padding:15px; border:1px solid #2a2a2a;">
@@ -711,7 +707,7 @@ class KartingDashboard {
                 </div>`;
             if (btn) btn.style.display = 'none';
         } 
-        // Android
+        // Android - Instructions manuelles
         else if (isAndroid) {
             inst.innerHTML = `
                 <div style="background:#1a1a1a; border-radius:8px; padding:15px; border:1px solid #2a2a2a;">
