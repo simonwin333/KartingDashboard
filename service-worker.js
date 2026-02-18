@@ -1,5 +1,5 @@
 // Service Worker - Karting Dashboard v4.0
-const CACHE_NAME = 'karting-v4';
+const CACHE_NAME = 'karting-v4.1'; // Changé pour forcer mise à jour
 
 // Ne pas mettre de chemins absolus - utiliser des chemins relatifs
 const ASSETS = [
