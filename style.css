@@ -1315,7 +1315,7 @@ section h2 {
     transition: all 0.3s; color: white;
 }
 .header-settings-btn:hover { background: rgba(102,126,234,0.2); border-color: #667eea; }
-.header-right { display: flex; gap: 8px; align-items: center; }
+.header-right { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 
 /* CGU Checkbox */
 .cgu-label {
@@ -1496,8 +1496,8 @@ section h2 {
 .header-left { display: flex; align-items: center; gap: 12px; }
 .header-logo { font-size: 2em; }
 .app-header h1 { font-size: 1.1em; margin: 0; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.header-subtitle { font-size: 0.8em; color: #999; margin: 0; }
-.header-right { display: flex; align-items: center; gap: 10px; }
+.header-subtitle { font-size: 0.72em; color: #999; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+.header-right { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .btn-icon { background: none; border: none; font-size: 1.4em; cursor: pointer; padding: 5px; }
 .coffee-badge {
     text-decoration: none; font-size: 1.3em; opacity: 0.7;
