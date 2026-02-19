@@ -176,10 +176,27 @@
     <!-- DASHBOARD -->
     <section class="view-section" data-view="dashboard">
         <div class="stats-grid">
-            <div class="stat-card"><div class="stat-icon">🏎️</div><div class="stat-value" id="dashTotalSessions">0</div><div class="stat-label">Sessions</div></div>
-            <div class="stat-card"><div class="stat-icon">🏁</div><div class="stat-value" id="dashCircuitsCount">0</div><div class="stat-label">Circuits</div></div>
-            <div class="stat-card"><div class="stat-icon">🔄</div><div class="stat-value" id="dashTotalLaps">0</div><div class="stat-label">Tours</div></div>
-            <div class="stat-card stat-card-wide"><div class="stat-icon">⭐</div><div class="stat-value" id="dashFavoriteCircuit">-</div><div class="stat-label" id="dashFavoriteCircuitBest">Circuit favori</div></div>
+            <div class="stat-card">
+                <div class="stat-icon">🏎️</div>
+                <div class="stat-value" id="dashTotalSessions">0</div>
+                <div class="stat-label">Nb sessions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🏁</div>
+                <div class="stat-value" id="dashCircuitsCount">0</div>
+                <div class="stat-label">Circuits visités</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🔄</div>
+                <div class="stat-value" id="dashTotalLaps">0</div>
+                <div class="stat-label">Nb tours</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⭐</div>
+                <div class="stat-value" id="dashFavoriteCircuit">-</div>
+                <div class="stat-label">Circuit préféré</div>
+                <div class="stat-sublabel" id="dashFavoriteCircuitBest"></div>
+            </div>
         </div>
         <div class="section-header"><h2>🕐 10 dernières sessions</h2></div>
         <div id="recentSessionsList" class="sessions-list"></div>
