@@ -16,8 +16,8 @@ try {
     firebase.initializeApp(firebaseConfig);
     auth = firebase.auth();
     db = firebase.firestore();
-    console.log('✅ Firebase OK');
-} catch(e) { console.error('❌ Firebase:', e); }
+    console.log('âœ… Firebase OK');
+} catch(e) { console.error('âŒ Firebase:', e); }
 
 // ============================================
 // VARIABLES GLOBALES UI
@@ -29,7 +29,7 @@ let deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    // Attendre que le dashboard soit prêt
+    // Attendre que le dashboard soit prÃªt
     setTimeout(() => {
         if (window.dashboard) {
             dashboard.setPwaInstructions();
@@ -41,14 +41,14 @@ window.addEventListener('appinstalled', () => {
     deferredPrompt = null;
     const btn = document.getElementById('installBtn');
     if (btn) btn.style.display = 'none';
-    showNotifGlobal('App installée ! 🎉');
+    showNotifGlobal('App installÃ©e ! ðŸŽ‰');
 });
 
 function installPWA() {
     if (deferredPrompt) {
         deferredPrompt.prompt();
         deferredPrompt.userChoice.then((result) => {
-            if (result.outcome === 'accepted') showNotifGlobal('Installation réussie ! 📲');
+            if (result.outcome === 'accepted') showNotifGlobal('Installation rÃ©ussie ! ðŸ“²');
             deferredPrompt = null;
         });
     }
@@ -58,7 +58,7 @@ function installPWA() {
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('service-worker.js')
-            .then(() => console.log('✅ Service Worker actif'))
+            .then(() => console.log('âœ… Service Worker actif'))
             .catch(e => console.log('SW non disponible (local):', e.message));
     });
 }
@@ -74,8 +74,8 @@ function hideModal(id) { document.getElementById(id).style.display = 'none'; }
 
 function toggleAuthMode() {
     authMode = !authMode;
-    document.getElementById('authSubmitBtn').textContent = authMode ? 'Se connecter' : 'Créer un compte';
-    document.getElementById('authToggleBtn').textContent = authMode ? 'Créer un compte' : 'J\'ai déjà un compte';
+    document.getElementById('authSubmitBtn').textContent = authMode ? 'Se connecter' : 'CrÃ©er un compte';
+    document.getElementById('authToggleBtn').textContent = authMode ? 'CrÃ©er un compte' : 'J\'ai dÃ©jÃ  un compte';
 }
 
 async function handleEmailAuth() {
@@ -92,7 +92,7 @@ async function handleEmailAuth() {
         let msg = 'Erreur de connexion';
         if (e.code === 'auth/user-not-found') msg = 'Compte introuvable';
         else if (e.code === 'auth/wrong-password') msg = 'Mot de passe incorrect';
-        else if (e.code === 'auth/email-already-in-use') msg = 'Email déjà utilisé';
+        else if (e.code === 'auth/email-already-in-use') msg = 'Email dÃ©jÃ  utilisÃ©';
         else if (e.code === 'auth/weak-password') msg = 'Mot de passe trop court (6 min)';
         else if (e.code === 'auth/invalid-email') msg = 'Email invalide';
         showNotifGlobal(msg, 'error');
@@ -120,25 +120,25 @@ async function saveProfileModal() {
     errEl.style.display = 'none';
 
     if (!name || !kart || !engine) {
-        errEl.textContent = '⚠️ Veuillez remplir tous les champs obligatoires (*)';
+        errEl.textContent = 'âš ï¸ Veuillez remplir tous les champs obligatoires (*)';
         errEl.style.display = 'block';
         return;
     }
     if (!cgu) {
-        errEl.textContent = '⚠️ Veuillez accepter les conditions d\'utilisation';
+        errEl.textContent = 'âš ï¸ Veuillez accepter les conditions d\'utilisation';
         errEl.style.display = 'block';
         return;
     }
 
     const btn = document.getElementById('saveProfileBtn');
-    btn.textContent = '⏳ Enregistrement...';
+    btn.textContent = 'â³ Enregistrement...';
     btn.disabled = true;
 
     const user = auth.currentUser;
     if (!user) {
-        errEl.textContent = '❌ Erreur: non connecté';
+        errEl.textContent = 'âŒ Erreur: non connectÃ©';
         errEl.style.display = 'block';
-        btn.textContent = '✅ Commencer';
+        btn.textContent = 'âœ… Commencer';
         btn.disabled = false;
         return;
     }
@@ -154,21 +154,21 @@ async function saveProfileModal() {
 
     try {
         await db.collection('users').doc(user.uid).collection('profile').doc('data').set(profile);
-        console.log('✅ Profil sauvegardé Firebase');
+        console.log('âœ… Profil sauvegardÃ© Firebase');
 
-        // Mettre à jour le dashboard
+        // Mettre Ã  jour le dashboard
         dashboard.profile = profile;
         dashboard.displayProfile();
         hideModal('profileModal');
         document.getElementById('appContainer').style.display = 'block';
-        dashboard.showNotification('Bienvenue ' + name + ' ! 🏁', 'success');
+        dashboard.showNotification('Bienvenue ' + name + ' ! ðŸ', 'success');
     } catch(e) {
-        console.error('❌ Erreur Firebase:', e);
-        errEl.textContent = '❌ Erreur sauvegarde: ' + e.message;
+        console.error('âŒ Erreur Firebase:', e);
+        errEl.textContent = 'âŒ Erreur sauvegarde: ' + e.message;
         errEl.style.display = 'block';
     }
 
-    btn.textContent = '✅ Commencer';
+    btn.textContent = 'âœ… Commencer';
     btn.disabled = false;
 }
 
@@ -196,13 +196,13 @@ class KartingDashboard {
         this.setupEventListeners();
     }
 
-    // ── AUTH ──────────────────────────────────
+    // â”€â”€ AUTH â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     setupAuth() {
         auth.onAuthStateChanged(user => {
             this.currentUser = user;
             if (user) {
-                console.log('✅ Connecté:', user.email);
+                console.log('âœ… ConnectÃ©:', user.email);
                 hideModal('authModal');
                 this.loadFromFirebase();
             } else {
@@ -212,7 +212,7 @@ class KartingDashboard {
         });
     }
 
-    // ── FIREBASE ─────────────────────────────
+    // â”€â”€ FIREBASE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     async loadFromFirebase() {
         if (!this.currentUser || !db) return;
@@ -223,8 +223,8 @@ class KartingDashboard {
             const profileDoc = await db.collection('users').doc(uid).collection('profile').doc('data').get();
 
             if (!profileDoc.exists || !profileDoc.data().pilotName) {
-                // Premier lancement → montrer modal profil
-                console.log('📋 Premier lancement - affichage profil obligatoire');
+                // Premier lancement â†’ montrer modal profil
+                console.log('ðŸ“‹ Premier lancement - affichage profil obligatoire');
                 document.getElementById('regEmail').value = this.currentUser.email || '';
                 document.getElementById('appContainer').style.display = 'none';
                 showModal('profileModal');
@@ -232,13 +232,13 @@ class KartingDashboard {
             }
 
             this.profile = profileDoc.data();
-            console.log('✅ Profil chargé:', this.profile.pilotName);
+            console.log('âœ… Profil chargÃ©:', this.profile.pilotName);
 
             // Charger sessions
             const sessSnap = await db.collection('users').doc(uid).collection('sessions').get();
             this.sessions = [];
             sessSnap.forEach(doc => this.sessions.push(doc.data()));
-            console.log('✅ Sessions chargées:', this.sessions.length);
+            console.log('âœ… Sessions chargÃ©es:', this.sessions.length);
 
             // Charger circuits
             const circDoc = await db.collection('users').doc(uid).collection('settings').doc('circuits').get();
@@ -259,17 +259,17 @@ class KartingDashboard {
             this.setTodayDate();
             this.setCurrentTime();
 
-            // Email dans réglages
+            // Email dans rÃ©glages
             const emailEl = document.getElementById('settingsUserEmail');
-            if (emailEl) emailEl.textContent = '📧 ' + (this.currentUser.email || '');
+            if (emailEl) emailEl.textContent = 'ðŸ“§ ' + (this.currentUser.email || '');
 
             // Instructions PWA selon plateforme
             this.setPwaInstructions();
 
-            this.showNotification('Données synchronisées ☁️', 'success');
+            this.showNotification('DonnÃ©es synchronisÃ©es â˜ï¸', 'success');
 
         } catch(e) {
-            console.error('❌ Erreur chargement Firebase:', e);
+            console.error('âŒ Erreur chargement Firebase:', e);
             this.showNotification('Erreur de connexion', 'error');
         }
     }
@@ -294,7 +294,7 @@ class KartingDashboard {
         await db.collection('users').doc(this.currentUser.uid).collection('profile').doc('data').set(this.profile);
     }
 
-    // ── PROFIL SETTINGS ───────────────────────
+    // â”€â”€ PROFIL SETTINGS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     saveProfileSettings() {
         const name = document.getElementById('pilotName').value.trim();
@@ -308,7 +308,7 @@ class KartingDashboard {
         this.profile.kartEngine = engine;
         this.displayProfile();
         this.saveProfileFirebase()
-            .then(() => this.showNotification('Profil sauvegardé ! 👤', 'success'))
+            .then(() => this.showNotification('Profil sauvegardÃ© ! ðŸ‘¤', 'success'))
             .catch(() => this.showNotification('Erreur sauvegarde', 'error'));
     }
 
@@ -323,7 +323,7 @@ class KartingDashboard {
         if (pe) pe.value = this.profile.kartEngine || '';
     }
 
-    // ── SESSIONS ─────────────────────────────
+    // â”€â”€ SESSIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     addSession() {
         const date = document.getElementById('date').value;
@@ -348,9 +348,9 @@ class KartingDashboard {
             if (s) {
                 Object.assign(s, { date, time, circuit, bestTime, lapsCount, maxLaps, crownUsed, weather, temperature, tireType, tirePressure, notes });
                 this.saveSessionFirebase(s);
-                this.showNotification('Session modifiée ✏️');
+                this.showNotification('Session modifiÃ©e âœï¸');
                 this.editingId = null;
-                document.getElementById('submitBtn').textContent = '📊 Enregistrer la session';
+                document.getElementById('submitBtn').textContent = 'ðŸ“Š Enregistrer la session';
                 document.getElementById('cancelEditBtn').style.display = 'none';
             }
         } else {
@@ -361,7 +361,7 @@ class KartingDashboard {
             if (isRecord) {
                 this.showRecordPopup(circuit, bestTime);
             } else {
-                this.showNotification('Session ajoutée ! 🎉');
+                this.showNotification('Session ajoutÃ©e ! ðŸŽ‰');
             }
         }
 
@@ -378,7 +378,7 @@ class KartingDashboard {
     }
 
     showRecordPopup(circuit, time) {
-        document.getElementById('recordCircuit').textContent = '🏁 ' + circuit;
+        document.getElementById('recordCircuit').textContent = 'ðŸ ' + circuit;
         document.getElementById('recordTime').textContent = this.formatTime(time);
         document.getElementById('recordPopup').style.display = 'flex';
         setTimeout(() => closeRecord(), 6000);
@@ -395,7 +395,7 @@ class KartingDashboard {
         setVal('tireType', s.tireType); setVal('tirePressure', s.tirePressure);
         setVal('notes', s.notes);
         this.editingId = id;
-        document.getElementById('submitBtn').textContent = '✏️ Enregistrer les modifications';
+        document.getElementById('submitBtn').textContent = 'âœï¸ Enregistrer les modifications';
         document.getElementById('cancelEditBtn').style.display = 'block';
         this.switchView('add-session');
         window.scrollTo(0, 0);
@@ -407,7 +407,7 @@ class KartingDashboard {
         await this.deleteSessionFirebase(id);
         this.updateDashboard();
         this.populateCircuitFilter();
-        this.showNotification('Session supprimée', 'error');
+        this.showNotification('Session supprimÃ©e', 'error');
     }
 
     cancelEdit() {
@@ -423,7 +423,7 @@ class KartingDashboard {
         this.setCurrentTime();
         this.editingId = null;
         const sb = document.getElementById('submitBtn');
-        if (sb) sb.textContent = '📊 Enregistrer la session';
+        if (sb) sb.textContent = 'ðŸ“Š Enregistrer la session';
         const cb = document.getElementById('cancelEditBtn');
         if (cb) cb.style.display = 'none';
     }
@@ -432,18 +432,18 @@ class KartingDashboard {
         const s = this.sessions.find(s => s.id === id);
         if (!s) return;
         const rows = [
-            ['📅 Date', this.formatDate(s.date)],
-            ['🕐 Heure', s.time || '-'],
-            ['🏁 Circuit', s.circuit],
-            ['⏱️ Meilleur temps', this.formatTime(s.bestTime)],
-            ['🔢 Tours', s.lapsCount || '-'],
-            ['🏎️ Tours moteur', s.maxLaps || '-'],
-            ['⚙️ Couronne', s.crownUsed || '-'],
-            ['🌦️ Météo', s.weather || '-'],
-            ['🌡️ Température', s.temperature ? s.temperature + '°C' : '-'],
-            ['🛞 Pneus', s.tireType || '-'],
-            ['⚡ Pression', s.tirePressure ? s.tirePressure + ' bar' : '-'],
-            ['📝 Notes', s.notes || '-']
+            ['ðŸ“… Date', this.formatDate(s.date)],
+            ['ðŸ• Heure', s.time || '-'],
+            ['ðŸ Circuit', s.circuit],
+            ['â±ï¸ Meilleur temps', this.formatTime(s.bestTime)],
+            ['ðŸ”¢ Tours', s.lapsCount || '-'],
+            ['ðŸŽï¸ Tours moteur', s.maxLaps || '-'],
+            ['âš™ï¸ Couronne', s.crownUsed || '-'],
+            ['ðŸŒ¦ï¸ MÃ©tÃ©o', s.weather || '-'],
+            ['ðŸŒ¡ï¸ TempÃ©rature', s.temperature ? s.temperature + 'Â°C' : '-'],
+            ['ðŸ›ž Pneus', s.tireType || '-'],
+            ['âš¡ Pression', s.tirePressure ? s.tirePressure + ' bar' : '-'],
+            ['ðŸ“ Notes', s.notes || '-']
         ];
         document.getElementById('sessionDetailsContent').innerHTML =
             rows.map(([l, v]) => `<div class="session-detail-row"><span class="session-detail-label">${l}</span><span class="session-detail-value">${v}</span></div>`).join('');
@@ -452,12 +452,12 @@ class KartingDashboard {
 
     closeSessionDetails() { hideModal('sessionModal'); }
 
-    // ── CIRCUITS ─────────────────────────────
+    // â”€â”€ CIRCUITS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     populateCircuits() {
         const sel = document.getElementById('circuit');
         if (!sel) return;
-        sel.innerHTML = '<option value="">-- Sélectionnez --</option>';
+        sel.innerHTML = '<option value="">-- SÃ©lectionnez --</option>';
         [...this.circuits].sort().forEach(c => {
             const o = document.createElement('option');
             o.value = o.textContent = c;
@@ -487,16 +487,16 @@ class KartingDashboard {
         const name = prompt('Nom du circuit :');
         if (!name || !name.trim()) return;
         const n = name.trim();
-        if (this.circuits.includes(n)) { alert('Circuit déjà existant !'); return; }
+        if (this.circuits.includes(n)) { alert('Circuit dÃ©jÃ  existant !'); return; }
         this.circuits.push(n);
         this.saveCircuitsFirebase();
         this.populateCircuits();
         const sel = document.getElementById('circuit');
         if (sel) sel.value = n;
-        this.showNotification('Circuit "' + n + '" ajouté ! 🏁');
+        this.showNotification('Circuit "' + n + '" ajoutÃ© ! ðŸ');
     }
 
-    // ── DASHBOARD ────────────────────────────
+    // â”€â”€ DASHBOARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     updateDashboard() {
         this.updateStats();
@@ -535,10 +535,10 @@ class KartingDashboard {
         const el = document.getElementById('recentSessionsList');
         if (!el) return;
         if (this.sessions.length === 0) {
-            el.innerHTML = '<div class="empty-state"><p>🏎️ Aucune session<br><small>Commencez par ajouter une session !</small></p></div>';
+            el.innerHTML = '<div class="empty-state"><p>ðŸŽï¸ Aucune session<br><small>Commencez par ajouter une session !</small></p></div>';
             return;
         }
-        // LIMITE 10 DERNIÈRES SESSIONS
+        // LIMITE 10 DERNIÃˆRES SESSIONS
         const recent = [...this.sessions]
             .sort((a, b) => new Date(b.date + ' ' + (b.time || '')) - new Date(a.date + ' ' + (a.time || '')))
             .slice(0, 10);
@@ -549,7 +549,7 @@ class KartingDashboard {
         const el = document.getElementById('circuitsAnalysis');
         if (!el) return;
         if (this.sessions.length === 0) {
-            el.innerHTML = '<div class="empty-state"><p>📊 Aucune donnée</p></div>';
+            el.innerHTML = '<div class="empty-state"><p>ðŸ“Š Aucune donnÃ©e</p></div>';
             return;
         }
         const data = {};
@@ -569,17 +569,17 @@ class KartingDashboard {
         const avg = sessions.reduce((s, x) => s + x.bestTime, 0) / sessions.length;
         const totalLaps = sessions.reduce((s, x) => s + (x.lapsCount || 0), 0);
         const bestSess = sessions.find(s => s.bestTime === best);
-        const conds = [bestSess.weather, bestSess.tireType ? 'Pneus: ' + bestSess.tireType : '', bestSess.tirePressure ? bestSess.tirePressure + ' bar' : '', bestSess.maxLaps ? bestSess.maxLaps + ' t.moteur' : ''].filter(Boolean).join(' • ');
+        const conds = [bestSess.weather, bestSess.tireType ? 'Pneus: ' + bestSess.tireType : '', bestSess.tirePressure ? bestSess.tirePressure + ' bar' : '', bestSess.maxLaps ? bestSess.maxLaps + ' t.moteur' : ''].filter(Boolean).join(' â€¢ ');
         const chartId = 'chart-' + circuit.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
 
         const tile = document.createElement('div');
         tile.className = 'circuit-tile';
         tile.innerHTML = `
-            <div class="circuit-tile-name">🏁 ${circuit}</div>
+            <div class="circuit-tile-name">ðŸ ${circuit}</div>
             <div class="circuit-best-time-line">
                 <span>Mon meilleur :</span>
                 <span class="circuit-best-time-value">${this.formatTime(best)}</span>
-                <button class="btn-view-record-inline" data-id="${bestSess.id}">👁️ Détails</button>
+                <button class="btn-view-record-inline" data-id="${bestSess.id}">ðŸ‘ï¸ DÃ©tails</button>
             </div>
             <div class="circuit-conditions-summary">${conds || '-'}</div>
             <div class="circuit-tile-chart"><canvas id="${chartId}"></canvas></div>
@@ -617,30 +617,30 @@ class KartingDashboard {
         const el = document.getElementById('sessionsList');
         if (!el) return;
         if (this.sessions.length === 0) {
-            el.innerHTML = '<div class="empty-state"><p>🏎️ Aucune session</p></div>'; return;
+            el.innerHTML = '<div class="empty-state"><p>ðŸŽï¸ Aucune session</p></div>'; return;
         }
         const sorted = [...this.sessions].sort((a, b) => new Date(b.date + ' ' + (b.time || '')) - new Date(a.date + ' ' + (a.time || '')));
         el.innerHTML = sorted.map(s => this.sessionItemHTML(s, true)).join('');
     }
 
     sessionItemHTML(s, showDelete) {
-        const details = [s.lapsCount ? s.lapsCount + ' tours' : '', s.weather || '', s.tirePressure ? s.tirePressure + ' bar' : ''].filter(Boolean).join(' • ');
+        const details = [s.lapsCount ? s.lapsCount + ' tours' : '', s.weather || '', s.tirePressure ? s.tirePressure + ' bar' : ''].filter(Boolean).join(' â€¢ ');
         return `<div class="session-item">
             <div class="session-info">
                 <span class="session-date">${this.formatDateShort(s.date)} ${s.time || ''}</span>
-                <span class="session-circuit">📍 ${s.circuit}</span>
+                <span class="session-circuit">ðŸ“ ${s.circuit}</span>
                 <span class="session-time">${this.formatTime(s.bestTime)}</span>
                 <span class="session-notes">${details || '-'}</span>
             </div>
             <div class="session-actions">
-                <button class="btn-details" data-id="${s.id}">👁️</button>
-                <button class="btn-edit" data-id="${s.id}">✏️</button>
-                ${showDelete ? `<button class="btn-delete" data-id="${s.id}">🗑️</button>` : ''}
+                <button class="btn-details" data-id="${s.id}">ðŸ‘ï¸</button>
+                <button class="btn-edit" data-id="${s.id}">âœï¸</button>
+                <button class="btn-delete" data-id="${s.id}" title="Supprimer">🗑️</button>
             </div>
         </div>`;
     }
 
-    // ── NAVIGATION ───────────────────────────
+    // â”€â”€ NAVIGATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     switchView(view) {
         document.querySelectorAll('.view-section').forEach(s => s.style.display = 'none');
@@ -652,7 +652,7 @@ class KartingDashboard {
         if (view === 'settings') this.displayProfile();
     }
 
-    // ── THEME ────────────────────────────────
+    // â”€â”€ THEME â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     applyTheme() {
         const mode = localStorage.getItem('themeMode') || 'dark';
@@ -672,10 +672,10 @@ class KartingDashboard {
         const mode = document.getElementById('themeMode').value;
         localStorage.setItem('themeMode', mode);
         this.applyTheme();
-        this.showNotification('Thème appliqué ✅');
+        this.showNotification('ThÃ¨me appliquÃ© âœ…');
     }
 
-    // ── PWA ──────────────────────────────────
+    // â”€â”€ PWA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     setPwaInstructions() {
         const inst = document.getElementById('pwaInstructions');
@@ -689,17 +689,17 @@ class KartingDashboard {
         
         if (deferredPrompt && btn) {
             btn.style.display = 'block';
-            inst.innerHTML = '<p style="color:#10b981; font-size:0.9em; margin-bottom:10px;">✅ Prêt à installer sur votre écran d\'accueil</p>';
+            inst.innerHTML = '<p style="color:#10b981; font-size:0.9em; margin-bottom:10px;">âœ… PrÃªt Ã  installer sur votre Ã©cran d\'accueil</p>';
             return;
         }
         
         if (isIOS || isSafari) {
             inst.innerHTML = `
                 <div style="background:#1a1a1a; border-radius:8px; padding:15px; border:1px solid #2a2a2a;">
-                    <p style="color:#667eea; font-weight:600; margin:0 0 10px;">📱 Installation iOS/Safari :</p>
+                    <p style="color:#667eea; font-weight:600; margin:0 0 10px;">ðŸ“± Installation iOS/Safari :</p>
                     <ol style="color:#ccc; font-size:0.85em; margin:0; padding-left:20px; line-height:1.6;">
-                        <li>Appuyez sur le bouton <strong>Partager</strong> (📤) en bas</li>
-                        <li>Faites défiler et sélectionnez <strong>"Sur l'écran d'accueil"</strong></li>
+                        <li>Appuyez sur le bouton <strong>Partager</strong> (ðŸ“¤) en bas</li>
+                        <li>Faites dÃ©filer et sÃ©lectionnez <strong>"Sur l'Ã©cran d'accueil"</strong></li>
                         <li>Appuyez sur <strong>"Ajouter"</strong></li>
                     </ol>
                 </div>`;
@@ -708,10 +708,10 @@ class KartingDashboard {
         else if (isAndroid) {
             inst.innerHTML = `
                 <div style="background:#1a1a1a; border-radius:8px; padding:15px; border:1px solid #2a2a2a;">
-                    <p style="color:#667eea; font-weight:600; margin:0 0 10px;">📱 Installation Android :</p>
+                    <p style="color:#667eea; font-weight:600; margin:0 0 10px;">ðŸ“± Installation Android :</p>
                     <ol style="color:#ccc; font-size:0.85em; margin:0; padding-left:20px; line-height:1.6;">
-                        <li>Appuyez sur les <strong>3 points</strong> (⋮) du menu Chrome</li>
-                        <li>Sélectionnez <strong>"Ajouter à l'écran d'accueil"</strong></li>
+                        <li>Appuyez sur les <strong>3 points</strong> (â‹®) du menu Chrome</li>
+                        <li>SÃ©lectionnez <strong>"Ajouter Ã  l'Ã©cran d'accueil"</strong></li>
                         <li>Confirmez avec <strong>"Ajouter"</strong></li>
                     </ol>
                 </div>`;
@@ -720,47 +720,47 @@ class KartingDashboard {
         else {
             inst.innerHTML = `
                 <div style="background:#1a1a1a; border-radius:8px; padding:15px; border:1px solid #2a2a2a;">
-                    <p style="color:#667eea; font-weight:600; margin:0 0 10px;">💻 Installation Desktop :</p>
+                    <p style="color:#667eea; font-weight:600; margin:0 0 10px;">ðŸ’» Installation Desktop :</p>
                     <p style="color:#ccc; font-size:0.85em; margin:0; line-height:1.6;">
-                        Cherchez l'icône <strong>⊕</strong> ou <strong>🖥️</strong> dans la barre d'adresse (à droite) et cliquez dessus pour installer l'application.
+                        Cherchez l'icÃ´ne <strong>âŠ•</strong> ou <strong>ðŸ–¥ï¸</strong> dans la barre d'adresse (Ã  droite) et cliquez dessus pour installer l'application.
                     </p>
                 </div>`;
             if (btn) btn.style.display = 'none';
         }
     }
 
-    // ── LOGOUT ───────────────────────────────
+    // â”€â”€ LOGOUT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     async logout() {
-        if (!confirm('Se déconnecter ?')) return;
+        if (!confirm('Se dÃ©connecter ?')) return;
         await auth.signOut();
         location.reload();
     }
 
-    // ── DELETE ACCOUNT ───────────────────────
+    // â”€â”€ DELETE ACCOUNT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     async clearAllData() {
         const count = this.sessions.length;
-        if (!confirm(`⚠️ Supprimer DÉFINITIVEMENT ?\n\n• ${count} session(s)\n• Votre profil\n• Vos circuits\n\nAction IRRÉVERSIBLE !`)) return;
+        if (!confirm(`âš ï¸ Supprimer DÃ‰FINITIVEMENT ?\n\nâ€¢ ${count} session(s)\nâ€¢ Votre profil\nâ€¢ Vos circuits\n\nAction IRRÃ‰VERSIBLE !`)) return;
         const confirm2 = prompt('Tapez votre nom de pilote pour confirmer :');
         if (confirm2 !== this.profile.pilotName) {
-            this.showNotification('Nom incorrect. Annulé.', 'error'); return;
+            this.showNotification('Nom incorrect. AnnulÃ©.', 'error'); return;
         }
         try {
             const uid = this.currentUser.uid;
-            this.showNotification('🗑️ Suppression...', 'error');
+            this.showNotification('ðŸ—‘ï¸ Suppression...', 'error');
             const sessSnap = await db.collection('users').doc(uid).collection('sessions').get();
             await Promise.all(sessSnap.docs.map(d => d.ref.delete()));
             await db.collection('users').doc(uid).collection('profile').doc('data').delete();
             await db.collection('users').doc(uid).collection('settings').doc('circuits').delete();
-            this.showNotification('Compte supprimé', 'success');
+            this.showNotification('Compte supprimÃ©', 'success');
             setTimeout(() => auth.signOut().then(() => location.reload()), 2000);
         } catch(e) {
             this.showNotification('Erreur suppression', 'error');
         }
     }
 
-    // ── UTILITAIRES ──────────────────────────
+    // â”€â”€ UTILITAIRES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     formatTime(seconds) {
         if (isNaN(seconds)) return '-';
@@ -804,7 +804,7 @@ class KartingDashboard {
         setTimeout(() => { n.style.opacity = '0'; n.style.transition = 'opacity 0.3s'; setTimeout(() => n.remove(), 300); }, 3000);
     }
 
-    // ── SETUP EVENT LISTENERS ─────────────────
+    // â”€â”€ SETUP EVENT LISTENERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     setupEventListeners() {
         // Google signin
@@ -884,7 +884,7 @@ class KartingDashboard {
     }
 }
 
-// ── LANCEMENT ────────────────────────────────
+// â”€â”€ LANCEMENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 let dashboard;
 document.addEventListener('DOMContentLoaded', () => {
