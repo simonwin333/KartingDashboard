@@ -1693,7 +1693,7 @@ section h2 {
     .form-row { grid-template-columns: 1fr; }
 }
 
-/* STAT SUBLABEL - meilleur temps circuit préféré */
+/* STAT SUBLABEL */
 .stat-sublabel {
     font-size: 0.7em;
     color: #10b981;
