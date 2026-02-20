@@ -1315,7 +1315,7 @@ section h2 {
     transition: all 0.3s; color: white;
 }
 .header-settings-btn:hover { background: rgba(102,126,234,0.2); border-color: #667eea; }
-.header-right { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.header-right { display: flex; gap: 8px; align-items: center; }
 
 /* CGU Checkbox */
 .cgu-label {
@@ -1496,8 +1496,8 @@ section h2 {
 .header-left { display: flex; align-items: center; gap: 12px; }
 .header-logo { font-size: 2em; }
 .app-header h1 { font-size: 1.1em; margin: 0; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.header-subtitle { font-size: 0.72em; color: #999; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
-.header-right { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.header-subtitle { font-size: 0.8em; color: #999; margin: 0; }
+.header-right { display: flex; align-items: center; gap: 10px; }
 .btn-icon { background: none; border: none; font-size: 1.4em; cursor: pointer; padding: 5px; }
 .coffee-badge {
     text-decoration: none; font-size: 1.3em; opacity: 0.7;
@@ -1522,17 +1522,17 @@ section h2 {
 /* STATS GRID */
 .stats-grid {
     display: grid; grid-template-columns: 1fr 1fr;
-    gap: 10px; padding: 15px;
+    gap: 8px; padding: 10px;
 }
 .stat-card {
-    background: #1a1a1a; border-radius: 12px; padding: 15px 10px;
+    background: #1a1a1a; border-radius: 10px; padding: 10px 8px;
     text-align: center; border: 1px solid #2a2a2a;
 }
 .stat-card-wide { grid-column: span 1; }
-.stat-icon { font-size: 1.5em; margin-bottom: 5px; }
-.stat-value { font-size: 1.4em; font-weight: 700; color: #fff; }
-.stat-label { font-size: 0.75em; color: #666; margin-top: 3px; }
-.stat-card-wide .stat-value { font-size: 1.1em; }
+.stat-icon { font-size: 1.2em; margin-bottom: 3px; }
+.stat-value { font-size: 1.1em; font-weight: 700; color: #fff; }
+.stat-label { font-size: 0.65em; color: #666; margin-top: 2px; }
+.stat-card-wide .stat-value { font-size: 0.9em; }
 
 /* SECTIONS */
 .view-section { padding: 15px; }
@@ -1543,19 +1543,19 @@ section h2 {
 /* SESSIONS */
 .sessions-list { display: flex; flex-direction: column; gap: 8px; }
 .session-item {
-    background: #1a1a1a; border-radius: 10px; padding: 12px 15px;
+    background: #1a1a1a; border-radius: 8px; padding: 8px 10px;
     display: flex; justify-content: space-between; align-items: center;
-    border: 1px solid #2a2a2a;
+    border: 1px solid #2a2a2a; gap: 8px;
 }
-.session-info { display: flex; flex-direction: column; gap: 3px; flex: 1; }
-.session-date { font-size: 0.8em; color: #666; }
-.session-circuit { font-size: 0.9em; color: #fff; font-weight: 600; }
-.session-time { font-size: 1em; color: #667eea; font-weight: 700; }
-.session-notes { font-size: 0.75em; color: #666; }
-.session-actions { display: flex; gap: 5px; }
+.session-info { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+.session-date { font-size: 0.72em; color: #666; }
+.session-circuit { font-size: 0.85em; color: #fff; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.session-time { font-size: 0.9em; color: #667eea; font-weight: 700; }
+.session-notes { font-size: 0.7em; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.session-actions { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
 .btn-details, .btn-edit, .btn-delete {
-    background: #2a2a2a; border: none; border-radius: 6px;
-    padding: 6px 8px; cursor: pointer; font-size: 0.85em; color: #fff;
+    background: #2a2a2a; border: none; border-radius: 5px;
+    padding: 5px 7px; cursor: pointer; font-size: 0.8em; color: #fff; width: 32px; text-align: center;
 }
 .btn-edit:hover { background: #667eea; }
 .btn-delete:hover { background: #ff4757; }
