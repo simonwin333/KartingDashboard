@@ -795,9 +795,9 @@ section h2 {
 
     /* SESSIONS */
     .session-item {
-        flex-direction: row;
-        align-items: center;
-        padding: 6px 8px;
+        flex-direction: column;
+        align-items: stretch;
+        padding: 8px 10px;
         gap: 6px;
     }
 
@@ -805,21 +805,21 @@ section h2 {
         flex-direction: row;
         align-items: center;
         gap: 6px;
-        width: auto;
-        flex: 1;
+        width: 100%;
+        flex: unset;
     }
 
     .session-date {
         width: auto;
         min-width: unset;
-        font-size: 0.65em;
+        font-size: 0.68em;
         flex-shrink: 0;
     }
 
     .session-circuit {
         width: auto;
         min-width: unset;
-        font-size: 0.78em;
+        font-size: 0.82em;
         flex: 1;
     }
 
@@ -827,27 +827,26 @@ section h2 {
         width: auto;
         display: inline;
         padding: 0;
-        font-size: 0.78em;
+        font-size: 0.82em;
         flex-shrink: 0;
     }
 
     .session-notes { display: none; }
 
     .session-actions {
-        width: auto;
+        width: 100%;
         display: flex;
         flex-direction: row;
-        gap: 4px;
-        flex-shrink: 0;
+        gap: 6px;
     }
 
     .btn-edit,
     .btn-delete,
     .btn-details {
-        flex: none;
-        font-size: 0.75em;
-        padding: 5px 6px;
-        width: 28px;
+        flex: 1;
+        font-size: 0.8em;
+        padding: 6px 4px;
+        width: auto;
     }
 
     /* CIRCUITS */
