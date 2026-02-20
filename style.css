@@ -1490,18 +1490,19 @@ section h2 {
 /* HEADER V4 */
 .app-header {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 12px 16px; background: #111; border-bottom: 1px solid #222;
+    padding: 6px 12px; background: #111; border-bottom: 1px solid #222;
     position: sticky; top: 0; z-index: 100;
+    height: 52px;
 }
-.header-left { display: flex; align-items: center; gap: 12px; }
-.header-logo { font-size: 2em; }
-.app-header h1 { font-size: 1.1em; margin: 0; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.header-subtitle { font-size: 0.8em; color: #999; margin: 0; }
-.header-right { display: flex; align-items: center; gap: 10px; }
-.btn-icon { background: none; border: none; font-size: 1.4em; cursor: pointer; padding: 5px; }
+.header-left { display: flex; align-items: center; gap: 8px; }
+.header-logo { font-size: 1.4em; }
+.app-header h1 { font-size: 0.95em; margin: 0; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.header-subtitle { font-size: 0.68em; color: #999; margin: 0; }
+.header-right { display: flex; align-items: center; gap: 6px; }
+.btn-icon { background: none; border: none; font-size: 1.2em; cursor: pointer; padding: 4px; }
 .coffee-badge {
-    text-decoration: none; font-size: 1.3em; opacity: 0.7;
-    transition: opacity 0.2s; padding: 5px;
+    text-decoration: none; font-size: 1.1em; opacity: 0.7;
+    transition: opacity 0.2s; padding: 4px;
 }
 .coffee-badge:hover { opacity: 1; }
 
@@ -1509,10 +1510,11 @@ section h2 {
 .main-nav {
     display: flex; justify-content: space-around; background: #111;
     border-bottom: 1px solid #222; padding: 0;
+    position: sticky; top: 52px; z-index: 99;
 }
 .nav-btn {
     flex: 1; background: none; border: none; color: #666;
-    padding: 10px 5px; font-size: 0.75em; cursor: pointer;
+    padding: 8px 5px; font-size: 0.75em; cursor: pointer;
     border-bottom: 2px solid transparent; transition: all 0.2s;
     text-align: center; line-height: 1.4;
 }
@@ -1541,18 +1543,18 @@ section h2 {
 .section-header h2 { margin: 0; }
 
 /* SESSIONS */
-.sessions-list { display: flex; flex-direction: column; gap: 8px; }
+.sessions-list { display: flex; flex-direction: column; gap: 4px; }
 .session-item {
-    background: #1a1a1a; border-radius: 8px; padding: 8px 10px;
+    background: #1a1a1a; border-radius: 7px; padding: 6px 8px;
     display: flex; justify-content: space-between; align-items: center;
     border: 1px solid #2a2a2a; gap: 8px;
 }
-.session-info { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
-.session-date { font-size: 0.72em; color: #666; }
-.session-circuit { font-size: 0.85em; color: #fff; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.session-time { font-size: 0.9em; color: #667eea; font-weight: 700; }
-.session-notes { font-size: 0.7em; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.session-actions { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+.session-info { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.session-date { font-size: 0.68em; color: #666; white-space: nowrap; flex-shrink: 0; }
+.session-circuit { font-size: 0.82em; color: #fff; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+.session-time { font-size: 0.82em; color: #667eea; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+.session-notes { display: none; }
+.session-actions { display: flex; flex-direction: row; gap: 4px; flex-shrink: 0; }
 .btn-details, .btn-edit, .btn-delete {
     background: #2a2a2a; border: none; border-radius: 5px;
     padding: 5px 7px; cursor: pointer; font-size: 0.8em; color: #fff; width: 32px; text-align: center;
