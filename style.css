@@ -1522,17 +1522,17 @@ section h2 {
 /* STATS GRID */
 .stats-grid {
     display: grid; grid-template-columns: 1fr 1fr;
-    gap: 8px; padding: 10px;
+    gap: 6px; padding: 8px;
 }
 .stat-card {
-    background: #1a1a1a; border-radius: 10px; padding: 10px 8px;
+    background: #1a1a1a; border-radius: 9px; padding: 7px 6px;
     text-align: center; border: 1px solid #2a2a2a;
 }
 .stat-card-wide { grid-column: span 1; }
-.stat-icon { font-size: 1.2em; margin-bottom: 3px; }
-.stat-value { font-size: 1.1em; font-weight: 700; color: #fff; }
-.stat-label { font-size: 0.65em; color: #666; margin-top: 2px; }
-.stat-card-wide .stat-value { font-size: 0.9em; }
+.stat-icon { font-size: 1.0em; margin-bottom: 2px; }
+.stat-value { font-size: 0.95em; font-weight: 700; color: #fff; }
+.stat-label { font-size: 0.56em; color: #666; margin-top: 2px; }
+.stat-card-wide .stat-value { font-size: 0.78em; }
 
 /* SECTIONS */
 .view-section { padding: 15px; }
