@@ -795,51 +795,59 @@ section h2 {
 
     /* SESSIONS */
     .session-item {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 12px;
-        gap: 10px;
+        flex-direction: row;
+        align-items: center;
+        padding: 6px 8px;
+        gap: 6px;
     }
 
     .session-info {
-        flex-direction: column;
-        align-items: flex-start;
+        flex-direction: row;
+        align-items: center;
         gap: 6px;
-        width: 100%;
+        width: auto;
+        flex: 1;
     }
 
-    .session-date,
-    .session-circuit {
-        width: 100%;
+    .session-date {
+        width: auto;
         min-width: unset;
-        font-size: 0.85em;
+        font-size: 0.65em;
+        flex-shrink: 0;
+    }
+
+    .session-circuit {
+        width: auto;
+        min-width: unset;
+        font-size: 0.78em;
+        flex: 1;
     }
 
     .session-time {
         width: auto;
-        display: inline-block;
-        padding: 4px 10px;
-        font-size: 0.9em;
+        display: inline;
+        padding: 0;
+        font-size: 0.78em;
+        flex-shrink: 0;
     }
 
-    .session-notes {
-        width: 100%;
-        font-size: 0.75em;
-    }
+    .session-notes { display: none; }
 
     .session-actions {
-        width: 100%;
+        width: auto;
         display: flex;
-        gap: 6px;
+        flex-direction: row;
+        gap: 4px;
+        flex-shrink: 0;
     }
 
     .btn-edit,
     .btn-delete,
     .btn-details {
-        flex: 1;
+        flex: none;
         font-size: 0.75em;
-        padding: 8px 4px;
-        white-space: nowrap;
+        padding: 5px 6px;
+        width: 28px;
     }
 
     /* CIRCUITS */
