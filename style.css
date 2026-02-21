@@ -1524,9 +1524,9 @@ section h2 {
 .session-line2 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .session-circuit { font-size: 0.88em; color: #fff; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .session-date { font-size: 0.68em; color: #666; white-space: nowrap; flex-shrink: 0; }
-.session-time { font-size: 0.85em; color: #667eea; font-weight: 700; white-space: nowrap; }
+.session-time { font-size: 0.82em; color: #667eea; font-weight: 700; white-space: nowrap; display: inline; }
 .session-record { color: #10b981 !important; }
-.session-conditions { font-size: 0.72em; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.session-conditions { font-size: 0.72em; color: #666; }
 .session-notes { display: none; }
 .session-actions { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; justify-content: center; }
 .session-btn {

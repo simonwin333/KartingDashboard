@@ -628,25 +628,25 @@ class KartingDashboard {
         const bestTime = Math.min(...circuitSessions.map(x => x.bestTime));
         const isRecord = s.bestTime === bestTime;
 
-        // Ligne 2 : infos conditions
+        // Ligne 2 : infos conditions dans le bon ordre
         const line2 = [
+            s.tireType || '',
+            s.tirePressure ? s.tirePressure + ' bar' : '',
             s.temperature ? '🌡️ ' + s.temperature + '°C' : '',
-            s.tirePressure ? '⚡ ' + s.tirePressure + ' bar' : '',
-            s.weather || '',
-            s.tireType || ''
-        ].filter(Boolean).join('  ');
+            s.weather || ''
+        ].filter(Boolean).join(' · ');
 
         const deleteBtn = showDelete ? `<button class="btn-delete session-btn" data-id="${s.id}">🗑️</button>` : '';
 
         return `<div class="session-item">
             <div class="session-content">
                 <div class="session-line1">
-                    <span class="session-circuit">📍 ${s.circuit}</span>
                     <span class="session-date">${this.formatDateShort(s.date)} ${s.time || ''}</span>
+                    <span class="session-circuit">📍 ${s.circuit}</span>
                 </div>
                 <div class="session-line2">
                     <span class="session-time ${isRecord ? 'session-record' : ''}">⏱️ ${this.formatTime(s.bestTime)}${isRecord ? ' 🏆' : ''}</span>
-                    <span class="session-conditions">${line2}</span>
+                    ${line2 ? `<span class="session-conditions">${line2}</span>` : ''}
                 </div>
             </div>
             <div class="session-actions">
