@@ -342,14 +342,9 @@ section h2 {
 }
 
 .session-time {
-    background: #2a2a2a;
-    color: white;
-    padding: 5px 12px;
-    border-radius: 15px;
+    color: #667eea;
     font-weight: bold;
-    font-size: 0.95em;
-    border: 1px solid #444;
-    text-align: center;
+    font-size: 0.85em;
 }
 
 .session-notes {
