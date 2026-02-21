@@ -623,18 +623,36 @@ class KartingDashboard {
     }
 
     sessionItemHTML(s, showDelete) {
-        const details = [s.lapsCount ? s.lapsCount + ' tours' : '', s.weather || '', s.tirePressure ? s.tirePressure + ' bar' : ''].filter(Boolean).join(' • ');
+        // Détecter si c'est le record du circuit
+        const circuitSessions = this.sessions.filter(x => x.circuit === s.circuit);
+        const bestTime = Math.min(...circuitSessions.map(x => x.bestTime));
+        const isRecord = s.bestTime === bestTime;
+
+        // Ligne 2 : infos conditions
+        const line2 = [
+            s.temperature ? '🌡️ ' + s.temperature + '°C' : '',
+            s.tirePressure ? '⚡ ' + s.tirePressure + ' bar' : '',
+            s.weather || '',
+            s.tireType || ''
+        ].filter(Boolean).join('  ');
+
+        const deleteBtn = showDelete ? `<button class="btn-delete session-btn" data-id="${s.id}">🗑️</button>` : '';
+
         return `<div class="session-item">
-            <div class="session-info">
-                <span class="session-date">${this.formatDateShort(s.date)} ${s.time || ''}</span>
-                <span class="session-circuit">📍 ${s.circuit}</span>
-                <span class="session-time">${this.formatTime(s.bestTime)}</span>
-                <span class="session-notes">${details || '-'}</span>
+            <div class="session-content">
+                <div class="session-line1">
+                    <span class="session-circuit">📍 ${s.circuit}</span>
+                    <span class="session-date">${this.formatDateShort(s.date)} ${s.time || ''}</span>
+                </div>
+                <div class="session-line2">
+                    <span class="session-time ${isRecord ? 'session-record' : ''}">⏱️ ${this.formatTime(s.bestTime)}${isRecord ? ' 🏆' : ''}</span>
+                    <span class="session-conditions">${line2}</span>
+                </div>
             </div>
             <div class="session-actions">
-                <button class="btn-details" data-id="${s.id}">👁️</button>
-                <button class="btn-edit" data-id="${s.id}">✏️</button>
-                <button class="btn-delete" data-id="${s.id}">🗑️</button>
+                <button class="btn-details session-btn" data-id="${s.id}">👁️</button>
+                <button class="btn-edit session-btn" data-id="${s.id}">✏️</button>
+                ${deleteBtn}
             </div>
         </div>`;
     }
