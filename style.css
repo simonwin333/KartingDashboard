@@ -1612,22 +1612,37 @@ section h2 {
 
 /* CIRCUITS */
 .circuit-tile {
-    background: #1a1a1a; border-radius: 12px; padding: 20px;
+    background: #1a1a1a; border-radius: 12px; padding: 16px;
     margin-bottom: 15px; border: 1px solid #2a2a2a;
+    display: flex; flex-direction: column; gap: 12px;
 }
-.circuit-tile-name { font-size: 1.1em; font-weight: 700; margin-bottom: 8px; }
-.circuit-best-time-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 5px; }
-.circuit-best-time-value { color: #10b981; font-weight: 700; font-size: 1.1em; }
-.circuit-conditions-summary { font-size: 0.8em; color: #666; margin-bottom: 15px; }
-.circuit-tile-chart { height: 180px; margin: 15px 0; }
-.circuit-tile-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.circuit-mini-stat { text-align: center; }
-.circuit-mini-stat-label { font-size: 0.75em; color: #666; }
-.circuit-mini-stat-value { font-size: 1em; font-weight: 700; color: #fff; }
-.btn-view-record-inline {
-    background: #2a2a2a; border: none; border-radius: 5px;
-    color: #ccc; padding: 3px 8px; font-size: 0.78em; cursor: pointer;
-}
+.circuit-tile-name { font-size: 1.1em; font-weight: 700; }
+
+/* Record */
+.ct-record-line { display:flex; align-items:center; gap:10px; }
+.ct-best-badge { background:linear-gradient(135deg,#10b981,#059669); padding:6px 13px; border-radius:20px; font-size:1.05em; font-weight:800; color:#fff; white-space:nowrap; }
+.ct-record-label { color:#999; font-size:0.8em; }
+.ct-record-cond { color:#666; font-size:0.7em; margin-top:2px; }
+.ct-record-line .btn-view-record-inline { margin-left:auto; }
+
+/* Stats horizontales */
+.ct-stats-row { display:flex; justify-content:space-around; padding:10px 0; border-top:1px solid #222; border-bottom:1px solid #222; }
+.ct-stat { text-align:center; }
+.ct-stat-val { font-size:1.05em; font-weight:800; }
+.ct-stat-lbl { font-size:0.54em; color:#666; margin-top:3px; }
+.ct-stat-div { width:1px; background:#2a2a2a; }
+
+/* Réglage optimal */
+.ct-reglage { background:#111; border-radius:9px; padding:10px 12px; border:1px solid #222; }
+.ct-reglage-title { font-size:0.62em; color:#f59e0b; font-weight:700; margin-bottom:7px; letter-spacing:0.06em; }
+.ct-chips { display:flex; gap:5px; flex-wrap:wrap; }
+.ct-chip { background:#2a2a2a; border-radius:20px; padding:3px 10px; font-size:0.64em; color:#ccc; }
+.ct-chip-hl { background:#667eea18; color:#667eea; border:1px solid #667eea33; }
+
+/* Graphiques */
+.ct-chart-block { background:#111; border-radius:9px; padding:11px 12px; border:1px solid #222; }
+.ct-chart-title { font-size:0.64em; color:#999; font-weight:600; margin-bottom:8px; letter-spacing:0.03em; }
+.ct-chart-block canvas { width:100% !important; height:130px !important; display:block; }
 
 /* FAQ */
 .faq-body { display: flex; flex-direction: column; gap: 0; max-height: 65vh; overflow-y: auto; }

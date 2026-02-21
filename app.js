@@ -563,54 +563,187 @@ class KartingDashboard {
     }
 
     renderCircuitTile(container, circuit, sessions) {
-        const sorted = [...sessions].sort((a, b) => new Date(a.date) - new Date(b.date));
+        const sorted = [...sessions].sort((a, b) => new Date(a.date + ' ' + (a.time||'')) - new Date(b.date + ' ' + (b.time||'')));
         const best = Math.min(...sessions.map(s => s.bestTime));
         const avg = sessions.reduce((s, x) => s + x.bestTime, 0) / sessions.length;
         const totalLaps = sessions.reduce((s, x) => s + (x.lapsCount || 0), 0);
         const bestSess = sessions.find(s => s.bestTime === best);
-        const conds = [bestSess.weather, bestSess.tireType ? 'Pneus: ' + bestSess.tireType : '', bestSess.tirePressure ? bestSess.tirePressure + ' bar' : '', bestSess.maxLaps ? bestSess.maxLaps + ' t.moteur' : ''].filter(Boolean).join(' • ');
-        const chartId = 'chart-' + circuit.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+        const ecart = avg - best;
+
+        // Réglage optimal : conditions de la session avec le meilleur temps
+        const optimalChips = [
+            bestSess.tireType ? '🛞 ' + bestSess.tireType : '',
+            bestSess.tirePressure ? bestSess.tirePressure + ' bar' : '',
+            bestSess.weather || '',
+            bestSess.temperature ? '🌡️ ' + bestSess.temperature + '°C' : '',
+            bestSess.crownUsed ? 'Couronne ' + bestSess.crownUsed : ''
+        ].filter(Boolean);
+
+        const bestCond = [
+            bestSess.tireType ? '🛞 ' + bestSess.tireType : '',
+            bestSess.tirePressure ? bestSess.tirePressure + ' bar' : '',
+            bestSess.temperature ? '🌡️ ' + bestSess.temperature + '°C' : '',
+            bestSess.weather || ''
+        ].filter(Boolean).join(' · ');
+
+        const cid = circuit.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+        const chartId1 = 'chart-evol-' + cid;
+        const chartId2 = 'chart-pneu-' + cid;
+        const chartId3 = 'chart-bvs-' + cid;
+        const chartId4 = 'chart-press-' + cid;
 
         const tile = document.createElement('div');
         tile.className = 'circuit-tile';
         tile.innerHTML = `
             <div class="circuit-tile-name">🏁 ${circuit}</div>
-            <div class="circuit-best-time-line">
-                <span>Mon meilleur :</span>
-                <span class="circuit-best-time-value">${this.formatTime(best)}</span>
-                <button class="btn-view-record-inline" data-id="${bestSess.id}">📋 Détails</button>
+
+            <div class="ct-record-line">
+                <span class="ct-best-badge">${this.formatTime(best)} 🏆</span>
+                <div>
+                    <div class="ct-record-label">Record personnel</div>
+                    <div class="ct-record-cond">${bestCond || '-'}</div>
+                </div>
+                <button class="btn-view-record-inline" data-id="${bestSess.id}">📋</button>
             </div>
-            <div class="circuit-conditions-summary">${conds || '-'}</div>
-            <div class="circuit-tile-chart"><canvas id="${chartId}"></canvas></div>
-            <div class="circuit-tile-stats">
-                <div class="circuit-mini-stat"><div class="circuit-mini-stat-label">Sessions</div><div class="circuit-mini-stat-value">${sessions.length}</div></div>
-                <div class="circuit-mini-stat"><div class="circuit-mini-stat-label">Moy.</div><div class="circuit-mini-stat-value">${this.formatTime(avg)}</div></div>
-                <div class="circuit-mini-stat"><div class="circuit-mini-stat-label">Tours</div><div class="circuit-mini-stat-value">${totalLaps}</div></div>
+
+            <div class="ct-stats-row">
+                <div class="ct-stat"><div class="ct-stat-val">${sessions.length}</div><div class="ct-stat-lbl">Sessions</div></div>
+                <div class="ct-stat-div"></div>
+                <div class="ct-stat"><div class="ct-stat-val">${totalLaps}</div><div class="ct-stat-lbl">Tours</div></div>
+                <div class="ct-stat-div"></div>
+                <div class="ct-stat"><div class="ct-stat-val" style="color:#667eea">${this.formatTime(avg)}</div><div class="ct-stat-lbl">Moyenne</div></div>
+                <div class="ct-stat-div"></div>
+                <div class="ct-stat"><div class="ct-stat-val" style="color:#f59e0b">+${this.formatTime(ecart)}</div><div class="ct-stat-lbl">Écart moy.</div></div>
+            </div>
+
+            <div class="ct-reglage">
+                <div class="ct-reglage-title">⚙️ RÉGLAGE OPTIMAL</div>
+                <div class="ct-chips">${optimalChips.map((c,i) => `<span class="ct-chip${i<2?' ct-chip-hl':''}">${c}</span>`).join('')}</div>
+            </div>
+
+            <div class="ct-chart-block">
+                <div class="ct-chart-title">📈 Évolution des temps</div>
+                <canvas id="${chartId1}"></canvas>
+            </div>
+            <div class="ct-chart-block">
+                <div class="ct-chart-title">🛞 Temps moyen par type de pneu</div>
+                <canvas id="${chartId2}"></canvas>
+            </div>
+            <div class="ct-chart-block">
+                <div class="ct-chart-title">📊 Meilleur vs Moyenne par session</div>
+                <canvas id="${chartId3}"></canvas>
+            </div>
+            <div class="ct-chart-block">
+                <div class="ct-chart-title">🔵 Pression pneu vs Temps</div>
+                <canvas id="${chartId4}"></canvas>
             </div>`;
 
         tile.querySelector('.btn-view-record-inline').addEventListener('click', () => this.showSessionDetails(bestSess.id));
         container.appendChild(tile);
-        setTimeout(() => this.createChart(chartId, sorted), 50);
+
+        setTimeout(() => {
+            this.createChartEvolution(chartId1, sorted, best);
+            this.createChartPneu(chartId2, sessions);
+            this.createChartBvsMoy(chartId3, sorted);
+            this.createChartPression(chartId4, sessions);
+        }, 50);
     }
 
-    createChart(id, sessions) {
+    // Graphique 1 — Évolution des temps
+    createChartEvolution(id, sessions, best) {
         const canvas = document.getElementById(id);
         if (!canvas) return;
         if (this.circuitCharts[id]) this.circuitCharts[id].destroy();
-        const labels = sessions.map(s => { const d = new Date(s.date); return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }); });
+        const labels = sessions.map(s => { const d = new Date(s.date); return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' }) + (s.time ? ' ' + s.time.substring(0,5) : ''); });
+        const ptColors = sessions.map(s => s.bestTime === best ? '#10b981' : '#667eea');
         this.circuitCharts[id] = new Chart(canvas.getContext('2d'), {
             type: 'line',
-            data: {
-                labels,
-                datasets: [{ label: 'Temps', data: sessions.map(s => s.bestTime), borderColor: '#667eea', backgroundColor: 'rgba(102,126,234,0.1)', tension: 0.4, fill: true, pointRadius: 5, pointHoverRadius: 7, pointBackgroundColor: '#667eea', pointBorderColor: '#fff', pointBorderWidth: 2 }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: true,
-                plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => { const s = sessions[ctx.dataIndex]; return ['Temps: ' + this.formatTime(s.bestTime), s.weather || '', s.lapsCount ? 'Tours: ' + s.lapsCount : ''].filter(Boolean); }}, backgroundColor: '#1a1a1a', titleColor: '#fff', bodyColor: '#ccc', borderColor: '#444', borderWidth: 1 }},
-                scales: { y: { beginAtZero: false, ticks: { callback: v => this.formatTime(v), color: '#999' }, grid: { color: '#2a2a2a' }}, x: { ticks: { color: '#999' }, grid: { color: '#2a2a2a' }}}
+            data: { labels, datasets: [{ data: sessions.map(s => s.bestTime), borderColor: '#667eea', backgroundColor: 'rgba(102,126,234,0.08)', tension: 0.4, fill: true, pointRadius: 5, pointHoverRadius: 7, pointBackgroundColor: ptColors, pointBorderColor: '#fff', pointBorderWidth: 2 }] },
+            options: { responsive:true, maintainAspectRatio:false,
+                plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: ctx => { const s = sessions[ctx.dataIndex]; return [this.formatTime(s.bestTime), s.weather||'', s.tireType||''].filter(Boolean); }}, backgroundColor:'#1a1a1a', titleColor:'#fff', bodyColor:'#ccc', borderColor:'#333', borderWidth:1 }},
+                scales: { y:{ beginAtZero:false, ticks:{ callback: v => this.formatTime(v), color:'#555', font:{size:9} }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#555', font:{size:9}}, grid:{color:'#1e1e1e'} } }
             }
         });
     }
+
+    // Graphique 2 — Temps moyen par pneu
+    createChartPneu(id, sessions) {
+        const canvas = document.getElementById(id);
+        if (!canvas) return;
+        if (this.circuitCharts[id]) this.circuitCharts[id].destroy();
+        const byTire = {};
+        sessions.forEach(s => {
+            if (!s.tireType) return;
+            if (!byTire[s.tireType]) byTire[s.tireType] = [];
+            byTire[s.tireType].push(s.bestTime);
+        });
+        const labels = Object.keys(byTire);
+        if (labels.length === 0) { canvas.parentElement.style.display='none'; return; }
+        const avgs = labels.map(t => byTire[t].reduce((a,b)=>a+b,0) / byTire[t].length);
+        const minAvg = Math.min(...avgs);
+        const bgColors = avgs.map(v => v === minAvg ? '#10b981aa' : '#667eeaaa');
+        const bdColors = avgs.map(v => v === minAvg ? '#10b981' : '#667eea');
+        this.circuitCharts[id] = new Chart(canvas.getContext('2d'), {
+            type: 'bar',
+            data: { labels, datasets: [{ data: avgs, backgroundColor: bgColors, borderColor: bdColors, borderWidth:1, borderRadius:6 }] },
+            options: { responsive:true, maintainAspectRatio:false,
+                plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: ctx => this.formatTime(ctx.raw) }, backgroundColor:'#1a1a1a', titleColor:'#fff', bodyColor:'#ccc', borderColor:'#333', borderWidth:1 }},
+                scales: { y:{ beginAtZero:false, ticks:{ callback: v => this.formatTime(v), color:'#555', font:{size:9} }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#555', font:{size:9}}, grid:{color:'#1e1e1e'} } }
+            }
+        });
+    }
+
+    // Graphique 3 — Meilleur vs Moyenne par session
+    createChartBvsMoy(id, sessions) {
+        const canvas = document.getElementById(id);
+        if (!canvas) return;
+        if (this.circuitCharts[id]) this.circuitCharts[id].destroy();
+        const labels = sessions.map((s,i) => 'S'+(i+1));
+        // "Meilleur" = bestTime de chaque session, "Moyenne" = on n'a qu'un temps par session donc on simule +5% pour la moyenne
+        const bests = sessions.map(s => s.bestTime);
+        // Si on a un champ avgTime on l'utilise, sinon on indique juste le bestTime avec un écart estimé
+        const moyennes = sessions.map(s => s.avgTime || null);
+        const hasMoy = moyennes.some(v => v !== null);
+        const datasets = [
+            { label:'Meilleur', data: bests, borderColor:'#10b981', backgroundColor:'transparent', tension:0.4, pointRadius:4, pointBackgroundColor:'#10b981', pointBorderColor:'#fff', pointBorderWidth:2 }
+        ];
+        if (hasMoy) {
+            datasets.push({ label:'Moyenne', data: moyennes, borderColor:'#667eea', backgroundColor:'rgba(102,126,234,0.06)', tension:0.4, fill:true, borderDash:[4,3], pointRadius:4, pointBackgroundColor:'#667eea', pointBorderColor:'#fff', pointBorderWidth:2 });
+        }
+        this.circuitCharts[id] = new Chart(canvas.getContext('2d'), {
+            type: 'line',
+            data: { labels, datasets },
+            options: { responsive:true, maintainAspectRatio:false,
+                plugins: { legend:{ display: hasMoy, labels:{ color:'#999', font:{size:9}, boxWidth:12, padding:8 }}, tooltip:{ callbacks:{ label: ctx => ctx.dataset.label+': '+this.formatTime(ctx.raw) }, backgroundColor:'#1a1a1a', titleColor:'#fff', bodyColor:'#ccc', borderColor:'#333', borderWidth:1 }},
+                scales: { y:{ beginAtZero:false, ticks:{ callback: v => this.formatTime(v), color:'#555', font:{size:9} }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#555', font:{size:9}}, grid:{color:'#1e1e1e'} } }
+            }
+        });
+    }
+
+    // Graphique 4 — Pression vs Temps (scatter)
+    createChartPression(id, sessions) {
+        const canvas = document.getElementById(id);
+        if (!canvas) return;
+        if (this.circuitCharts[id]) this.circuitCharts[id].destroy();
+        const data = sessions.filter(s => s.tirePressure).map(s => ({ x: parseFloat(s.tirePressure), y: s.bestTime }));
+        if (data.length < 2) { canvas.parentElement.style.display='none'; return; }
+        const best = Math.min(...data.map(d=>d.y));
+        const ptColors = data.map(d => d.y === best ? '#10b981' : '#667eea');
+        this.circuitCharts[id] = new Chart(canvas.getContext('2d'), {
+            type: 'scatter',
+            data: { datasets: [{ data, backgroundColor: ptColors, pointRadius:7, pointHoverRadius:9, pointBorderColor:'#fff', pointBorderWidth:2 }] },
+            options: { responsive:true, maintainAspectRatio:false,
+                plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: ctx => ctx.raw.x+' bar → '+this.formatTime(ctx.raw.y) }, backgroundColor:'#1a1a1a', titleColor:'#fff', bodyColor:'#ccc', borderColor:'#333', borderWidth:1 }},
+                scales: {
+                    y:{ beginAtZero:false, ticks:{ callback: v => this.formatTime(v), color:'#555', font:{size:9} }, grid:{color:'#1e1e1e'} },
+                    x:{ ticks:{ callback: v => v+' b', color:'#555', font:{size:9} }, grid:{color:'#1e1e1e'}, title:{ display:true, text:'Pression (bar)', color:'#555', font:{size:9} } }
+                }
+            }
+        });
+    }
+
+    // Legacy createChart — garde pour compatibilité
+    createChart(id, sessions) { this.createChartEvolution(id, sessions, Math.min(...sessions.map(s=>s.bestTime))); }
 
     displaySessions() {
         const el = document.getElementById('sessionsList');
