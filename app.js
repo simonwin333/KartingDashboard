@@ -570,7 +570,13 @@ class KartingDashboard {
         const bestSess = sessions.find(s => s.bestTime === best);
         const ecart = avg - best;
 
-        // Réglage optimal : conditions de la session avec le meilleur temps
+        const cid = circuit.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+        const chartId1 = 'chart-evol-' + cid;
+        const chartId2 = 'chart-pneu-' + cid;
+        const chartId3 = 'chart-bvs-' + cid;
+        const chartId4 = 'chart-press-' + cid;
+
+        // Chips réglage optimal — toutes blanches
         const optimalChips = [
             bestSess.tireType ? '🛞 ' + bestSess.tireType : '',
             bestSess.tirePressure ? bestSess.tirePressure + ' bar' : '',
@@ -579,18 +585,15 @@ class KartingDashboard {
             bestSess.crownUsed ? 'Couronne ' + bestSess.crownUsed : ''
         ].filter(Boolean);
 
-        const bestCond = [
+        // Conditions du record : 2 lignes
+        const condLine1 = [
             bestSess.tireType ? '🛞 ' + bestSess.tireType : '',
-            bestSess.tirePressure ? bestSess.tirePressure + ' bar' : '',
+            bestSess.tirePressure ? bestSess.tirePressure + ' bar' : ''
+        ].filter(Boolean).join(' · ');
+        const condLine2 = [
             bestSess.temperature ? '🌡️ ' + bestSess.temperature + '°C' : '',
             bestSess.weather || ''
         ].filter(Boolean).join(' · ');
-
-        const cid = circuit.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
-        const chartId1 = 'chart-evol-' + cid;
-        const chartId2 = 'chart-pneu-' + cid;
-        const chartId3 = 'chart-bvs-' + cid;
-        const chartId4 = 'chart-press-' + cid;
 
         const tile = document.createElement('div');
         tile.className = 'circuit-tile';
@@ -599,11 +602,12 @@ class KartingDashboard {
 
             <div class="ct-record-line">
                 <span class="ct-best-badge">${this.formatTime(best)} 🏆</span>
-                <div>
+                <div class="ct-record-info">
                     <div class="ct-record-label">Record personnel</div>
-                    <div class="ct-record-cond">${bestCond || '-'}</div>
+                    ${condLine1 ? `<div class="ct-record-cond">${condLine1}</div>` : ''}
+                    ${condLine2 ? `<div class="ct-record-cond">${condLine2}</div>` : ''}
                 </div>
-                <button class="btn-view-record-inline" data-id="${bestSess.id}">📋</button>
+                <button class="btn-details session-btn ct-eye-btn" data-id="${bestSess.id}">👁️</button>
             </div>
 
             <div class="ct-stats-row">
@@ -618,7 +622,7 @@ class KartingDashboard {
 
             <div class="ct-reglage">
                 <div class="ct-reglage-title">⚙️ RÉGLAGE OPTIMAL</div>
-                <div class="ct-chips">${optimalChips.map((c,i) => `<span class="ct-chip${i<2?' ct-chip-hl':''}">${c}</span>`).join('')}</div>
+                <div class="ct-chips">${optimalChips.map(c => `<span class="ct-chip">${c}</span>`).join('')}</div>
             </div>
 
             <div class="ct-chart-block">
@@ -638,7 +642,7 @@ class KartingDashboard {
                 <canvas id="${chartId4}"></canvas>
             </div>`;
 
-        tile.querySelector('.btn-view-record-inline').addEventListener('click', () => this.showSessionDetails(bestSess.id));
+        tile.querySelector('.ct-eye-btn').addEventListener('click', () => this.showSessionDetails(bestSess.id));
         container.appendChild(tile);
 
         setTimeout(() => {
@@ -656,13 +660,39 @@ class KartingDashboard {
         if (this.circuitCharts[id]) this.circuitCharts[id].destroy();
         const labels = sessions.map(s => { const d = new Date(s.date); return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' }) + (s.time ? ' ' + s.time.substring(0,5) : ''); });
         const ptColors = sessions.map(s => s.bestTime === best ? '#10b981' : '#667eea');
+        const self = this;
         this.circuitCharts[id] = new Chart(canvas.getContext('2d'), {
             type: 'line',
-            data: { labels, datasets: [{ data: sessions.map(s => s.bestTime), borderColor: '#667eea', backgroundColor: 'rgba(102,126,234,0.08)', tension: 0.4, fill: true, pointRadius: 5, pointHoverRadius: 7, pointBackgroundColor: ptColors, pointBorderColor: '#fff', pointBorderWidth: 2 }] },
+            data: { labels, datasets: [{ data: sessions.map(s => s.bestTime), borderColor: '#667eea', backgroundColor: 'rgba(102,126,234,0.08)', tension: 0.4, fill: true, pointRadius: 6, pointHoverRadius: 8, pointBackgroundColor: ptColors, pointBorderColor: '#fff', pointBorderWidth: 2,
+                datalabels: { display: true }
+            }] },
             options: { responsive:true, maintainAspectRatio:false,
-                plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: ctx => { const s = sessions[ctx.dataIndex]; return [this.formatTime(s.bestTime), s.weather||'', s.tireType||''].filter(Boolean); }}, backgroundColor:'#1a1a1a', titleColor:'#fff', bodyColor:'#ccc', borderColor:'#333', borderWidth:1 }},
-                scales: { y:{ beginAtZero:false, ticks:{ callback: v => this.formatTime(v), color:'#555', font:{size:9} }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#555', font:{size:9}}, grid:{color:'#1e1e1e'} } }
-            }
+                plugins: {
+                    legend:{display:false},
+                    tooltip:{ callbacks:{ label: ctx => { const s = sessions[ctx.dataIndex]; return [self.formatTime(s.bestTime), s.tireType ? '🛞 '+s.tireType : '', s.weather||''].filter(Boolean); }}, backgroundColor:'#1a1a1a', titleColor:'#fff', bodyColor:'#ccc', borderColor:'#333', borderWidth:1 }
+                },
+                scales: { y:{ beginAtZero:false, ticks:{ callback: v => self.formatTime(v), color:'#555', font:{size:9} }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#555', font:{size:9}, maxRotation:30}, grid:{color:'#1e1e1e'} } }
+            },
+            plugins: [{
+                id: 'datalabels',
+                afterDatasetsDraw(chart) {
+                    const ctx = chart.ctx;
+                    chart.data.datasets.forEach((dataset, i) => {
+                        const meta = chart.getDatasetMeta(i);
+                        meta.data.forEach((point, index) => {
+                            const val = self.formatTime(dataset.data[index]);
+                            const isRecord = dataset.data[index] === best;
+                            ctx.save();
+                            ctx.fillStyle = isRecord ? '#10b981' : '#aaa';
+                            ctx.font = 'bold 9px Segoe UI';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'bottom';
+                            ctx.fillText(val, point.x, point.y - 8);
+                            ctx.restore();
+                        });
+                    });
+                }
+            }]
         });
     }
 
