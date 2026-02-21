@@ -630,7 +630,7 @@ class KartingDashboard {
 
         // Ligne 2 : infos conditions dans le bon ordre
         const line2 = [
-            s.tireType || '',
+            s.tireType ? '🛞 ' + s.tireType : '',
             s.tirePressure ? s.tirePressure + ' bar' : '',
             s.temperature ? '🌡️ ' + s.temperature + '°C' : '',
             s.weather || ''
