@@ -1642,7 +1642,7 @@ section h2 {
 /* Graphiques */
 .ct-chart-block { background:#111; border-radius:9px; padding:11px 12px; border:1px solid #222; }
 .ct-chart-title { font-size:0.64em; color:#999; font-weight:600; margin-bottom:8px; letter-spacing:0.03em; }
-.ct-chart-block canvas { width:100% !important; height:180px !important; display:block; }
+.ct-chart-block canvas { width:100% !important; height:150px !important; display:block; }
 .ct-eye-btn { flex-shrink:0; margin-left:auto; }
 
 /* FAQ */
@@ -1697,3 +1697,81 @@ section h2 {
     margin-top: 4px;
     font-weight: 600;
 }
+
+/* ANALYSE PHRASE */
+.ct-analysis {
+    font-size: 0.72em;
+    color: #888;
+    line-height: 1.5;
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: #0d0d0d;
+    border-radius: 7px;
+    border: 1px solid #1e1e1e;
+}
+.ct-analysis:empty { display: none; }
+.ct-analysis strong { color: #10b981; }
+
+/* MATRICE pneu × pression */
+.ct-matrix-wrap { overflow-x: auto; padding-bottom: 4px; }
+.ct-matrix-table {
+    border-collapse: separate;
+    border-spacing: 4px;
+    width: 100%;
+    min-width: 200px;
+}
+.ct-matrix-table th { font-size: 0.6em; color: #555; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; padding: 3px 5px; }
+.ct-matrix-rh { text-align: right; white-space: nowrap; padding-right: 6px !important; }
+.ct-matrix-ch { text-align: center; }
+.ct-matrix-cell {
+    border-radius: 7px;
+    padding: 8px 5px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.15s;
+    position: relative;
+    min-width: 58px;
+    display: block;
+}
+.ct-matrix-cell:hover { transform: scale(1.07); }
+.ct-matrix-time { font-size: 0.75em; font-weight: 700; display: block; }
+.ct-matrix-n { font-size: 0.55em; color: rgba(255,255,255,0.45); margin-top: 2px; display: block; }
+.ct-matrix-empty {
+    background: #0d0d0d !important;
+    border: 1px dashed #1e1e1e !important;
+    color: #333;
+    font-size: 0.65em;
+    padding: 10px 5px;
+    border-radius: 7px;
+    min-width: 58px;
+    display: block;
+    text-align: center;
+}
+.ct-matrix-dot {
+    position: absolute; top: 4px; right: 4px;
+    width: 5px; height: 5px;
+    background: rgba(255,255,255,0.7);
+    border-radius: 50%;
+}
+.ct-matrix-legend {
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 8px; font-size: 0.6em; color: #555;
+}
+.ct-legend-gradient {
+    flex: 1; height: 6px; border-radius: 3px;
+    background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444);
+}
+.ct-legend-l { color: #10b981; font-weight: 700; }
+.ct-legend-r { color: #ef4444; font-weight: 700; }
+.ct-matrix-tooltip {
+    display: none;
+    margin-top: 8px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 0.75em;
+    color: #ccc;
+    line-height: 1.6;
+}
+.ct-matrix-tooltip strong { color: #fff; }

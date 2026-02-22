@@ -628,6 +628,7 @@ class KartingDashboard {
             <div class="ct-chart-block">
                 <div class="ct-chart-title">📈 Évolution des chronos</div>
                 <canvas id="${chartId1}"></canvas>
+                <div class="ct-analysis" id="analysis-${cid}"></div>
             </div>
             <div class="ct-chart-block">
                 <div class="ct-chart-title">🛞 Chrono moyen par type de pneu</div>
@@ -640,21 +641,33 @@ class KartingDashboard {
             <div class="ct-chart-block">
                 <div class="ct-chart-title">🔵 Pression pneu → Impact sur le chrono</div>
                 <canvas id="${chartId4}"></canvas>
+            </div>
+            <div class="ct-chart-block" id="matrix-block-${cid}">
+                <div class="ct-chart-title">⚙️ Matrice réglage — Pneu × Pression</div>
+                <div class="ct-matrix-wrap" id="matrix-${cid}"></div>
+                <div class="ct-matrix-legend">
+                    <span class="ct-legend-l">Rapide</span>
+                    <div class="ct-legend-gradient"></div>
+                    <span class="ct-legend-r">Lent</span>
+                </div>
+                <div class="ct-matrix-tooltip" id="matrix-tooltip-${cid}"></div>
+                <div class="ct-analysis" id="matrix-insight-${cid}"></div>
             </div>`;
 
         tile.querySelector('.ct-eye-btn').addEventListener('click', () => this.showSessionDetails(bestSess.id));
         container.appendChild(tile);
 
         setTimeout(() => {
-            this.createChartEvolution(chartId1, sorted, best);
+            this.createChartEvolution(chartId1, sorted, best, cid);
             this.createChartPneu(chartId2, sessions);
             this.createChartBvsMoy(chartId3, sorted);
             this.createChartPression(chartId4, sessions);
+            this.createMatrice(cid, sessions);
         }, 50);
     }
 
-    // Graphique 1 — Évolution des temps
-    createChartEvolution(id, sessions, best) {
+    // Graphique 1 — Évolution des chronos
+    createChartEvolution(id, sessions, best, cid) {
         const canvas = document.getElementById(id);
         if (!canvas) return;
         if (this.circuitCharts[id]) this.circuitCharts[id].destroy();
@@ -667,12 +680,11 @@ class KartingDashboard {
                 datalabels: { display: true }
             }] },
             options: { responsive:true, maintainAspectRatio:false,
-                layout: { padding: { top: 26, left: 2, right: 2, bottom: 0 } },
                 plugins: {
                     legend:{display:false},
                     tooltip:{ callbacks:{ label: ctx => { const s = sessions[ctx.dataIndex]; return [self.formatTime(s.bestTime), s.tireType ? '🛞 '+s.tireType : '', s.weather||''].filter(Boolean); }}, backgroundColor:'#1a1a1a', titleColor:'#fff', bodyColor:'#ccc', borderColor:'#333', borderWidth:1 }
                 },
-                scales: { y:{ beginAtZero:false, ticks:{ callback: v => self.formatTime(v), color:'#555', font:{size:9}, maxTicksLimit:6 }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#555', font:{size:9}, maxRotation:30}, grid:{color:'#1e1e1e'} } }
+                scales: { y:{ beginAtZero:false, ticks:{ callback: v => self.formatTime(v), color:'#555', font:{size:9} }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#555', font:{size:9}, maxRotation:30}, grid:{color:'#1e1e1e'} } }
             },
             plugins: [{
                 id: 'datalabels',
@@ -695,6 +707,26 @@ class KartingDashboard {
                 }
             }]
         });
+
+        // Phrase d'analyse automatique
+        if (cid) {
+            const el = document.getElementById('analysis-' + cid);
+            if (el && sessions.length >= 2) {
+                const first = sessions[0].bestTime;
+                const last = sessions[sessions.length - 1].bestTime;
+                const gain = first - best;
+                const prevLast = sessions[sessions.length - 2].bestTime;
+                const trend = last < prevLast ? 'en progression 📈' : 'en légère régression 📉';
+                let phrase = '';
+                if (gain > 0) {
+                    phrase = `💡 Tu as gagné <strong>${self.formatTime(gain)}</strong> depuis ta 1ère session sur ce circuit.`;
+                } else {
+                    phrase = `💡 Chrono stable sur ce circuit.`;
+                }
+                if (sessions.length >= 3) phrase += ` Ta dernière session est ${trend}.`;
+                el.innerHTML = phrase;
+            }
+        }
     }
 
     // Graphique 2 — Temps moyen par pneu
@@ -714,34 +746,13 @@ class KartingDashboard {
         const minAvg = Math.min(...avgs);
         const bgColors = avgs.map(v => v === minAvg ? '#10b981aa' : '#667eeaaa');
         const bdColors = avgs.map(v => v === minAvg ? '#10b981' : '#667eea');
-        const self2 = this;
         this.circuitCharts[id] = new Chart(canvas.getContext('2d'), {
             type: 'bar',
             data: { labels, datasets: [{ data: avgs, backgroundColor: bgColors, borderColor: bdColors, borderWidth:1, borderRadius:6 }] },
             options: { responsive:true, maintainAspectRatio:false,
-                layout: { padding: { top: 26, left: 2, right: 2, bottom: 0 } },
                 plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: ctx => this.formatTime(ctx.raw) }, backgroundColor:'#1a1a1a', titleColor:'#fff', bodyColor:'#ccc', borderColor:'#333', borderWidth:1 }},
-                scales: { y:{ beginAtZero:false, suggestedMin: minAvg - (Math.max(...avgs) - minAvg) * 0.6, ticks:{ callback: v => self2.formatTime(v), color:'#555', font:{size:9}, maxTicksLimit:5 }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#555', font:{size:9}}, grid:{color:'#1e1e1e'} } }
-            },
-            plugins: [{
-                id: 'barLabels',
-                afterDatasetsDraw(chart) {
-                    const ctx = chart.ctx;
-                    chart.data.datasets.forEach((dataset, i) => {
-                        chart.getDatasetMeta(i).data.forEach((bar, index) => {
-                            const val = dataset.data[index];
-                            const isRec = val === minAvg;
-                            ctx.save();
-                            ctx.fillStyle = isRec ? '#10b981' : '#ccc';
-                            ctx.font = 'bold 10px Segoe UI';
-                            ctx.textAlign = 'center';
-                            ctx.textBaseline = 'bottom';
-                            ctx.fillText(self2.formatTime(val), bar.x, bar.y - 5);
-                            ctx.restore();
-                        });
-                    });
-                }
-            }]
+                scales: { y:{ beginAtZero:false, ticks:{ callback: v => this.formatTime(v), color:'#555', font:{size:9} }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#555', font:{size:9}}, grid:{color:'#1e1e1e'} } }
+            }
         });
     }
 
@@ -777,32 +788,131 @@ class KartingDashboard {
         const canvas = document.getElementById(id);
         if (!canvas) return;
         if (this.circuitCharts[id]) this.circuitCharts[id].destroy();
-        const data = sessions.filter(s => s.tirePressure).map(s => ({ x: parseFloat(s.tirePressure), y: s.bestTime, tireType: s.tireType || '' }));
+        const data = sessions.filter(s => s.tirePressure).map(s => ({ x: parseFloat(s.tirePressure), y: s.bestTime }));
         if (data.length < 2) { canvas.parentElement.style.display='none'; return; }
         const best = Math.min(...data.map(d=>d.y));
-        const ptColors = data.map(d => d.y === best ? '#10b981cc' : '#667eeacc');
-        const self3 = this;
+        const ptColors = data.map(d => d.y === best ? '#10b981' : '#667eea');
         this.circuitCharts[id] = new Chart(canvas.getContext('2d'), {
             type: 'scatter',
-            data: { datasets: [{ data, backgroundColor: ptColors, pointRadius:10, pointHoverRadius:13, pointBorderColor:'#0a0a0a', pointBorderWidth:2 }] },
+            data: { datasets: [{ data, backgroundColor: ptColors, pointRadius:7, pointHoverRadius:9, pointBorderColor:'#fff', pointBorderWidth:2 }] },
             options: { responsive:true, maintainAspectRatio:false,
-                plugins: { legend:{display:false}, tooltip:{ callbacks:{
-                    title: ctx => ctx[0].raw.x + ' bar',
-                    label: ctx => {
-                        const d = ctx.raw;
-                        const lines = [self3.formatTime(d.y)];
-                        if (d.tireType) lines.push('🛞 ' + d.tireType);
-                        if (d.y === best) lines.push('🏆 Record');
-                        return lines;
-                    }
-                }, backgroundColor:'#1a1a1a', titleColor:'#667eea', bodyColor:'#ccc', borderColor:'#333', borderWidth:1, padding:10 }},
+                plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: ctx => ctx.raw.x+' bar → '+this.formatTime(ctx.raw.y) }, backgroundColor:'#1a1a1a', titleColor:'#fff', bodyColor:'#ccc', borderColor:'#333', borderWidth:1 }},
                 scales: {
-                    y:{ beginAtZero:false, ticks:{ callback: v => self3.formatTime(v), color:'#555', font:{size:9}, maxTicksLimit:5 }, grid:{color:'#1e1e1e'} },
+                    y:{ beginAtZero:false, ticks:{ callback: v => this.formatTime(v), color:'#555', font:{size:9} }, grid:{color:'#1e1e1e'} },
                     x:{ ticks:{ callback: v => v+' b', color:'#555', font:{size:9} }, grid:{color:'#1e1e1e'}, title:{ display:true, text:'Pression (bar)', color:'#555', font:{size:9} } }
                 }
             }
-            // Pas de plugin labels → graphique propre, données accessibles via tooltip
         });
+    }
+
+    // Matrice pneu × pression
+    createMatrice(cid, sessions) {
+        const wrap = document.getElementById('matrix-' + cid);
+        if (!wrap) return;
+
+        // Collecter les combinaisons pneu × pression
+        const pneus = [...new Set(sessions.filter(s => s.tireType).map(s => s.tireType))].sort();
+        const pressions = [...new Set(sessions.filter(s => s.tirePressure).map(s => String(s.tirePressure)))].sort((a,b) => parseFloat(a)-parseFloat(b));
+
+        if (pneus.length === 0 || pressions.length === 0) {
+            document.getElementById('matrix-block-' + cid).style.display = 'none';
+            return;
+        }
+
+        // Construire les données : meilleur chrono par combo
+        const matData = {};
+        pneus.forEach(p => {
+            matData[p] = {};
+            pressions.forEach(pr => {
+                const matching = sessions.filter(s => s.tireType === p && String(s.tirePressure) === pr);
+                if (matching.length > 0) {
+                    matData[p][pr] = { best: Math.min(...matching.map(s => s.bestTime)), count: matching.length };
+                } else {
+                    matData[p][pr] = null;
+                }
+            });
+        });
+
+        // Min / max pour colorisation
+        const allTimes = [];
+        pneus.forEach(p => pressions.forEach(pr => { if (matData[p][pr]) allTimes.push(matData[p][pr].best); }));
+        if (allTimes.length < 2) { document.getElementById('matrix-block-' + cid).style.display = 'none'; return; }
+        const minT = Math.min(...allTimes);
+        const maxT = Math.max(...allTimes);
+
+        function timeToColor(t) {
+            const ratio = maxT === minT ? 0 : (t - minT) / (maxT - minT);
+            let r, g, b;
+            if (ratio < 0.5) {
+                const f = ratio * 2;
+                r = Math.round(16 + (245 - 16) * f);
+                g = Math.round(185 + (158 - 185) * f);
+                b = Math.round(129 + (11 - 129) * f);
+            } else {
+                const f = (ratio - 0.5) * 2;
+                r = Math.round(245 + (239 - 245) * f);
+                g = Math.round(158 + (68 - 158) * f);
+                b = Math.round(11 + (68 - 11) * f);
+            }
+            return `rgb(${r},${g},${b})`;
+        }
+
+        const self = this;
+        // Construire le tableau HTML
+        let html = '<table class="ct-matrix-table"><thead><tr><th class="ct-matrix-rh">Pneu / Bar</th>';
+        pressions.forEach(pr => { html += `<th class="ct-matrix-ch">${pr}b</th>`; });
+        html += '</tr></thead><tbody>';
+
+        pneus.forEach(pneu => {
+            html += `<tr><th class="ct-matrix-rh">${pneu}</th>`;
+            pressions.forEach(pr => {
+                const cell = matData[pneu][pr];
+                if (!cell) {
+                    html += `<td><div class="ct-matrix-cell ct-matrix-empty">—<br><span>Non testé</span></div></td>`;
+                } else {
+                    const color = timeToColor(cell.best);
+                    const isBest = cell.best === minT;
+                    html += `<td><div class="ct-matrix-cell" style="background:${color}22;border:1.5px solid ${color}88;" data-pneu="${pneu}" data-pr="${pr}" data-best="${cell.best}" data-count="${cell.count}" data-cid="${cid}">
+                        ${isBest ? '<div class="ct-matrix-dot"></div>' : ''}
+                        <span class="ct-matrix-time" style="color:${color}">${self.formatTime(cell.best)}</span>
+                        <span class="ct-matrix-n">${cell.count} sess.</span>
+                    </div></td>`;
+                }
+            });
+            html += '</tr>';
+        });
+        html += '</tbody></table>';
+        wrap.innerHTML = html;
+
+        // Tooltip au clic
+        wrap.querySelectorAll('.ct-matrix-cell[data-pneu]').forEach(cell => {
+            cell.addEventListener('click', () => {
+                const tooltip = document.getElementById('matrix-tooltip-' + cell.dataset.cid);
+                if (!tooltip) return;
+                const best = parseFloat(cell.dataset.best);
+                const diff = best - minT;
+                tooltip.innerHTML = `<strong>${cell.dataset.pneu} + ${cell.dataset.pr} bar</strong> · ${self.formatTime(best)}<br>` +
+                    (diff === 0 ? `<span style="color:#10b981">✓ Meilleure combinaison !</span>` : `Écart vs optimal : <span style="color:#f59e0b">+${self.formatTime(diff)}</span>`) +
+                    ` · ${cell.dataset.count} session(s)`;
+                tooltip.style.display = 'block';
+            });
+        });
+
+        // Insight
+        const insightEl = document.getElementById('matrix-insight-' + cid);
+        if (insightEl) {
+            const bestSess = sessions.find(s => s.bestTime === minT);
+            const worstTime = Math.max(...allTimes);
+            const worstSess = sessions.find(s => s.bestTime === worstTime);
+            let insight = '';
+            if (bestSess && bestSess.tireType && bestSess.tirePressure) {
+                insight = `💡 Combo optimal : <strong>${bestSess.tireType} + ${bestSess.tirePressure} bar</strong> → ${this.formatTime(minT)}.`;
+                if (worstSess && worstSess.tireType && worstSess.tirePressure && (worstSess.tireType !== bestSess.tireType || String(worstSess.tirePressure) !== String(bestSess.tirePressure))) {
+                    insight += ` Évite <strong>${worstSess.tireType} + ${worstSess.tirePressure} bar</strong> (−${this.formatTime(worstTime - minT)}).`;
+                }
+            }
+            insightEl.innerHTML = insight;
+        }
     }
 
     // Legacy createChart — garde pour compatibilité
