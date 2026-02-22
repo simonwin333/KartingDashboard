@@ -688,7 +688,7 @@ class KartingDashboard {
             options: { responsive:true, maintainAspectRatio:false,
                 layout: { padding: { top: 26, left: 2, right: 2, bottom: 0 } },
                 plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: ctx => { const s = sessions[ctx.dataIndex]; return [self.formatTime(s.bestTime), s.tireType ? '🛞 '+s.tireType : '', s.weather||''].filter(Boolean); }}, backgroundColor:'#1a1a1a', titleColor:'#fff', bodyColor:'#ccc', borderColor:'#333', borderWidth:1 } },
-                scales: { y:{ beginAtZero:false, ticks:{ callback: v => self.formatTime(v), color:'#555', font:{size:9}, maxTicksLimit:6 }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#555', font:{size:9}, maxRotation:30}, grid:{color:'#1e1e1e'} } }
+                scales: { y:{ beginAtZero:false, ticks:{ callback: v => self.formatTime(v), color:'#ccc', font:{size:9}, maxTicksLimit:6 }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#ccc', font:{size:9}, maxRotation:30}, grid:{color:'#1e1e1e'} } }
             },
             plugins: [{ id:'datalabels', afterDatasetsDraw(chart) {
                 const ctx = chart.ctx;
@@ -736,7 +736,7 @@ class KartingDashboard {
             options: { responsive:true, maintainAspectRatio:false,
                 layout: { padding: { top: 26, left: 2, right: 2, bottom: 0 } },
                 plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: ctx => self2.formatTime(ctx.raw) }, backgroundColor:'#1a1a1a', titleColor:'#fff', bodyColor:'#ccc', borderColor:'#333', borderWidth:1 }},
-                scales: { y:{ beginAtZero:false, suggestedMin: minAvg - (Math.max(...avgs) - minAvg) * 0.6, ticks:{ callback: v => self2.formatTime(v), color:'#555', font:{size:9}, maxTicksLimit:5 }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#555', font:{size:9}}, grid:{color:'#1e1e1e'} } }
+                scales: { y:{ beginAtZero:false, suggestedMin: minAvg - (Math.max(...avgs) - minAvg) * 0.6, ticks:{ callback: v => self2.formatTime(v), color:'#ccc', font:{size:9}, maxTicksLimit:5 }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#ccc', font:{size:9}}, grid:{color:'#1e1e1e'} } }
             },
             plugins: [{ id:'barLabels', afterDatasetsDraw(chart) {
                 const ctx = chart.ctx;
@@ -770,8 +770,8 @@ class KartingDashboard {
                     label: ctx => { const d = ctx.raw; const lines = [self3.formatTime(d.y)]; if (d.tireType) lines.push('🛞 '+d.tireType); if (d.y === best) lines.push('🏆 Record'); return lines; }
                 }, backgroundColor:'#1a1a1a', titleColor:'#667eea', bodyColor:'#ccc', borderColor:'#333', borderWidth:1, padding:10 }},
                 scales: {
-                    y:{ beginAtZero:false, ticks:{ callback: v => self3.formatTime(v), color:'#555', font:{size:9}, maxTicksLimit:5 }, grid:{color:'#1e1e1e'} },
-                    x:{ ticks:{ callback: v => v+' b', color:'#555', font:{size:9} }, grid:{color:'#1e1e1e'}, title:{ display:true, text:'Pression (bar)', color:'#555', font:{size:9} } }
+                    y:{ beginAtZero:false, ticks:{ callback: v => self3.formatTime(v), color:'#ccc', font:{size:9}, maxTicksLimit:5 }, grid:{color:'#1e1e1e'} },
+                    x:{ ticks:{ callback: v => v+' b', color:'#ccc', font:{size:9} }, grid:{color:'#1e1e1e'}, title:{ display:true, text:'Pression (bar)', color:'#ccc', font:{size:9} } }
                 }
             }
         });
@@ -839,7 +839,7 @@ class KartingDashboard {
     }
 
     // Plein écran graphique
-    openChartFullscreen(chartId, title) {
+    async openChartFullscreen(chartId, title) {
         const sourceChart = this.circuitCharts[chartId];
         if (!sourceChart) return;
         let overlay = document.getElementById('chartOverlay');
@@ -847,13 +847,25 @@ class KartingDashboard {
             overlay = document.createElement('div');
             overlay.id = 'chartOverlay';
             overlay.className = 'chart-overlay';
-            overlay.innerHTML = '<div class="chart-overlay-inner"><div class="chart-overlay-header"><span class="chart-overlay-title" id="overlayTitle"></span><button class="chart-overlay-close" id="overlayClose">✕</button></div><div class="chart-overlay-canvas-wrap"><canvas id="chartOverlayCanvas"></canvas></div><div class="chart-overlay-hint">Appuie sur ✕ pour revenir</div></div>';
+            overlay.innerHTML = '<div class="chart-overlay-inner"><div class="chart-overlay-header"><span class="chart-overlay-title" id="overlayTitle"></span><button class="chart-overlay-close" id="overlayClose">✕</button></div><div class="chart-overlay-canvas-wrap"><canvas id="chartOverlayCanvas"></canvas></div><div class="chart-overlay-rotate-hint" id="overlayRotateHint">📱 Tourne ton téléphone pour voir le graphique en grand</div><div class="chart-overlay-hint">Appuie sur ✕ pour revenir</div></div>';
             document.body.appendChild(overlay);
             document.getElementById('overlayClose').addEventListener('click', () => this.closeChartFullscreen());
         }
         document.getElementById('overlayTitle').textContent = title;
         overlay.style.display = 'flex';
         document.body.style.overflow = 'hidden';
+
+        // Tenter le verrou paysage (Android Chrome) — iOS ne supporte pas cette API
+        let lockOk = false;
+        try {
+            if (screen.orientation && screen.orientation.lock) {
+                await screen.orientation.lock('landscape');
+                lockOk = true;
+            }
+        } catch(e) { /* non supporté sur iOS/desktop */ }
+        const rotateHint = document.getElementById('overlayRotateHint');
+        if (rotateHint) rotateHint.style.display = lockOk ? 'none' : 'block';
+
         if (this._overlayChart) { this._overlayChart.destroy(); this._overlayChart = null; }
         const origCfg = sourceChart.config;
         setTimeout(() => {
@@ -871,6 +883,7 @@ class KartingDashboard {
         const overlay = document.getElementById('chartOverlay');
         if (overlay) overlay.style.display = 'none';
         document.body.style.overflow = '';
+        try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch(e) {}
         if (this._overlayChart) { this._overlayChart.destroy(); this._overlayChart = null; }
     }
 
