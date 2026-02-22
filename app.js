@@ -626,11 +626,11 @@ class KartingDashboard {
             </div>
 
             <div class="ct-chart-block">
-                <div class="ct-chart-title">📈 Évolution des temps</div>
+                <div class="ct-chart-title">📈 Évolution des chronos</div>
                 <canvas id="${chartId1}"></canvas>
             </div>
             <div class="ct-chart-block">
-                <div class="ct-chart-title">🛞 Temps moyen par type de pneu</div>
+                <div class="ct-chart-title">🛞 Chrono moyen par type de pneu</div>
                 <canvas id="${chartId2}"></canvas>
             </div>
             <div class="ct-chart-block">
@@ -638,7 +638,7 @@ class KartingDashboard {
                 <canvas id="${chartId3}"></canvas>
             </div>
             <div class="ct-chart-block">
-                <div class="ct-chart-title">🔵 Pression pneu vs Temps</div>
+                <div class="ct-chart-title">🔵 Pression pneu → Impact sur le chrono</div>
                 <canvas id="${chartId4}"></canvas>
             </div>`;
 
@@ -667,11 +667,12 @@ class KartingDashboard {
                 datalabels: { display: true }
             }] },
             options: { responsive:true, maintainAspectRatio:false,
+                layout: { padding: { top: 26, left: 2, right: 2, bottom: 0 } },
                 plugins: {
                     legend:{display:false},
                     tooltip:{ callbacks:{ label: ctx => { const s = sessions[ctx.dataIndex]; return [self.formatTime(s.bestTime), s.tireType ? '🛞 '+s.tireType : '', s.weather||''].filter(Boolean); }}, backgroundColor:'#1a1a1a', titleColor:'#fff', bodyColor:'#ccc', borderColor:'#333', borderWidth:1 }
                 },
-                scales: { y:{ beginAtZero:false, ticks:{ callback: v => self.formatTime(v), color:'#555', font:{size:9} }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#555', font:{size:9}, maxRotation:30}, grid:{color:'#1e1e1e'} } }
+                scales: { y:{ beginAtZero:false, ticks:{ callback: v => self.formatTime(v), color:'#555', font:{size:9}, maxTicksLimit:6 }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#555', font:{size:9}, maxRotation:30}, grid:{color:'#1e1e1e'} } }
             },
             plugins: [{
                 id: 'datalabels',
@@ -713,13 +714,34 @@ class KartingDashboard {
         const minAvg = Math.min(...avgs);
         const bgColors = avgs.map(v => v === minAvg ? '#10b981aa' : '#667eeaaa');
         const bdColors = avgs.map(v => v === minAvg ? '#10b981' : '#667eea');
+        const self2 = this;
         this.circuitCharts[id] = new Chart(canvas.getContext('2d'), {
             type: 'bar',
             data: { labels, datasets: [{ data: avgs, backgroundColor: bgColors, borderColor: bdColors, borderWidth:1, borderRadius:6 }] },
             options: { responsive:true, maintainAspectRatio:false,
+                layout: { padding: { top: 26, left: 2, right: 2, bottom: 0 } },
                 plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: ctx => this.formatTime(ctx.raw) }, backgroundColor:'#1a1a1a', titleColor:'#fff', bodyColor:'#ccc', borderColor:'#333', borderWidth:1 }},
-                scales: { y:{ beginAtZero:false, ticks:{ callback: v => this.formatTime(v), color:'#555', font:{size:9} }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#555', font:{size:9}}, grid:{color:'#1e1e1e'} } }
-            }
+                scales: { y:{ beginAtZero:false, suggestedMin: minAvg - (Math.max(...avgs) - minAvg) * 0.6, ticks:{ callback: v => self2.formatTime(v), color:'#555', font:{size:9}, maxTicksLimit:5 }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#555', font:{size:9}}, grid:{color:'#1e1e1e'} } }
+            },
+            plugins: [{
+                id: 'barLabels',
+                afterDatasetsDraw(chart) {
+                    const ctx = chart.ctx;
+                    chart.data.datasets.forEach((dataset, i) => {
+                        chart.getDatasetMeta(i).data.forEach((bar, index) => {
+                            const val = dataset.data[index];
+                            const isRec = val === minAvg;
+                            ctx.save();
+                            ctx.fillStyle = isRec ? '#10b981' : '#ccc';
+                            ctx.font = 'bold 10px Segoe UI';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'bottom';
+                            ctx.fillText(self2.formatTime(val), bar.x, bar.y - 5);
+                            ctx.restore();
+                        });
+                    });
+                }
+            }]
         });
     }
 
@@ -755,20 +777,31 @@ class KartingDashboard {
         const canvas = document.getElementById(id);
         if (!canvas) return;
         if (this.circuitCharts[id]) this.circuitCharts[id].destroy();
-        const data = sessions.filter(s => s.tirePressure).map(s => ({ x: parseFloat(s.tirePressure), y: s.bestTime }));
+        const data = sessions.filter(s => s.tirePressure).map(s => ({ x: parseFloat(s.tirePressure), y: s.bestTime, tireType: s.tireType || '' }));
         if (data.length < 2) { canvas.parentElement.style.display='none'; return; }
         const best = Math.min(...data.map(d=>d.y));
-        const ptColors = data.map(d => d.y === best ? '#10b981' : '#667eea');
+        const ptColors = data.map(d => d.y === best ? '#10b981cc' : '#667eeacc');
+        const self3 = this;
         this.circuitCharts[id] = new Chart(canvas.getContext('2d'), {
             type: 'scatter',
-            data: { datasets: [{ data, backgroundColor: ptColors, pointRadius:7, pointHoverRadius:9, pointBorderColor:'#fff', pointBorderWidth:2 }] },
+            data: { datasets: [{ data, backgroundColor: ptColors, pointRadius:10, pointHoverRadius:13, pointBorderColor:'#0a0a0a', pointBorderWidth:2 }] },
             options: { responsive:true, maintainAspectRatio:false,
-                plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: ctx => ctx.raw.x+' bar → '+this.formatTime(ctx.raw.y) }, backgroundColor:'#1a1a1a', titleColor:'#fff', bodyColor:'#ccc', borderColor:'#333', borderWidth:1 }},
+                plugins: { legend:{display:false}, tooltip:{ callbacks:{
+                    title: ctx => ctx[0].raw.x + ' bar',
+                    label: ctx => {
+                        const d = ctx.raw;
+                        const lines = [self3.formatTime(d.y)];
+                        if (d.tireType) lines.push('🛞 ' + d.tireType);
+                        if (d.y === best) lines.push('🏆 Record');
+                        return lines;
+                    }
+                }, backgroundColor:'#1a1a1a', titleColor:'#667eea', bodyColor:'#ccc', borderColor:'#333', borderWidth:1, padding:10 }},
                 scales: {
-                    y:{ beginAtZero:false, ticks:{ callback: v => this.formatTime(v), color:'#555', font:{size:9} }, grid:{color:'#1e1e1e'} },
+                    y:{ beginAtZero:false, ticks:{ callback: v => self3.formatTime(v), color:'#555', font:{size:9}, maxTicksLimit:5 }, grid:{color:'#1e1e1e'} },
                     x:{ ticks:{ callback: v => v+' b', color:'#555', font:{size:9} }, grid:{color:'#1e1e1e'}, title:{ display:true, text:'Pression (bar)', color:'#555', font:{size:9} } }
                 }
             }
+            // Pas de plugin labels → graphique propre, données accessibles via tooltip
         });
     }
 
