@@ -1016,49 +1016,68 @@ class KartingDashboard {
 
         const ua = navigator.userAgent;
         const isIOS = /iPhone|iPad|iPod/.test(ua);
+        const isSafari = /Safari/.test(ua) && !/CriOS/.test(ua) && !/FxiOS/.test(ua) && !/Chrome/.test(ua);
         const isAndroid = /Android/.test(ua);
-        const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua);
 
-        if (deferredPrompt && btn) {
-            btn.style.display = 'block';
-            inst.innerHTML = '<p style="color:#10b981; font-size:0.9em; margin-bottom:10px;">✅ Prêt à installer sur votre écran d\'accueil</p>';
+        // CAS 3 — Android : bouton automatique en priorité
+        if (isAndroid) {
+            if (deferredPrompt && btn) {
+                btn.style.display = 'block';
+                inst.innerHTML = '';
+            } else {
+                if (btn) btn.style.display = 'none';
+                inst.innerHTML = `
+                    <div style="background:#1a1a1a;border-radius:10px;padding:14px;border:1px solid #2a2a2a;">
+                        <p style="font-size:0.72em;font-weight:700;color:#667eea;margin:0 0 8px;">📱 Android détecté</p>
+                        <p style="font-size:0.85em;color:#ccc;margin:0 0 10px;">Le bouton d'installation devrait apparaître automatiquement. Si ce n'est pas le cas, ouvre le menu Chrome (⋮) et choisis <strong>"Ajouter à l'écran d'accueil"</strong>.</p>
+                    </div>`;
+            }
             return;
         }
 
-        if (isIOS || isSafari) {
-            inst.innerHTML = `
-                <div style="background:#1a1a1a; border-radius:8px; padding:15px; border:1px solid #2a2a2a;">
-                    <p style="color:#667eea; font-weight:600; margin:0 0 10px;">📱 Installation iOS/Safari :</p>
-                    <ol style="color:#ccc; font-size:0.85em; margin:0; padding-left:20px; line-height:1.6;">
-                        <li>Appuyez sur le bouton <strong>Partager</strong> (📤) en bas</li>
-                        <li>Faites défiler et sélectionnez <strong>"Sur l'écran d'accueil"</strong></li>
-                        <li>Appuyez sur <strong>"Ajouter"</strong></li>
-                    </ol>
-                </div>`;
+        // CAS 1 — iPhone + Safari : instructions manuelles
+        if (isIOS && isSafari) {
             if (btn) btn.style.display = 'none';
-        }
-        else if (isAndroid) {
             inst.innerHTML = `
-                <div style="background:#1a1a1a; border-radius:8px; padding:15px; border:1px solid #2a2a2a;">
-                    <p style="color:#667eea; font-weight:600; margin:0 0 10px;">📱 Installation Android :</p>
-                    <ol style="color:#ccc; font-size:0.85em; margin:0; padding-left:20px; line-height:1.6;">
-                        <li>Appuyez sur les <strong>3 points</strong> (⋮) du menu Chrome</li>
-                        <li>Sélectionnez <strong>"Ajouter à l'écran d'accueil"</strong></li>
-                        <li>Confirmez avec <strong>"Ajouter"</strong></li>
-                    </ol>
+                <div style="background:#1a1a1a;border-radius:10px;padding:14px;border:1px solid #2a2a2a;">
+                    <p style="font-size:0.72em;font-weight:700;color:#10b981;margin:0 0 8px;">✅ iPhone détecté · Safari</p>
+                    <p style="font-size:0.82em;color:#888;margin:0 0 12px;">Apple ne permet pas l'installation automatique, suis ces 3 étapes :</p>
+                    <div style="display:flex;flex-direction:column;gap:10px;">
+                        <div style="display:flex;align-items:flex-start;gap:10px;">
+                            <div style="min-width:22px;height:22px;border-radius:50%;background:#667eea;color:#fff;font-size:0.7em;font-weight:700;display:flex;align-items:center;justify-content:center;">1</div>
+                            <p style="font-size:0.82em;color:#ccc;margin:0;line-height:1.5;">Appuie sur <strong style="color:#fff;">📤 Partager</strong> en bas de Safari</p>
+                        </div>
+                        <div style="display:flex;align-items:flex-start;gap:10px;">
+                            <div style="min-width:22px;height:22px;border-radius:50%;background:#667eea;color:#fff;font-size:0.7em;font-weight:700;display:flex;align-items:center;justify-content:center;">2</div>
+                            <p style="font-size:0.82em;color:#ccc;margin:0;line-height:1.5;">Fais défiler et choisis <strong style="color:#fff;">"Sur l'écran d'accueil"</strong></p>
+                        </div>
+                        <div style="display:flex;align-items:flex-start;gap:10px;">
+                            <div style="min-width:22px;height:22px;border-radius:50%;background:#667eea;color:#fff;font-size:0.7em;font-weight:700;display:flex;align-items:center;justify-content:center;">3</div>
+                            <p style="font-size:0.82em;color:#ccc;margin:0;line-height:1.5;">Appuie sur <strong style="color:#fff;">"Ajouter"</strong> en haut à droite</p>
+                        </div>
+                    </div>
                 </div>`;
-            if (btn) btn.style.display = 'none';
+            return;
         }
-        else {
+
+        // CAS 2 — iPhone + Chrome/Firefox
+        if (isIOS && !isSafari) {
+            if (btn) btn.style.display = 'none';
             inst.innerHTML = `
-                <div style="background:#1a1a1a; border-radius:8px; padding:15px; border:1px solid #2a2a2a;">
-                    <p style="color:#667eea; font-weight:600; margin:0 0 10px;">💻 Installation Desktop :</p>
-                    <p style="color:#ccc; font-size:0.85em; margin:0; line-height:1.6;">
-                        Cherchez l'icône <strong>⊕</strong> ou <strong>🖥️</strong> dans la barre d'adresse (à droite) et cliquez dessus pour installer l'application.
-                    </p>
+                <div style="background:#2a1500;border-radius:10px;padding:14px;border:1px solid #f59e0b44;">
+                    <p style="font-size:0.72em;font-weight:700;color:#f59e0b;margin:0 0 8px;">⚠️ iPhone détecté · Chrome / Firefox</p>
+                    <p style="font-size:0.85em;color:#ccc;margin:0;line-height:1.6;">L'installation sur iPhone n'est disponible que dans <strong style="color:#fff;">Safari</strong>. Ouvre cette page dans Safari pour pouvoir l'installer sur ton écran d'accueil.</p>
                 </div>`;
-            if (btn) btn.style.display = 'none';
+            return;
         }
+
+        // Desktop
+        if (btn) btn.style.display = 'none';
+        inst.innerHTML = `
+            <div style="background:#1a1a1a;border-radius:10px;padding:14px;border:1px solid #2a2a2a;">
+                <p style="font-size:0.72em;font-weight:700;color:#667eea;margin:0 0 8px;">💻 Desktop détecté</p>
+                <p style="font-size:0.85em;color:#ccc;margin:0;">Cherche l'icône <strong>⊕</strong> dans la barre d'adresse pour installer l'application.</p>
+            </div>`;
     }
 
     // ── LOGOUT ────────────────────────────────────────────────────────────
