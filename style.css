@@ -1543,8 +1543,8 @@ section h2 {
 .circuit-select-row { display: flex; gap: 8px; align-items: center; }
 .circuit-select-row select { flex: 1; }
 .btn-add-circuit {
-    background: #667eea; border: none; border-radius: 8px;
-    color: #fff; padding: 0 10px; cursor: pointer; font-size: 0.9em;
+    background: #667eea; border: 1px solid #667eea; border-radius: 8px;
+    color: #fff; padding: 0; cursor: pointer; font-size: 0.9em;
     height: 38px; width: 38px; flex-shrink: 0; display: flex;
     align-items: center; justify-content: center;
 }
