@@ -1737,23 +1737,29 @@ section h2 {
 .chart-overlay-hint { font-size: 0.6em; color: #2a2a2a; text-align: center; margin-top: 8px; flex-shrink: 0; }
 
 /* FAQ accordéon */
-.faq-body { display: flex; flex-direction: column; gap: 0; max-height: 65vh; overflow-y: auto; }
-.faq-item { border-bottom: 1px solid #1e1e1e; }
+.faq-body { display: flex; flex-direction: column; gap: 0; max-height: 65vh; overflow-y: auto; overflow-x: hidden; }
+.faq-item { border-bottom: 1px solid #1e1e1e; width: 100%; }
 .faq-item:last-child { border-bottom: none; }
 .faq-q {
     display: flex; align-items: flex-start; justify-content: space-between;
-    padding: 14px 4px; cursor: pointer; gap: 12px;
+    padding: 14px 0; cursor: pointer; gap: 8px;
     transition: background 0.15s; border-radius: 6px;
+    width: 100%; box-sizing: border-box;
 }
 .faq-q:hover { background: #141414; }
 .faq-q.open { background: #141414; }
-.faq-q-text { font-size: 0.88em; font-weight: 600; color: #667eea; line-height: 1.4; flex: 1; word-break: break-word; white-space: normal; }
+.faq-q-text {
+    font-size: 0.88em; font-weight: 600; color: #667eea;
+    line-height: 1.4; flex: 1;
+    white-space: normal; word-wrap: break-word; overflow-wrap: break-word;
+    min-width: 0;
+}
 .faq-q.open .faq-q-text { color: #818cf8; }
-.faq-chevron { font-size: 0.65em; color: #555; flex-shrink: 0; transition: transform 0.25s; margin-top: 3px; }
+.faq-chevron { font-size: 0.65em; color: #555; flex-shrink: 0; transition: transform 0.25s; margin-top: 4px; }
 .faq-q.open .faq-chevron { transform: rotate(180deg); color: #667eea; }
-.faq-a { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; padding: 0 4px; }
-.faq-a.open { max-height: 300px; padding: 0 4px 14px; }
-.faq-a-inner { font-size: 0.82em; color: #ccc; line-height: 1.6; border-left: 2px solid #667eea44; padding-left: 12px; }
+.faq-a { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; padding: 0; }
+.faq-a.open { max-height: 300px; padding: 0 0 14px; }
+.faq-a-inner { font-size: 0.82em; color: #ccc; line-height: 1.6; border-left: 2px solid #667eea44; padding-left: 12px; word-wrap: break-word; }
 
 /* RECORD POPUP */
 .record-popup {
