@@ -105,6 +105,21 @@ function closeFAQ() { hideModal('faqModal'); }
 function closeRecord() { document.getElementById('recordPopup').style.display = 'none'; }
 function showNotifGlobal(msg, type) { if (window.dashboard) dashboard.showNotification(msg, type); }
 
+function toggleFaq(el) {
+    const answer = el.nextElementSibling;
+    const isOpen = el.classList.contains('open');
+    // Fermer toutes les autres
+    document.querySelectorAll('.faq-q.open').forEach(q => {
+        q.classList.remove('open');
+        q.nextElementSibling.classList.remove('open');
+    });
+    // Ouvrir celle-ci si elle était fermée
+    if (!isOpen) {
+        el.classList.add('open');
+        answer.classList.add('open');
+    }
+}
+
 // ============================================
 // PROFIL MODAL - SAUVEGARDE DIRECTE FIREBASE
 // ============================================
