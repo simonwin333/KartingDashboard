@@ -839,52 +839,89 @@ class KartingDashboard {
     }
 
     // Plein écran graphique
-    async openChartFullscreen(chartId, title) {
+    openChartFullscreen(chartId, title) {
         const sourceChart = this.circuitCharts[chartId];
         if (!sourceChart) return;
+
         let overlay = document.getElementById('chartOverlay');
         if (!overlay) {
             overlay = document.createElement('div');
             overlay.id = 'chartOverlay';
             overlay.className = 'chart-overlay';
-            overlay.innerHTML = '<div class="chart-overlay-inner"><div class="chart-overlay-header"><span class="chart-overlay-title" id="overlayTitle"></span><button class="chart-overlay-close" id="overlayClose">✕</button></div><div class="chart-overlay-canvas-wrap"><canvas id="chartOverlayCanvas"></canvas></div><div class="chart-overlay-rotate-hint" id="overlayRotateHint">📱 Tourne ton téléphone pour voir le graphique en grand</div><div class="chart-overlay-hint">Appuie sur ✕ pour revenir</div></div>';
+            overlay.innerHTML = `
+                <div class="chart-overlay-inner">
+                    <div class="chart-overlay-header">
+                        <span class="chart-overlay-title" id="overlayTitle"></span>
+                        <button class="chart-overlay-close" id="overlayClose">✕</button>
+                    </div>
+                    <div class="chart-overlay-rotate-hint" id="overlayRotateHint">
+                        📱 Tourne ton téléphone pour voir en paysage
+                    </div>
+                    <div class="chart-overlay-canvas-wrap">
+                        <canvas id="chartOverlayCanvas"></canvas>
+                    </div>
+                    <div class="chart-overlay-hint">Appuie sur ✕ pour revenir</div>
+                </div>`;
             document.body.appendChild(overlay);
             document.getElementById('overlayClose').addEventListener('click', () => this.closeChartFullscreen());
         }
+
         document.getElementById('overlayTitle').textContent = title;
         overlay.style.display = 'flex';
         document.body.style.overflow = 'hidden';
+        this._fullscreenChartId = chartId;
 
-        // Tenter le verrou paysage (Android Chrome) — iOS ne supporte pas cette API
-        let lockOk = false;
-        try {
-            if (screen.orientation && screen.orientation.lock) {
-                await screen.orientation.lock('landscape');
-                lockOk = true;
-            }
-        } catch(e) { /* non supporté sur iOS/desktop */ }
-        const rotateHint = document.getElementById('overlayRotateHint');
-        if (rotateHint) rotateHint.style.display = lockOk ? 'none' : 'block';
+        // Afficher ou cacher le hint selon l'orientation actuelle
+        this._updateOverlayRotateHint();
 
+        // Écouter les changements d'orientation pour redessiner
+        this._orientationHandler = () => {
+            this._updateOverlayRotateHint();
+            // Laisser le navigateur finir la rotation avant de redessiner
+            setTimeout(() => this._redrawOverlayChart(), 300);
+        };
+        window.addEventListener('orientationchange', this._orientationHandler);
+        window.addEventListener('resize', this._orientationHandler);
+
+        // Dessiner le graphique
+        this._redrawOverlayChart();
+    }
+
+    _updateOverlayRotateHint() {
+        const hint = document.getElementById('overlayRotateHint');
+        if (!hint) return;
+        const isLandscape = window.innerWidth > window.innerHeight;
+        hint.style.display = isLandscape ? 'none' : 'block';
+    }
+
+    _redrawOverlayChart() {
         if (this._overlayChart) { this._overlayChart.destroy(); this._overlayChart = null; }
+        const chartId = this._fullscreenChartId;
+        if (!chartId) return;
+        const sourceChart = this.circuitCharts[chartId];
+        if (!sourceChart) return;
+        const canvas = document.getElementById('chartOverlayCanvas');
+        if (!canvas) return;
         const origCfg = sourceChart.config;
-        setTimeout(() => {
-            const canvas = document.getElementById('chartOverlayCanvas');
-            this._overlayChart = new Chart(canvas.getContext('2d'), {
-                type: origCfg.type,
-                data: JSON.parse(JSON.stringify(origCfg.data)),
-                options: Object.assign({}, origCfg.options, { responsive:true, maintainAspectRatio:false }),
-                plugins: origCfg.plugins || []
-            });
-        }, 50);
+        this._overlayChart = new Chart(canvas.getContext('2d'), {
+            type: origCfg.type,
+            data: JSON.parse(JSON.stringify(origCfg.data)),
+            options: Object.assign({}, origCfg.options, { responsive: true, maintainAspectRatio: false }),
+            plugins: origCfg.plugins || []
+        });
     }
 
     closeChartFullscreen() {
         const overlay = document.getElementById('chartOverlay');
         if (overlay) overlay.style.display = 'none';
         document.body.style.overflow = '';
-        try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch(e) {}
+        if (this._orientationHandler) {
+            window.removeEventListener('orientationchange', this._orientationHandler);
+            window.removeEventListener('resize', this._orientationHandler);
+            this._orientationHandler = null;
+        }
         if (this._overlayChart) { this._overlayChart.destroy(); this._overlayChart = null; }
+        this._fullscreenChartId = null;
     }
 
     // Legacy createChart — garde pour compatibilité
