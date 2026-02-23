@@ -511,6 +511,77 @@ class KartingDashboard {
         this.showNotification('Circuit "' + n + '" ajouté ! 🏁');
     }
 
+    openManageCircuit() {
+        const sel = document.getElementById('circuit');
+        const name = sel ? sel.value : '';
+        if (!name) { this.showNotification('Sélectionne d\'abord un circuit', 'error'); return; }
+
+        // Badge nom
+        document.getElementById('manageCircuitBadge').textContent = '🏁 ' + name;
+
+        // Pré-remplir champ renommer
+        document.getElementById('renameCircuitInput').value = name;
+
+        // Bloc suppression
+        const sessCount = this.sessions.filter(s => s.circuit === name).length;
+        const deleteBlock = document.getElementById('manageDeleteBlock');
+        if (sessCount === 0) {
+            deleteBlock.innerHTML = `
+                <p style="font-size:0.82em;color:#ccc;line-height:1.5;margin-bottom:12px;">
+                    Ce circuit n'a <strong style="color:#10b981;">aucune session</strong> enregistrée. Il peut être supprimé sans perte de données.
+                </p>
+                <button type="button" id="deleteCircuitBtn" class="btn-delete-circuit">🗑️ Supprimer ce circuit</button>`;
+            document.getElementById('deleteCircuitBtn').addEventListener('click', () => this.deleteCircuit(name));
+        } else {
+            deleteBlock.innerHTML = `
+                <p style="font-size:0.82em;color:#ccc;line-height:1.5;margin-bottom:10px;">
+                    Ce circuit a <strong style="color:#ff4757;">${sessCount} session(s) enregistrée(s)</strong>. Supprime d'abord toutes ses sessions dans l'Historique.
+                </p>
+                <div style="display:inline-block;background:#ff475718;border:1px solid #ff475744;border-radius:6px;padding:4px 10px;font-size:0.78em;color:#ff4757;font-weight:700;margin-bottom:12px;">⚠️ ${sessCount} session(s) liée(s)</div>
+                <button type="button" class="btn-delete-circuit disabled" disabled>🗑️ Suppression impossible</button>`;
+        }
+
+        showModal('manageCircuitModal');
+    }
+
+    renameCircuit() {
+        const sel = document.getElementById('circuit');
+        const oldName = sel ? sel.value : '';
+        const newName = document.getElementById('renameCircuitInput').value.trim();
+        if (!oldName) return;
+        if (!newName) { this.showNotification('Entre un nom valide', 'error'); return; }
+        if (newName === oldName) { this.showNotification('C\'est déjà ce nom !', 'error'); return; }
+        if (this.circuits.includes(newName)) { this.showNotification('Ce nom existe déjà', 'error'); return; }
+
+        // Mettre à jour la liste des circuits
+        const idx = this.circuits.indexOf(oldName);
+        if (idx !== -1) this.circuits[idx] = newName;
+
+        // Mettre à jour toutes les sessions liées
+        this.sessions.forEach(s => { if (s.circuit === oldName) { s.circuit = newName; this.saveSessionFirebase(s); } });
+
+        this.saveCircuitsFirebase();
+        this.populateCircuits();
+        this.populateCircuitFilter();
+        const selEl = document.getElementById('circuit');
+        if (selEl) selEl.value = newName;
+        hideModal('manageCircuitModal');
+        this.updateDashboard();
+        this.showNotification('Circuit renommé en "' + newName + '" ✅');
+    }
+
+    deleteCircuit(name) {
+        const sessCount = this.sessions.filter(s => s.circuit === name).length;
+        if (sessCount > 0) { this.showNotification('Supprime d\'abord les sessions liées', 'error'); return; }
+        if (!confirm('Supprimer le circuit "' + name + '" ?')) return;
+        this.circuits = this.circuits.filter(c => c !== name);
+        this.saveCircuitsFirebase();
+        this.populateCircuits();
+        this.populateCircuitFilter();
+        hideModal('manageCircuitModal');
+        this.showNotification('Circuit "' + name + '" supprimé', 'error');
+    }
+
     // ── DASHBOARD ─────────────────────────────────────────────────────────
 
     updateDashboard() {
@@ -1196,6 +1267,17 @@ class KartingDashboard {
 
         // Add circuit
         document.getElementById('addCircuitBtn').addEventListener('click', () => this.addNewCircuit());
+
+        // Manage circuit
+        document.getElementById('manageCircuitBtn').addEventListener('click', () => this.openManageCircuit());
+        document.getElementById('closeManageCircuitBtn').addEventListener('click', () => hideModal('manageCircuitModal'));
+        document.getElementById('renameCircuitBtn').addEventListener('click', () => this.renameCircuit());
+
+        // Activer/désactiver le bouton ✏️ selon la sélection
+        document.getElementById('circuit').addEventListener('change', e => {
+            const btn = document.getElementById('manageCircuitBtn');
+            if (btn) btn.style.opacity = e.target.value ? '1' : '0.35';
+        });
 
         // Circuit filter
         document.getElementById('circuitFilter').addEventListener('change', e => this.filterCircuit(e.target.value));

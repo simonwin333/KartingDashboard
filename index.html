@@ -245,6 +245,7 @@
                 <div class="circuit-select-row">
                     <select id="circuit" required><option value="">-- Sélectionnez --</option></select>
                     <button type="button" class="btn-add-circuit" id="addCircuitBtn" title="Ajouter un circuit">➕</button>
+                    <button type="button" class="btn-manage-circuit" id="manageCircuitBtn" title="Modifier / Supprimer ce circuit">✏️</button>
                 </div>
             </div>
             <div class="form-row">
@@ -337,6 +338,32 @@
             <p class="settings-hint" style="text-align:center;">Karting Dashboard v4.0 ❤️</p>
         </div>
     </section>
+</div>
+
+<!-- MODAL GESTION CIRCUIT -->
+<div class="modal-overlay" id="manageCircuitModal" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2>✏️ Gérer le circuit</h2>
+            <button class="btn-close" id="closeManageCircuitBtn">✕</button>
+        </div>
+        <div class="modal-body">
+            <div id="manageCircuitBadge" class="manage-circuit-badge"></div>
+
+            <div class="manage-section">
+                <div class="manage-section-title">Renommer</div>
+                <div class="manage-rename-row">
+                    <input type="text" id="renameCircuitInput" placeholder="Nouveau nom...">
+                    <button type="button" id="renameCircuitBtn" class="btn-rename-circuit">✅ Sauver</button>
+                </div>
+            </div>
+
+            <div class="manage-section">
+                <div class="manage-section-title">Supprimer</div>
+                <div id="manageDeleteBlock" class="manage-delete-block"></div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>

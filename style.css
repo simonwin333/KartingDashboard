@@ -1548,6 +1548,52 @@ section h2 {
     height: 38px; width: 38px; flex-shrink: 0; display: flex;
     align-items: center; justify-content: center;
 }
+.btn-manage-circuit {
+    background: #111; border: 1px solid #f59e0b66; border-radius: 8px;
+    color: #f59e0b; padding: 0; cursor: pointer; font-size: 0.9em;
+    height: 38px; width: 38px; flex-shrink: 0; display: flex;
+    align-items: center; justify-content: center;
+    opacity: 0.35; transition: opacity 0.2s, background 0.2s;
+}
+.btn-manage-circuit:hover { background: #f59e0b18; opacity: 1; }
+
+/* Modal gestion circuit */
+.manage-circuit-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #667eea18; border: 1px solid #667eea44;
+    border-radius: 8px; padding: 8px 14px; margin-bottom: 18px;
+    font-size: 0.9em; font-weight: 600; color: #667eea;
+}
+.manage-section { margin-bottom: 20px; }
+.manage-section-title {
+    font-size: 0.72em; font-weight: 700; color: #888;
+    text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px;
+}
+.manage-rename-row { display: flex; gap: 8px; }
+.manage-rename-row input {
+    flex: 1; background: #111; border: 1px solid #333; border-radius: 8px;
+    color: #fff; padding: 10px 12px; font-size: 0.88em;
+}
+.manage-rename-row input:focus { outline: none; border-color: #667eea; }
+.btn-rename-circuit {
+    padding: 10px 14px; border-radius: 8px; border: none;
+    background: #667eea; color: #fff; font-size: 0.82em; font-weight: 700;
+    cursor: pointer; white-space: nowrap;
+}
+.btn-rename-circuit:hover { background: #5a6fd6; }
+.manage-delete-block {
+    background: #2a0a0a; border-radius: 10px; padding: 14px;
+    border: 1px solid #ff475722;
+}
+.btn-delete-circuit {
+    width: 100%; padding: 11px; border-radius: 8px; border: 1.5px solid #ff4757;
+    background: transparent; color: #ff4757; font-size: 0.88em; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+}
+.btn-delete-circuit:hover { background: #ff475722; }
+.btn-delete-circuit.disabled {
+    opacity: 0.4; cursor: default; border-color: #555; color: #555;
+}
 .form-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
 
 /* BOUTONS */
