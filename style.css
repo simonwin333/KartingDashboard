@@ -1741,15 +1741,15 @@ section h2 {
 .faq-item { border-bottom: 1px solid #1e1e1e; }
 .faq-item:last-child { border-bottom: none; }
 .faq-q {
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex; align-items: flex-start; justify-content: space-between;
     padding: 14px 4px; cursor: pointer; gap: 12px;
     transition: background 0.15s; border-radius: 6px;
 }
 .faq-q:hover { background: #141414; }
 .faq-q.open { background: #141414; }
-.faq-q-text { font-size: 0.88em; font-weight: 600; color: #667eea; line-height: 1.4; flex: 1; }
+.faq-q-text { font-size: 0.88em; font-weight: 600; color: #667eea; line-height: 1.4; flex: 1; word-break: break-word; white-space: normal; }
 .faq-q.open .faq-q-text { color: #818cf8; }
-.faq-chevron { font-size: 0.65em; color: #555; flex-shrink: 0; transition: transform 0.25s; }
+.faq-chevron { font-size: 0.65em; color: #555; flex-shrink: 0; transition: transform 0.25s; margin-top: 3px; }
 .faq-q.open .faq-chevron { transform: rotate(180deg); color: #667eea; }
 .faq-a { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; padding: 0 4px; }
 .faq-a.open { max-height: 300px; padding: 0 4px 14px; }
