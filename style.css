@@ -1786,3 +1786,8 @@ section h2 {
     margin-top: 4px;
     font-weight: 600;
 }
+
+/* Profil compact — champs en ligne */
+.profil-field-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.profil-field-lbl { font-size: 0.72em; color: #666; width: 52px; flex-shrink: 0; text-align: right; }
+.profil-input-compact { margin-bottom: 0 !important; flex: 1; padding: 8px 10px !important; font-size: 0.88em !important; }
