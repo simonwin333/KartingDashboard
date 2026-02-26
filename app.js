@@ -105,21 +105,6 @@ function closeFAQ() { hideModal('faqModal'); }
 function closeRecord() { document.getElementById('recordPopup').style.display = 'none'; }
 function showNotifGlobal(msg, type) { if (window.dashboard) dashboard.showNotification(msg, type); }
 
-function toggleFaq(el) {
-    const answer = el.nextElementSibling;
-    const isOpen = el.classList.contains('open');
-    // Fermer toutes les autres
-    document.querySelectorAll('.faq-q.open').forEach(q => {
-        q.classList.remove('open');
-        q.nextElementSibling.classList.remove('open');
-    });
-    // Ouvrir celle-ci si elle était fermée
-    if (!isOpen) {
-        el.classList.add('open');
-        answer.classList.add('open');
-    }
-}
-
 // ============================================
 // PROFIL MODAL - SAUVEGARDE DIRECTE FIREBASE
 // ============================================
@@ -511,77 +496,6 @@ class KartingDashboard {
         this.showNotification('Circuit "' + n + '" ajouté ! 🏁');
     }
 
-    openManageCircuit() {
-        const sel = document.getElementById('circuit');
-        const name = sel ? sel.value : '';
-        if (!name) { this.showNotification('Sélectionne d\'abord un circuit', 'error'); return; }
-
-        // Badge nom
-        document.getElementById('manageCircuitBadge').textContent = '🏁 ' + name;
-
-        // Pré-remplir champ renommer
-        document.getElementById('renameCircuitInput').value = name;
-
-        // Bloc suppression
-        const sessCount = this.sessions.filter(s => s.circuit === name).length;
-        const deleteBlock = document.getElementById('manageDeleteBlock');
-        if (sessCount === 0) {
-            deleteBlock.innerHTML = `
-                <p style="font-size:0.82em;color:#ccc;line-height:1.5;margin-bottom:12px;">
-                    Ce circuit n'a <strong style="color:#10b981;">aucune session</strong> enregistrée. Il peut être supprimé sans perte de données.
-                </p>
-                <button type="button" id="deleteCircuitBtn" class="btn-delete-circuit">🗑️ Supprimer ce circuit</button>`;
-            document.getElementById('deleteCircuitBtn').addEventListener('click', () => this.deleteCircuit(name));
-        } else {
-            deleteBlock.innerHTML = `
-                <p style="font-size:0.82em;color:#ccc;line-height:1.5;margin-bottom:10px;">
-                    Ce circuit a <strong style="color:#ff4757;">${sessCount} session(s) enregistrée(s)</strong>. Supprime d'abord toutes ses sessions dans l'Historique.
-                </p>
-                <div style="display:inline-block;background:#ff475718;border:1px solid #ff475744;border-radius:6px;padding:4px 10px;font-size:0.78em;color:#ff4757;font-weight:700;margin-bottom:12px;">⚠️ ${sessCount} session(s) liée(s)</div>
-                <button type="button" class="btn-delete-circuit disabled" disabled>🗑️ Suppression impossible</button>`;
-        }
-
-        showModal('manageCircuitModal');
-    }
-
-    renameCircuit() {
-        const sel = document.getElementById('circuit');
-        const oldName = sel ? sel.value : '';
-        const newName = document.getElementById('renameCircuitInput').value.trim();
-        if (!oldName) return;
-        if (!newName) { this.showNotification('Entre un nom valide', 'error'); return; }
-        if (newName === oldName) { this.showNotification('C\'est déjà ce nom !', 'error'); return; }
-        if (this.circuits.includes(newName)) { this.showNotification('Ce nom existe déjà', 'error'); return; }
-
-        // Mettre à jour la liste des circuits
-        const idx = this.circuits.indexOf(oldName);
-        if (idx !== -1) this.circuits[idx] = newName;
-
-        // Mettre à jour toutes les sessions liées
-        this.sessions.forEach(s => { if (s.circuit === oldName) { s.circuit = newName; this.saveSessionFirebase(s); } });
-
-        this.saveCircuitsFirebase();
-        this.populateCircuits();
-        this.populateCircuitFilter();
-        const selEl = document.getElementById('circuit');
-        if (selEl) selEl.value = newName;
-        hideModal('manageCircuitModal');
-        this.updateDashboard();
-        this.showNotification('Circuit renommé en "' + newName + '" ✅');
-    }
-
-    deleteCircuit(name) {
-        const sessCount = this.sessions.filter(s => s.circuit === name).length;
-        if (sessCount > 0) { this.showNotification('Supprime d\'abord les sessions liées', 'error'); return; }
-        if (!confirm('Supprimer le circuit "' + name + '" ?')) return;
-        this.circuits = this.circuits.filter(c => c !== name);
-        this.saveCircuitsFirebase();
-        this.populateCircuits();
-        this.populateCircuitFilter();
-        hideModal('manageCircuitModal');
-        this.showNotification('Circuit "' + name + '" supprimé', 'error');
-    }
-
     // ── DASHBOARD ─────────────────────────────────────────────────────────
 
     updateDashboard() {
@@ -668,7 +582,8 @@ class KartingDashboard {
             bestSess.tirePressure ? bestSess.tirePressure + ' bar' : '',
             bestSess.weather || '',
             bestSess.temperature ? '🌡️ ' + bestSess.temperature + '°C' : '',
-            bestSess.crownUsed ? 'Couronne ' + bestSess.crownUsed : ''
+            bestSess.crownUsed ? 'Couronne ' + bestSess.crownUsed : '',
+            bestSess.maxLaps ? '🔧 ' + bestSess.maxLaps + ' tr/min' : ''
         ].filter(Boolean);
 
         // Conditions du record : 2 lignes
@@ -698,9 +613,9 @@ class KartingDashboard {
             </div>
 
             <div class="ct-stats-row">
-                <div class="ct-stat"><div class="ct-stat-val">${sessions.length}</div><div class="ct-stat-lbl">Sessions</div></div>
+                <div class="ct-stat"><div class="ct-stat-val">${sessions.length}</div><div class="ct-stat-lbl">Nb sessions</div></div>
                 <div class="ct-stat-div"></div>
-                <div class="ct-stat"><div class="ct-stat-val">${totalLaps}</div><div class="ct-stat-lbl">Tours</div></div>
+                <div class="ct-stat"><div class="ct-stat-val">${totalLaps}</div><div class="ct-stat-lbl">Nb tours</div></div>
                 <div class="ct-stat-div"></div>
                 <div class="ct-stat"><div class="ct-stat-val" style="color:#667eea">${this.formatTime(avg)}</div><div class="ct-stat-lbl">Moyenne</div></div>
                 <div class="ct-stat-div"></div>
@@ -735,7 +650,10 @@ class KartingDashboard {
                 <canvas id="${chartId4}"></canvas>
             </div>
             <div class="ct-chart-block" id="matrix-block-${cid}">
-                <div class="ct-chart-title">⚙️ Matrice réglage — Pression × Pneu</div>
+                <div class="ct-chart-header">
+                    <span class="ct-chart-title">⚙️ Matrice pression pneu</span>
+                    <button class="ct-expand-matrix-btn" data-cid="${cid}">⛶ Agrandir</button>
+                </div>
                 <div class="ct-matrix-wrap" id="matrix-${cid}"></div>
                 <div class="ct-matrix-legend">
                     <span class="ct-legend-l">Rapide</span>
@@ -750,6 +668,10 @@ class KartingDashboard {
         tile.querySelectorAll('.ct-expand-btn').forEach(btn => {
             btn.addEventListener('click', () => this.openChartFullscreen(btn.getAttribute('data-chart'), btn.getAttribute('data-title')));
         });
+        const matrixExpandBtn = tile.querySelector('.ct-expand-matrix-btn');
+        if (matrixExpandBtn) {
+            matrixExpandBtn.addEventListener('click', () => this.openMatrixFullscreen(cid, circuit));
+        }
         container.appendChild(tile);
 
         setTimeout(() => {
@@ -925,89 +847,87 @@ class KartingDashboard {
     }
 
     // Plein écran graphique
-    openChartFullscreen(chartId, title) {
+    async openChartFullscreen(chartId, title) {
         const sourceChart = this.circuitCharts[chartId];
         if (!sourceChart) return;
-
         let overlay = document.getElementById('chartOverlay');
         if (!overlay) {
             overlay = document.createElement('div');
             overlay.id = 'chartOverlay';
             overlay.className = 'chart-overlay';
-            overlay.innerHTML = `
-                <div class="chart-overlay-inner">
-                    <div class="chart-overlay-header">
-                        <span class="chart-overlay-title" id="overlayTitle"></span>
-                        <button class="chart-overlay-close" id="overlayClose">✕</button>
-                    </div>
-                    <div class="chart-overlay-rotate-hint" id="overlayRotateHint">
-                        📱 Tourne ton téléphone pour voir en paysage
-                    </div>
-                    <div class="chart-overlay-canvas-wrap">
-                        <canvas id="chartOverlayCanvas"></canvas>
-                    </div>
-                    <div class="chart-overlay-hint">Appuie sur ✕ pour revenir</div>
-                </div>`;
+            overlay.innerHTML = '<div class="chart-overlay-inner"><div class="chart-overlay-header"><span class="chart-overlay-title" id="overlayTitle"></span><button class="chart-overlay-close" id="overlayClose">✕</button></div><div class="chart-overlay-canvas-wrap"><canvas id="chartOverlayCanvas"></canvas></div><div class="chart-overlay-rotate-hint" id="overlayRotateHint">📱 Tourne ton téléphone pour voir le graphique en grand</div><div class="chart-overlay-hint">Appuie sur ✕ pour revenir</div></div>';
             document.body.appendChild(overlay);
             document.getElementById('overlayClose').addEventListener('click', () => this.closeChartFullscreen());
         }
-
         document.getElementById('overlayTitle').textContent = title;
         overlay.style.display = 'flex';
         document.body.style.overflow = 'hidden';
-        this._fullscreenChartId = chartId;
 
-        // Afficher ou cacher le hint selon l'orientation actuelle
-        this._updateOverlayRotateHint();
+        // Tenter le verrou paysage (Android Chrome) — iOS ne supporte pas cette API
+        let lockOk = false;
+        try {
+            if (screen.orientation && screen.orientation.lock) {
+                await screen.orientation.lock('landscape');
+                lockOk = true;
+            }
+        } catch(e) { /* non supporté sur iOS/desktop */ }
+        const rotateHint = document.getElementById('overlayRotateHint');
+        if (rotateHint) rotateHint.style.display = lockOk ? 'none' : 'block';
 
-        // Écouter les changements d'orientation pour redessiner
-        this._orientationHandler = () => {
-            this._updateOverlayRotateHint();
-            // Laisser le navigateur finir la rotation avant de redessiner
-            setTimeout(() => this._redrawOverlayChart(), 300);
-        };
-        window.addEventListener('orientationchange', this._orientationHandler);
-        window.addEventListener('resize', this._orientationHandler);
-
-        // Dessiner le graphique
-        this._redrawOverlayChart();
-    }
-
-    _updateOverlayRotateHint() {
-        const hint = document.getElementById('overlayRotateHint');
-        if (!hint) return;
-        const isLandscape = window.innerWidth > window.innerHeight;
-        hint.style.display = isLandscape ? 'none' : 'block';
-    }
-
-    _redrawOverlayChart() {
         if (this._overlayChart) { this._overlayChart.destroy(); this._overlayChart = null; }
-        const chartId = this._fullscreenChartId;
-        if (!chartId) return;
-        const sourceChart = this.circuitCharts[chartId];
-        if (!sourceChart) return;
-        const canvas = document.getElementById('chartOverlayCanvas');
-        if (!canvas) return;
         const origCfg = sourceChart.config;
-        this._overlayChart = new Chart(canvas.getContext('2d'), {
-            type: origCfg.type,
-            data: JSON.parse(JSON.stringify(origCfg.data)),
-            options: Object.assign({}, origCfg.options, { responsive: true, maintainAspectRatio: false }),
-            plugins: origCfg.plugins || []
-        });
+        setTimeout(() => {
+            const canvas = document.getElementById('chartOverlayCanvas');
+            this._overlayChart = new Chart(canvas.getContext('2d'), {
+                type: origCfg.type,
+                data: JSON.parse(JSON.stringify(origCfg.data)),
+                options: Object.assign({}, origCfg.options, { responsive:true, maintainAspectRatio:false }),
+                plugins: origCfg.plugins || []
+            });
+        }, 50);
     }
 
     closeChartFullscreen() {
         const overlay = document.getElementById('chartOverlay');
         if (overlay) overlay.style.display = 'none';
         document.body.style.overflow = '';
-        if (this._orientationHandler) {
-            window.removeEventListener('orientationchange', this._orientationHandler);
-            window.removeEventListener('resize', this._orientationHandler);
-            this._orientationHandler = null;
-        }
+        try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch(e) {}
         if (this._overlayChart) { this._overlayChart.destroy(); this._overlayChart = null; }
-        this._fullscreenChartId = null;
+    }
+
+    openMatrixFullscreen(cid, circuit) {
+        const matrixWrap = document.getElementById('matrix-' + cid);
+        if (!matrixWrap) return;
+        let overlay = document.getElementById('matrixOverlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'matrixOverlay';
+            overlay.style.cssText = 'display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#0a0a0a;z-index:9999;overflow-y:auto;padding:16px;box-sizing:border-box;';
+            overlay.innerHTML = `
+                <div style="max-width:700px;margin:0 auto;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                        <span style="font-size:0.85em;font-weight:700;color:#ccc;" id="matrixOverlayTitle"></span>
+                        <button id="matrixOverlayClose" style="background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#ccc;font-size:1em;padding:6px 14px;cursor:pointer;">✕ Fermer</button>
+                    </div>
+                    <div id="matrixOverlayContent"></div>
+                </div>`;
+            document.body.appendChild(overlay);
+            document.getElementById('matrixOverlayClose').addEventListener('click', () => {
+                overlay.style.display = 'none';
+                document.body.style.overflow = '';
+            });
+        }
+        document.getElementById('matrixOverlayTitle').textContent = '⚙️ Matrice pression pneu — ' + circuit;
+        // Clone la matrice avec une version agrandie
+        const content = document.getElementById('matrixOverlayContent');
+        content.innerHTML = matrixWrap.innerHTML;
+        // Agrandir les cellules
+        content.querySelectorAll('.ct-matrix-cell').forEach(c => { c.style.minWidth = '90px'; c.style.padding = '10px 8px'; });
+        content.querySelectorAll('.ct-matrix-time').forEach(c => { c.style.fontSize = '0.9em'; });
+        content.querySelectorAll('.ct-matrix-n').forEach(c => { c.style.fontSize = '0.65em'; });
+        content.querySelectorAll('.ct-matrix-table th').forEach(c => { c.style.fontSize = '0.7em'; });
+        overlay.style.display = 'block';
+        document.body.style.overflow = 'hidden';
     }
 
     // Legacy createChart — garde pour compatibilité
@@ -1102,68 +1022,49 @@ class KartingDashboard {
 
         const ua = navigator.userAgent;
         const isIOS = /iPhone|iPad|iPod/.test(ua);
-        const isSafari = /Safari/.test(ua) && !/CriOS/.test(ua) && !/FxiOS/.test(ua) && !/Chrome/.test(ua);
         const isAndroid = /Android/.test(ua);
+        const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua);
 
-        // CAS 3 — Android : bouton automatique en priorité
-        if (isAndroid) {
-            if (deferredPrompt && btn) {
-                btn.style.display = 'block';
-                inst.innerHTML = '';
-            } else {
-                if (btn) btn.style.display = 'none';
-                inst.innerHTML = `
-                    <div style="background:#1a1a1a;border-radius:10px;padding:14px;border:1px solid #2a2a2a;">
-                        <p style="font-size:0.72em;font-weight:700;color:#667eea;margin:0 0 8px;">📱 Android détecté</p>
-                        <p style="font-size:0.85em;color:#ccc;margin:0 0 10px;">Le bouton d'installation devrait apparaître automatiquement. Si ce n'est pas le cas, ouvre le menu Chrome (⋮) et choisis <strong>"Ajouter à l'écran d'accueil"</strong>.</p>
-                    </div>`;
-            }
+        if (deferredPrompt && btn) {
+            btn.style.display = 'block';
+            inst.innerHTML = '<p style="color:#10b981; font-size:0.9em; margin-bottom:10px;">✅ Prêt à installer sur votre écran d\'accueil</p>';
             return;
         }
 
-        // CAS 1 — iPhone + Safari : instructions manuelles
-        if (isIOS && isSafari) {
-            if (btn) btn.style.display = 'none';
+        if (isIOS || isSafari) {
             inst.innerHTML = `
-                <div style="background:#1a1a1a;border-radius:10px;padding:14px;border:1px solid #2a2a2a;">
-                    <p style="font-size:0.72em;font-weight:700;color:#10b981;margin:0 0 8px;">✅ iPhone détecté · Safari</p>
-                    <p style="font-size:0.82em;color:#888;margin:0 0 12px;">Apple ne permet pas l'installation automatique, suis ces 3 étapes :</p>
-                    <div style="display:flex;flex-direction:column;gap:10px;">
-                        <div style="display:flex;align-items:flex-start;gap:10px;">
-                            <div style="min-width:22px;height:22px;border-radius:50%;background:#667eea;color:#fff;font-size:0.7em;font-weight:700;display:flex;align-items:center;justify-content:center;">1</div>
-                            <p style="font-size:0.82em;color:#ccc;margin:0;line-height:1.5;">Appuie sur <strong style="color:#fff;">📤 Partager</strong> en bas de Safari</p>
-                        </div>
-                        <div style="display:flex;align-items:flex-start;gap:10px;">
-                            <div style="min-width:22px;height:22px;border-radius:50%;background:#667eea;color:#fff;font-size:0.7em;font-weight:700;display:flex;align-items:center;justify-content:center;">2</div>
-                            <p style="font-size:0.82em;color:#ccc;margin:0;line-height:1.5;">Fais défiler et choisis <strong style="color:#fff;">"Sur l'écran d'accueil"</strong></p>
-                        </div>
-                        <div style="display:flex;align-items:flex-start;gap:10px;">
-                            <div style="min-width:22px;height:22px;border-radius:50%;background:#667eea;color:#fff;font-size:0.7em;font-weight:700;display:flex;align-items:center;justify-content:center;">3</div>
-                            <p style="font-size:0.82em;color:#ccc;margin:0;line-height:1.5;">Appuie sur <strong style="color:#fff;">"Ajouter"</strong> en haut à droite</p>
-                        </div>
-                    </div>
+                <div style="background:#1a1a1a; border-radius:8px; padding:15px; border:1px solid #2a2a2a;">
+                    <p style="color:#667eea; font-weight:600; margin:0 0 10px;">📱 Installation iOS/Safari :</p>
+                    <ol style="color:#ccc; font-size:0.85em; margin:0; padding-left:20px; line-height:1.6;">
+                        <li>Appuyez sur le bouton <strong>Partager</strong> (📤) en bas</li>
+                        <li>Faites défiler et sélectionnez <strong>"Sur l'écran d'accueil"</strong></li>
+                        <li>Appuyez sur <strong>"Ajouter"</strong></li>
+                    </ol>
                 </div>`;
-            return;
-        }
-
-        // CAS 2 — iPhone + Chrome/Firefox
-        if (isIOS && !isSafari) {
             if (btn) btn.style.display = 'none';
-            inst.innerHTML = `
-                <div style="background:#2a1500;border-radius:10px;padding:14px;border:1px solid #f59e0b44;">
-                    <p style="font-size:0.72em;font-weight:700;color:#f59e0b;margin:0 0 8px;">⚠️ iPhone détecté · Chrome / Firefox</p>
-                    <p style="font-size:0.85em;color:#ccc;margin:0;line-height:1.6;">L'installation sur iPhone n'est disponible que dans <strong style="color:#fff;">Safari</strong>. Ouvre cette page dans Safari pour pouvoir l'installer sur ton écran d'accueil.</p>
-                </div>`;
-            return;
         }
-
-        // Desktop
-        if (btn) btn.style.display = 'none';
-        inst.innerHTML = `
-            <div style="background:#1a1a1a;border-radius:10px;padding:14px;border:1px solid #2a2a2a;">
-                <p style="font-size:0.72em;font-weight:700;color:#667eea;margin:0 0 8px;">💻 Desktop détecté</p>
-                <p style="font-size:0.85em;color:#ccc;margin:0;">Cherche l'icône <strong>⊕</strong> dans la barre d'adresse pour installer l'application.</p>
-            </div>`;
+        else if (isAndroid) {
+            inst.innerHTML = `
+                <div style="background:#1a1a1a; border-radius:8px; padding:15px; border:1px solid #2a2a2a;">
+                    <p style="color:#667eea; font-weight:600; margin:0 0 10px;">📱 Installation Android :</p>
+                    <ol style="color:#ccc; font-size:0.85em; margin:0; padding-left:20px; line-height:1.6;">
+                        <li>Appuyez sur les <strong>3 points</strong> (⋮) du menu Chrome</li>
+                        <li>Sélectionnez <strong>"Ajouter à l'écran d'accueil"</strong></li>
+                        <li>Confirmez avec <strong>"Ajouter"</strong></li>
+                    </ol>
+                </div>`;
+            if (btn) btn.style.display = 'none';
+        }
+        else {
+            inst.innerHTML = `
+                <div style="background:#1a1a1a; border-radius:8px; padding:15px; border:1px solid #2a2a2a;">
+                    <p style="color:#667eea; font-weight:600; margin:0 0 10px;">💻 Installation Desktop :</p>
+                    <p style="color:#ccc; font-size:0.85em; margin:0; line-height:1.6;">
+                        Cherchez l'icône <strong>⊕</strong> ou <strong>🖥️</strong> dans la barre d'adresse (à droite) et cliquez dessus pour installer l'application.
+                    </p>
+                </div>`;
+            if (btn) btn.style.display = 'none';
+        }
     }
 
     // ── LOGOUT ────────────────────────────────────────────────────────────
@@ -1267,17 +1168,6 @@ class KartingDashboard {
 
         // Add circuit
         document.getElementById('addCircuitBtn').addEventListener('click', () => this.addNewCircuit());
-
-        // Manage circuit
-        document.getElementById('manageCircuitBtn').addEventListener('click', () => this.openManageCircuit());
-        document.getElementById('closeManageCircuitBtn').addEventListener('click', () => hideModal('manageCircuitModal'));
-        document.getElementById('renameCircuitBtn').addEventListener('click', () => this.renameCircuit());
-
-        // Activer/désactiver le bouton ✏️ selon la sélection
-        document.getElementById('circuit').addEventListener('change', e => {
-            const btn = document.getElementById('manageCircuitBtn');
-            if (btn) btn.style.opacity = e.target.value ? '1' : '0.35';
-        });
 
         // Circuit filter
         document.getElementById('circuitFilter').addEventListener('change', e => this.filterCircuit(e.target.value));
