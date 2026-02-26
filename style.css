@@ -1626,7 +1626,7 @@ section h2 {
 .ct-record-line .btn-view-record-inline { margin-left:auto; }
 
 /* Stats horizontales */
-.ct-stats-row { display:flex; justify-content:space-around; padding:10px 0; border-top:1px solid #222; border-bottom:1px solid #222; }
+.ct-stats-row { display:flex; justify-content:space-around; padding:2px 0; }
 .ct-stat { text-align:center; }
 .ct-stat-val { font-size:1.05em; font-weight:800; }
 .ct-stat-lbl { font-size:0.54em; color:#666; margin-top:3px; }

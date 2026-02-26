@@ -602,24 +602,28 @@ class KartingDashboard {
         tile.innerHTML = `
             <div class="circuit-tile-name">🏁 ${circuit}</div>
 
-            <div class="ct-record-line">
-                <span class="ct-best-badge">${this.formatTime(best)} 🏆</span>
-                <div class="ct-record-info">
-                    <div class="ct-record-label">Record personnel</div>
-                    ${condLine1 ? `<div class="ct-record-cond">${condLine1}</div>` : ''}
-                    ${condLine2 ? `<div class="ct-record-cond">${condLine2}</div>` : ''}
+            <div class="ct-chart-block ct-record-block">
+                <div class="ct-record-line">
+                    <span class="ct-best-badge">${this.formatTime(best)} 🏆</span>
+                    <div class="ct-record-info">
+                        <div class="ct-record-label">Record personnel</div>
+                        ${condLine1 ? `<div class="ct-record-cond">${condLine1}</div>` : ''}
+                        ${condLine2 ? `<div class="ct-record-cond">${condLine2}</div>` : ''}
+                    </div>
+                    <button class="btn-details session-btn ct-eye-btn" data-id="${bestSess.id}">👁️</button>
                 </div>
-                <button class="btn-details session-btn ct-eye-btn" data-id="${bestSess.id}">👁️</button>
             </div>
 
-            <div class="ct-stats-row">
-                <div class="ct-stat"><div class="ct-stat-val">${sessions.length}</div><div class="ct-stat-lbl">Nb sessions</div></div>
-                <div class="ct-stat-div"></div>
-                <div class="ct-stat"><div class="ct-stat-val">${totalLaps}</div><div class="ct-stat-lbl">Nb tours</div></div>
-                <div class="ct-stat-div"></div>
-                <div class="ct-stat"><div class="ct-stat-val" style="color:#667eea">${this.formatTime(avg)}</div><div class="ct-stat-lbl">Moyenne</div></div>
-                <div class="ct-stat-div"></div>
-                <div class="ct-stat"><div class="ct-stat-val" style="color:#f59e0b">+${this.formatTime(ecart)}</div><div class="ct-stat-lbl">Écart moy.</div></div>
+            <div class="ct-chart-block ct-stats-block">
+                <div class="ct-stats-row">
+                    <div class="ct-stat"><div class="ct-stat-val">${sessions.length}</div><div class="ct-stat-lbl">Nb sessions</div></div>
+                    <div class="ct-stat-div"></div>
+                    <div class="ct-stat"><div class="ct-stat-val">${totalLaps}</div><div class="ct-stat-lbl">Nb tours</div></div>
+                    <div class="ct-stat-div"></div>
+                    <div class="ct-stat"><div class="ct-stat-val" style="color:#667eea">${this.formatTime(avg)}</div><div class="ct-stat-lbl">Moyenne</div></div>
+                    <div class="ct-stat-div"></div>
+                    <div class="ct-stat"><div class="ct-stat-val" style="color:#f59e0b">+${this.formatTime(ecart)}</div><div class="ct-stat-lbl">Écart moy.</div></div>
+                </div>
             </div>
 
             <div class="ct-reglage">
