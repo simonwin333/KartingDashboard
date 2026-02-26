@@ -496,6 +496,84 @@ class KartingDashboard {
         this.showNotification('Circuit "' + n + '" ajouté ! 🏁');
     }
 
+    openCircuitManager() {
+        const modal = document.getElementById('circuitManagerModal');
+        if (!modal) return;
+        this.renderCircuitManagerList();
+        modal.style.display = 'flex';
+    }
+
+    renderCircuitManagerList() {
+        const list = document.getElementById('circuitManagerList');
+        if (!list) return;
+        if (this.circuits.length === 0) {
+            list.innerHTML = '<p style="color:#555;font-size:0.85em;text-align:center;padding:20px 0;">Aucun circuit enregistré.<br>Ajoutez-en un avec le bouton ➕</p>';
+            return;
+        }
+        const self = this;
+        list.innerHTML = '';
+        this.circuits.forEach((circuit, idx) => {
+            const item = document.createElement('div');
+            item.className = 'circuit-manager-item';
+            item.innerHTML = `
+                <div class="circuit-manager-name" id="cm-name-${idx}"><span>${circuit}</span></div>
+                <button class="btn-circuit-rename" data-idx="${idx}" title="Renommer">✏️</button>
+                <button class="btn-circuit-delete" data-idx="${idx}" title="Supprimer">🗑️</button>`;
+            
+            item.querySelector('.btn-circuit-rename').addEventListener('click', () => {
+                const nameDiv = document.getElementById('cm-name-' + idx);
+                const currentName = self.circuits[idx];
+                nameDiv.innerHTML = `<input type="text" value="${currentName}" id="cm-input-${idx}" maxlength="40">`;
+                const renameBtn = item.querySelector('.btn-circuit-rename');
+                renameBtn.textContent = '💾';
+                renameBtn.className = 'btn-circuit-save';
+                renameBtn.onclick = () => {
+                    const newName = document.getElementById('cm-input-' + idx).value.trim();
+                    if (!newName) return;
+                    if (self.circuits.includes(newName) && newName !== currentName) {
+                        self.showNotification('Ce nom existe déjà !', 'error'); return;
+                    }
+                    // Mettre à jour dans les sessions aussi
+                    self.sessions.forEach(s => { if (s.circuit === currentName) s.circuit = newName; });
+                    self.sessions.forEach(s => { if (s.circuit === newName) self.saveSessionFirebase(s); });
+                    self.circuits[idx] = newName;
+                    self.saveCircuitsFirebase();
+                    self.populateCircuits();
+                    self.updateDashboard();
+                    self.showNotification('Circuit renommé ✅');
+                    self.renderCircuitManagerList();
+                };
+            });
+
+            item.querySelector('.btn-circuit-delete').addEventListener('click', () => {
+                const name = self.circuits[idx];
+                const sessionsCount = self.sessions.filter(s => s.circuit === name).length;
+                const msg = sessionsCount > 0
+                    ? `Supprimer "${name}" ?
+⚠️ ${sessionsCount} session(s) liée(s) seront aussi supprimées.`
+                    : `Supprimer le circuit "${name}" ?`;
+                if (!confirm(msg)) return;
+                if (sessionsCount > 0) {
+                    const toDelete = self.sessions.filter(s => s.circuit === name);
+                    toDelete.forEach(s => {
+                        self.sessions = self.sessions.filter(x => x.id !== s.id);
+                        if (self.currentUser) {
+                            db.collection('users').doc(self.currentUser.uid).collection('sessions').doc(String(s.id)).delete();
+                        }
+                    });
+                }
+                self.circuits.splice(idx, 1);
+                self.saveCircuitsFirebase();
+                self.populateCircuits();
+                self.updateDashboard();
+                self.showNotification('Circuit supprimé 🗑️');
+                self.renderCircuitManagerList();
+            });
+
+            list.appendChild(item);
+        });
+    }
+
     // ── DASHBOARD ─────────────────────────────────────────────────────────
 
     updateDashboard() {
@@ -1172,6 +1250,15 @@ class KartingDashboard {
 
         // Add circuit
         document.getElementById('addCircuitBtn').addEventListener('click', () => this.addNewCircuit());
+        document.getElementById('manageCircuitBtn').addEventListener('click', () => this.openCircuitManager());
+        document.getElementById('closeCircuitManagerBtn').addEventListener('click', () => {
+            document.getElementById('circuitManagerModal').style.display = 'none';
+        });
+        document.getElementById('circuitManagerModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('circuitManagerModal')) {
+                document.getElementById('circuitManagerModal').style.display = 'none';
+            }
+        });
 
         // Circuit filter
         document.getElementById('circuitFilter').addEventListener('change', e => this.filterCircuit(e.target.value));
