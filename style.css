@@ -1492,8 +1492,8 @@ section h2 {
     gap: 5px; padding: 6px;
 }
 .stat-card {
-    background: #1a1a1a; border-radius: 8px; padding: 5px 4px;
-    text-align: center; border: 1px solid #2a2a2a;
+    background: #0d0d0d; border-radius: 8px; padding: 5px 4px;
+    text-align: center; border: 1px solid #111;
 }
 .stat-card-wide { grid-column: span 1; }
 .stat-icon { font-size: 0.85em; margin-bottom: 1px; }
@@ -1502,7 +1502,7 @@ section h2 {
 .stat-card-wide .stat-value { font-size: 0.66em; }
 
 /* SECTIONS */
-.view-section { padding: 15px; }
+.view-section { padding: 15px; background: #1e1e1e; }
 .view-section h2 { font-size: 1.2em; margin: 0 0 15px; color: #fff; }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
 .section-header h2 { margin: 0; }
@@ -1510,9 +1510,9 @@ section h2 {
 /* SESSIONS */
 .sessions-list { display: flex; flex-direction: column; gap: 6px; }
 .session-item {
-    background: #1a1a1a; border-radius: 10px; padding: 8px 10px;
+    background: #0d0d0d; border-radius: 10px; padding: 8px 10px;
     display: flex; align-items: stretch;
-    border: 1px solid #2a2a2a; gap: 8px;
+    border: 1px solid #111; gap: 8px;
 }
 .session-content { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .session-line1 { display: flex; align-items: center; gap: 8px; }
