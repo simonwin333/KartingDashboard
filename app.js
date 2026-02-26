@@ -652,7 +652,7 @@ class KartingDashboard {
             <div class="ct-chart-block" id="matrix-block-${cid}">
                 <div class="ct-chart-header">
                     <span class="ct-chart-title">⚙️ Matrice pression pneu</span>
-                    <button class="ct-expand-matrix-btn" data-cid="${cid}">⛶ Agrandir</button>
+                    <button class="ct-expand-btn ct-expand-matrix-btn" data-cid="${cid}">⛶ Agrandir</button>
                 </div>
                 <div class="ct-matrix-wrap" id="matrix-${cid}"></div>
                 <div class="ct-matrix-legend">
