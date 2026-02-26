@@ -1591,10 +1591,12 @@ section h2 {
 
 /* SETTINGS */
 .settings-section {
-    background: #1a1a1a; border-radius: 12px; padding: 20px;
-    margin-bottom: 15px; border: 1px solid #2a2a2a;
+    background: #111; border-radius: 12px; padding: 16px;
+    margin-bottom: 10px; border: 1px solid #1e1e1e;
 }
-.settings-section h3 { margin: 0 0 15px; font-size: 1em; color: #fff; }
+.settings-section h3 { margin: 0 0 12px; font-size: 0.95em; color: #fff; }
+.settings-separator { border: none; border-top: 1px solid #222; margin: 10px 0 12px; }
+.settings-version { padding: 8px 16px !important; }
 .settings-input, .settings-select {
     width: 100%; padding: 10px 12px; background: #0f0f0f;
     border: 1.5px solid #2a2a2a; border-radius: 8px; color: #fff;
