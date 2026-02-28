@@ -626,7 +626,15 @@ class KartingDashboard {
         const el = document.getElementById('circuitsAnalysis');
         if (!el) return;
         if (this.sessions.length === 0) {
-            el.innerHTML = '<div class="empty-state"><p>📊 Aucune donnée</p></div>';
+            el.innerHTML = `
+                <div class="circuits-empty-state">
+                    <div class="ces-icon">🏎️</div>
+                    <div class="ces-title">Aucune session enregistrée</div>
+                    <div class="ces-sub">Commence par ajouter ta première session pour voir tes statistiques et graphiques ici.</div>
+                    <button class="ces-btn" onclick="document.querySelector('.nav-btn[data-view=add-session]').click()">
+                        ➕ Ajouter une session
+                    </button>
+                </div>`;
             return;
         }
         const data = {};
