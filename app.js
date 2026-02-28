@@ -913,7 +913,7 @@ class KartingDashboard {
         }
 
         if (rows.length === 0) return '';
-        return `<div class="ct-insight-label">📊 Analyse progression</div>${rows.join('')}`;
+        return rows.join('');
     }
 
     buildInsightPneu(labels, avgs, byTire, minAvg, self) {
@@ -934,7 +934,7 @@ class KartingDashboard {
         const missing = allTires.filter(t => !labels.includes(t));
         if (missing.length > 0) rows.push(this.insightRow('📌', `Jamais testé sur ce circuit : <b>${missing.join(', ')}</b>. Potentiel d'exploration.`));
 
-        return `<div class="ct-insight-label">🛞 Analyse pneus</div>${rows.join('')}`;
+        return rows.join('');
     }
 
     buildInsightPression(data, best, self) {
@@ -960,7 +960,7 @@ class KartingDashboard {
         // Note: on ne peut pas accéder à la température ici facilement, on mentionne juste le nb de sessions
         rows.push(this.insightRow('💡', `Analyse basée sur <b>${data.length} session${data.length>1?'s':''}</b> avec données de pression. Plus tu en ajoutes, plus l'analyse est fiable.`));
 
-        return `<div class="ct-insight-label">💨 Analyse pression</div>${rows.join('')}`;
+        return rows.join('');
     }
 
     buildInsightMatrice(sessions, matData, pneus, pressions, minT, allTimes) {
@@ -996,7 +996,7 @@ class KartingDashboard {
         if (oneSession > 0) rows.push(this.insightRow('⚠️', `<b style="color:#f59e0b">${oneSession} case${oneSession>1?'s':''}</b> avec 1 seule session — peu fiable. Vise 2–3 sessions minimum pour confirmer.`));
 
         if (rows.length === 0) return '';
-        return `<div class="ct-insight-label">🧩 Analyse combinaisons</div>${rows.join('')}`;
+        return rows.join('');
     }
 
     // Matrice pression (lignes) x pneu (colonnes)
