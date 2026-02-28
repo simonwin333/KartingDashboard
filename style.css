@@ -788,8 +788,7 @@ section h2 {
         max-width: 100%;
     }
 
-    /* SESSIONS - boutons en ligne, pas de colonne */
-    .session-item { padding: 8px 10px; }
+    /* SESSIONS - boutons en ligne */
     .btn-edit, .btn-delete, .btn-details {
         flex: none;
         width: 30px;
@@ -1504,18 +1503,13 @@ section h2 {
     border: 1px solid #111;
 }
 .session-content { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-.session-line1 { display: flex; align-items: center; gap: 8px; }
-.session-line2 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
-/* Boutons session en ligne (historique) */
-.session-actions-row {
-    display: flex; gap: 5px; margin-top: 4px;
-}
+/* Boutons session en ligne */
+.session-actions-row { display: flex; gap: 5px; margin-top: 4px; }
 .session-actions-row .session-btn {
     flex: 1; padding: 5px 4px; font-size: 0.68em; font-weight: 600;
     background: #1a1a1a; border: 1px solid #222; border-radius: 6px;
-    color: #888; cursor: pointer; text-align: center;
-    white-space: nowrap; height: auto;
+    color: #888; cursor: pointer; text-align: center; white-space: nowrap;
     display: flex; align-items: center; justify-content: center; gap: 3px;
 }
 .session-actions-row .btn-details:hover { background: #10b98120; color: #10b981; border-color: #10b98140; }
@@ -1523,9 +1517,7 @@ section h2 {
 .session-actions-row .btn-delete:hover { background: #ff475720; color: #ff4757; border-color: #ff475740; }
 
 /* Filtres historique */
-.history-filters {
-    display: flex; gap: 6px; margin-bottom: 10px;
-}
+.history-filters { display: flex; gap: 6px; margin-bottom: 10px; }
 .history-select {
     flex: 1; padding: 7px 6px; background: #0d0d0d;
     border: 1.5px solid #111; border-radius: 8px;
@@ -1533,18 +1525,15 @@ section h2 {
     -webkit-appearance: none; -moz-appearance: none; appearance: none;
 }
 .history-select option { background: #0d0d0d; color: #ccc; }
-.history-count {
-    font-size: 0.62em; color: #444; text-align: right;
-    margin-bottom: 8px; font-style: italic;
-}
-
-/* Séparateur mois historique */
+.history-count { font-size: 0.62em; color: #444; text-align: right; margin-bottom: 8px; font-style: italic; }
 .history-month-sep {
     font-size: 0.6em; font-weight: 700; color: #444;
     text-transform: capitalize; letter-spacing: 0.06em;
     padding: 10px 2px 5px; display: flex; align-items: center; gap: 8px;
 }
 .history-month-sep::after { content:''; flex:1; height:1px; background:#1a1a1a; }
+.session-line1 { display: flex; align-items: center; gap: 8px; }
+.session-line2 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .session-circuit { font-size: 0.88em; color: #fff; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .session-date { font-size: 0.68em; color: #666; white-space: nowrap; flex-shrink: 0; }
 .session-time { font-size: 0.82em; color: #667eea; font-weight: 700; white-space: nowrap; display: inline; }
