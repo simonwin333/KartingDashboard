@@ -37,6 +37,9 @@
                 <label>Mot de passe</label>
                 <input type="password" id="authPassword" placeholder="min. 6 caractères">
             </div>
+            <div id="forgotPasswordLink" style="text-align:right; margin-top:-6px; margin-bottom:8px;">
+                <a href="#" id="forgotPasswordBtn" style="font-size:0.78em; color:#667eea; text-decoration:none;">Mot de passe oublié ?</a>
+            </div>
             <button type="button" class="btn-primary" id="authSubmitBtn">Se connecter</button>
             <button type="button" class="btn-secondary" id="authToggleBtn">Créer un compte</button>
         </div>
@@ -228,7 +231,7 @@
             </div>
             <div class="form-row">
                 <div class="form-group"><label>🌦️ Météo</label>
-                    <select id="weather"><option value="">--</option><option>☀️ Sec</option><option>🌤️ Nuageux</option><option>🌧️ Pluie</option></select>
+                    <select id="weather"><option value="">--</option><option>☀️ Sec</option><option>🌤️ Nuageux</option><option>🌧️ Pluie</option><option>🌩️ Orage</option></select>
                 </div>
                 <div class="form-group"><label>🌡️ Température (°C)</label><input type="number" id="temperature" min="-20" max="50" placeholder="Ex: 18"></div>
             </div>
@@ -258,23 +261,6 @@
     <!-- HISTORIQUE -->
     <section class="view-section" data-view="history" style="display:none;">
         <h2>📋 Historique complet</h2>
-        <div class="history-filters">
-            <select id="historyFilterCircuit" class="history-select"><option value="all">🏁 Tous les circuits</option></select>
-            <select id="historyFilterWeather" class="history-select">
-                <option value="all">🌦️ Météo</option>
-                <option value="☀️ Sec">☀️ Sec</option>
-                <option value="🌤️ Nuageux">🌤️ Nuageux</option>
-                <option value="🌧️ Pluie">🌧️ Pluie</option>
-            </select>
-            <select id="historyFilterTire" class="history-select">
-                <option value="all">🛞 Pneus</option>
-                <option value="Soft">Soft</option>
-                <option value="Medium">Medium</option>
-                <option value="Hard">Hard</option>
-                <option value="Pluie">Pluie</option>
-            </select>
-        </div>
-        <div id="historyCount" class="history-count"></div>
         <div id="sessionsList" class="sessions-list"></div>
     </section>
 

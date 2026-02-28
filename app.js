@@ -102,6 +102,22 @@ function showCGU() { showModal('cguModal'); }
 function closeCGU() { hideModal('cguModal'); }
 function showFAQ() { showModal('faqModal'); }
 function closeFAQ() { hideModal('faqModal'); }
+
+async function resetPassword() {
+    const email = document.getElementById('authEmail').value.trim();
+    if (!email) {
+        showNotifGlobal('Entrez votre adresse e-mail d'abord', 'error');
+        return;
+    }
+    try {
+        await auth.sendPasswordResetEmail(email);
+        showNotifGlobal('📧 Email envoyé ! Vérifiez votre boîte mail.', 'success');
+    } catch(e) {
+        if (e.code === 'auth/user-not-found') showNotifGlobal('Aucun compte avec cet email', 'error');
+        else if (e.code === 'auth/invalid-email') showNotifGlobal('Adresse email invalide', 'error');
+        else showNotifGlobal('Erreur : ' + e.message, 'error');
+    }
+}
 function closeRecord() { document.getElementById('recordPopup').style.display = 'none'; }
 function showNotifGlobal(msg, type) { if (window.dashboard) dashboard.showNotification(msg, type); }
 
@@ -466,33 +482,16 @@ class KartingDashboard {
     }
 
     populateCircuitFilter() {
-        const circuits = [...new Set(this.sessions.map(s => s.circuit))].sort();
-
-        // Filtre page Circuits
         const sel = document.getElementById('circuitFilter');
-        if (sel) {
-            const val = sel.value;
-            sel.innerHTML = '<option value="all">Tous les circuits</option>';
-            circuits.forEach(c => {
-                const o = document.createElement('option');
-                o.value = o.textContent = c;
-                sel.appendChild(o);
-            });
-            if (val) sel.value = val;
-        }
-
-        // Filtre page Historique
-        const hSel = document.getElementById('historyFilterCircuit');
-        if (hSel) {
-            const hVal = hSel.value;
-            hSel.innerHTML = '<option value="all">🏁 Tous les circuits</option>';
-            circuits.forEach(c => {
-                const o = document.createElement('option');
-                o.value = o.textContent = c;
-                hSel.appendChild(o);
-            });
-            if (hVal) hSel.value = hVal;
-        }
+        if (!sel) return;
+        const val = sel.value;
+        sel.innerHTML = '<option value="all">Tous les circuits</option>';
+        [...new Set(this.sessions.map(s => s.circuit))].sort().forEach(c => {
+            const o = document.createElement('option');
+            o.value = o.textContent = c;
+            sel.appendChild(o);
+        });
+        if (val) sel.value = val;
     }
 
     filterCircuit(val) {
@@ -668,6 +667,7 @@ class KartingDashboard {
         const cid = circuit.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
         const chartId1 = 'chart-evol-' + cid;
         const chartId2 = 'chart-pneu-' + cid;
+        const chartId3 = 'chart-bvs-' + cid;
         const chartId4 = 'chart-press-' + cid;
 
         // Chips réglage optimal — toutes blanches
@@ -1037,41 +1037,8 @@ class KartingDashboard {
         if (this.sessions.length === 0) {
             el.innerHTML = '<div class="empty-state"><p>🏎️ Aucune session</p></div>'; return;
         }
-
-        // Lire les filtres
-        const fCircuit = (document.getElementById('historyFilterCircuit') || {}).value || 'all';
-        const fWeather = (document.getElementById('historyFilterWeather') || {}).value || 'all';
-        const fTire = (document.getElementById('historyFilterTire') || {}).value || 'all';
-
-        let filtered = [...this.sessions].sort((a, b) => new Date(b.date + ' ' + (b.time || '')) - new Date(a.date + ' ' + (a.time || '')));
-        if (fCircuit !== 'all') filtered = filtered.filter(s => s.circuit === fCircuit);
-        if (fWeather !== 'all') filtered = filtered.filter(s => s.weather === fWeather);
-        if (fTire !== 'all') filtered = filtered.filter(s => s.tireType === fTire);
-
-        // Compteur
-        const countEl = document.getElementById('historyCount');
-        if (countEl) countEl.textContent = filtered.length + ' session' + (filtered.length > 1 ? 's' : '');
-
-        if (filtered.length === 0) {
-            el.innerHTML = '<div class="empty-state"><p>🔍 Aucune session pour ces filtres</p></div>'; return;
-        }
-
-        // Grouper par mois
-        const groups = {};
-        filtered.forEach(s => {
-            const d = new Date(s.date);
-            const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-            const label = d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-            if (!groups[key]) groups[key] = { label, sessions: [] };
-            groups[key].sessions.push(s);
-        });
-
-        let html = '';
-        Object.keys(groups).sort((a, b) => b.localeCompare(a)).forEach(key => {
-            html += `<div class="history-month-sep">${groups[key].label.charAt(0).toUpperCase() + groups[key].label.slice(1)}</div>`;
-            html += groups[key].sessions.map(s => this.sessionItemHTML(s, true)).join('');
-        });
-        el.innerHTML = html;
+        const sorted = [...this.sessions].sort((a, b) => new Date(b.date + ' ' + (b.time || '')) - new Date(a.date + ' ' + (a.time || '')));
+        el.innerHTML = sorted.map(s => this.sessionItemHTML(s, true)).join('');
     }
 
     sessionItemHTML(s, showDelete) {
@@ -1088,7 +1055,7 @@ class KartingDashboard {
             s.weather || ''
         ].filter(Boolean).join(' · ');
 
-        const deleteBtn = showDelete ? `<button class="btn-delete session-btn" data-id="${s.id}">🗑️ Suppr.</button>` : '';
+        const deleteBtn = showDelete ? `<button class="btn-delete session-btn" data-id="${s.id}">🗑️</button>` : '';
 
         return `<div class="session-item">
             <div class="session-content">
@@ -1100,14 +1067,11 @@ class KartingDashboard {
                     <span class="session-time ${isRecord ? 'session-record' : ''}">⏱️ ${this.formatTime(s.bestTime)}${isRecord ? ' 🏆' : ''}</span>
                     ${line2 ? `<span class="session-conditions">${line2}</span>` : ''}
                 </div>
-                ${showDelete ? `<div class="session-actions-row">
-                    <button class="btn-details session-btn" data-id="${s.id}">👁️ Détail</button>
-                    <button class="btn-edit session-btn" data-id="${s.id}">✏️ Modifier</button>
-                    ${deleteBtn}
-                </div>` : `<div class="session-actions-row">
-                    <button class="btn-details session-btn" data-id="${s.id}">👁️ Détail</button>
-                    <button class="btn-edit session-btn" data-id="${s.id}">✏️ Modifier</button>
-                </div>`}
+            </div>
+            <div class="session-actions">
+                <button class="btn-details session-btn" data-id="${s.id}">👁️</button>
+                <button class="btn-edit session-btn" data-id="${s.id}">✏️</button>
+                ${deleteBtn}
             </div>
         </div>`;
     }
@@ -1122,7 +1086,6 @@ class KartingDashboard {
         document.querySelectorAll(`.nav-btn[data-view="${view}"]`).forEach(b => b.classList.add('active'));
         if (view === 'add-session') this.setCurrentTime();
         if (view === 'settings') this.displayProfile();
-        if (view === 'history') this.displaySessions();
     }
 
     // ── THEME ─────────────────────────────────────────────────────────────
@@ -1292,7 +1255,18 @@ class KartingDashboard {
 
         // Auth form
         document.getElementById('authSubmitBtn').addEventListener('click', handleEmailAuth);
-        document.getElementById('authToggleBtn').addEventListener('click', toggleAuthMode);
+        document.getElementById('authToggleBtn').addEventListener('click', () => {
+            toggleAuthMode();
+            // Masquer le lien "oublié" quand on crée un compte
+            const link = document.getElementById('forgotPasswordLink');
+            if (link) link.style.display = authMode ? 'block' : 'none';
+        });
+
+        // Mot de passe oublié
+        document.getElementById('forgotPasswordBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            resetPassword();
+        });
         document.getElementById('authPassword').addEventListener('keypress', e => { if (e.key === 'Enter') handleEmailAuth(); });
 
         // Session form
@@ -1315,12 +1289,6 @@ class KartingDashboard {
 
         // Circuit filter
         document.getElementById('circuitFilter').addEventListener('change', e => this.filterCircuit(e.target.value));
-
-        // Filtres historique
-        ['historyFilterCircuit', 'historyFilterWeather', 'historyFilterTire'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.addEventListener('change', () => this.displaySessions());
-        });
 
         // Profile modal
         document.getElementById('saveProfileBtn').addEventListener('click', saveProfileModal);
