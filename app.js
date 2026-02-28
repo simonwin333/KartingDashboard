@@ -1074,16 +1074,9 @@ class KartingDashboard {
         overlay.style.display = 'flex';
         document.body.style.overflow = 'hidden';
 
-        // Tenter le verrou paysage (Android Chrome) — iOS ne supporte pas cette API
-        let lockOk = false;
-        try {
-            if (screen.orientation && screen.orientation.lock) {
-                await screen.orientation.lock('landscape');
-                lockOk = true;
-            }
-        } catch(e) { /* non supporté sur iOS/desktop */ }
+        // Pas de forçage d'orientation — l'utilisateur tourne librement
         const rotateHint = document.getElementById('overlayRotateHint');
-        if (rotateHint) rotateHint.style.display = lockOk ? 'none' : 'block';
+        if (rotateHint) rotateHint.style.display = 'none';
 
         if (this._overlayChart) { this._overlayChart.destroy(); this._overlayChart = null; }
         const origCfg = sourceChart.config;
@@ -1102,7 +1095,6 @@ class KartingDashboard {
         const overlay = document.getElementById('chartOverlay');
         if (overlay) overlay.style.display = 'none';
         document.body.style.overflow = '';
-        try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch(e) {}
         if (this._overlayChart) { this._overlayChart.destroy(); this._overlayChart = null; }
     }
 

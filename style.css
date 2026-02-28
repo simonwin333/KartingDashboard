@@ -416,13 +416,15 @@ section h2 {
    ============================================ */
 
 .circuit-filter {
-    background: #0f0f0f;
-    color: #fff;
-    border: 2px solid #2a2a2a;
-    padding: 8px 15px;
+    background: #0d0d0d;
+    color: #888;
+    border: 1.5px solid #111;
+    padding: 8px 12px;
     border-radius: 8px;
-    font-size: 0.95em;
+    font-size: 0.88em;
+    -webkit-appearance: none; -moz-appearance: none; appearance: none;
 }
+.circuit-filter option { background: #0d0d0d; color: #ccc; }
 
 .circuit-tile {
     background: #0f0f0f;
@@ -1397,6 +1399,8 @@ section h2 {
 [data-theme="light"] .history-month-sep { color: #aaa; }
 [data-theme="light"] .history-month-sep::after { background: #e0e0e0; }
 [data-theme="light"] .history-count { color: #aaa; }
+[data-theme="light"] .circuit-filter { background: #fff; border-color: #ddd; color: #555; }
+[data-theme="light"] .circuit-filter option { background: #fff; color: #333; }
 [data-theme="light"] .ct-chart-block { background: #fff; border-color: #e8e8e8; }
 [data-theme="light"] .ct-chart-title { color: #888; }
 [data-theme="light"] .ct-expand-btn { background: #f0f0f0; border-color: #ddd; color: #888; }
@@ -1715,7 +1719,7 @@ section h2 {
 /* Graphiques */
 .ct-chart-block { background:#111; border-radius:9px; padding:11px 12px; border:1px solid #222; }
 .ct-chart-title { font-size:0.64em; color:#999; font-weight:600; margin-bottom:8px; letter-spacing:0.03em; }
-.ct-chart-block canvas { width:100% !important; height:180px !important; display:block; }
+.ct-chart-block canvas { width:100% !important; height:200px !important; display:block; }
 .ct-eye-btn { flex-shrink:0; margin-left:auto; }
 
 /* En-tête de bloc graphique avec bouton Agrandir */
@@ -1756,7 +1760,7 @@ section h2 {
 }
 .ct-insight-row:last-child { border-bottom: none; }
 .ct-insight-icon { font-size: 0.82em; flex-shrink: 0; margin-top: 1px; }
-.ct-insight-text { font-size: 0.7em; color: #777; line-height: 1.55; flex: 1; }
+.ct-insight-text { font-size: 0.75em; color: #777; line-height: 1.6; flex: 1; }
 .ct-insight-text b { color: #fff; font-weight: 600; }
 
 /* Écran vide Circuits */
