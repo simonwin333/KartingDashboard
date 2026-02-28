@@ -102,22 +102,6 @@ function showCGU() { showModal('cguModal'); }
 function closeCGU() { hideModal('cguModal'); }
 function showFAQ() { showModal('faqModal'); }
 function closeFAQ() { hideModal('faqModal'); }
-
-async function resetPassword() {
-    const email = document.getElementById('authEmail').value.trim();
-    if (!email) {
-        showNotifGlobal("Entrez votre adresse e-mail d'abord", 'error');
-        return;
-    }
-    try {
-        await auth.sendPasswordResetEmail(email);
-        showNotifGlobal('📧 Email envoyé ! Vérifiez votre boîte mail.', 'success');
-    } catch(e) {
-        if (e.code === 'auth/user-not-found') showNotifGlobal('Aucun compte avec cet email', 'error');
-        else if (e.code === 'auth/invalid-email') showNotifGlobal('Adresse email invalide', 'error');
-        else showNotifGlobal('Erreur : ' + e.message, 'error');
-    }
-}
 function closeRecord() { document.getElementById('recordPopup').style.display = 'none'; }
 function showNotifGlobal(msg, type) { if (window.dashboard) dashboard.showNotification(msg, type); }
 
@@ -482,21 +466,16 @@ class KartingDashboard {
     }
 
     populateCircuitFilter() {
-        const circuits = [...new Set(this.sessions.map(s => s.circuit))].sort();
         const sel = document.getElementById('circuitFilter');
-        if (sel) {
-            const val = sel.value;
-            sel.innerHTML = '<option value="all">Tous les circuits</option>';
-            circuits.forEach(c => { const o = document.createElement('option'); o.value = o.textContent = c; sel.appendChild(o); });
-            if (val) sel.value = val;
-        }
-        const hSel = document.getElementById('historyFilterCircuit');
-        if (hSel) {
-            const hVal = hSel.value;
-            hSel.innerHTML = '<option value="all">🏁 Tous les circuits</option>';
-            circuits.forEach(c => { const o = document.createElement('option'); o.value = o.textContent = c; hSel.appendChild(o); });
-            if (hVal) hSel.value = hVal;
-        }
+        if (!sel) return;
+        const val = sel.value;
+        sel.innerHTML = '<option value="all">Tous les circuits</option>';
+        [...new Set(this.sessions.map(s => s.circuit))].sort().forEach(c => {
+            const o = document.createElement('option');
+            o.value = o.textContent = c;
+            sel.appendChild(o);
+        });
+        if (val) sel.value = val;
     }
 
     filterCircuit(val) {
@@ -672,6 +651,7 @@ class KartingDashboard {
         const cid = circuit.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
         const chartId1 = 'chart-evol-' + cid;
         const chartId2 = 'chart-pneu-' + cid;
+        const chartId3 = 'chart-bvs-' + cid;
         const chartId4 = 'chart-press-' + cid;
 
         // Chips réglage optimal — toutes blanches
@@ -743,6 +723,7 @@ class KartingDashboard {
                     <button class="ct-expand-btn" data-chart="${chartId2}" data-title="🛞 Chrono moyen par type de pneu">⛶ Agrandir</button>
                 </div>
                 <canvas id="${chartId2}"></canvas>
+                <div class="ct-insight-block" id="insight-pneu-${cid}"></div>
             </div>
             <div class="ct-chart-block">
                 <div class="ct-chart-header">
@@ -750,6 +731,7 @@ class KartingDashboard {
                     <button class="ct-expand-btn" data-chart="${chartId4}" data-title="🔵 Pression pneu → Impact sur le chrono">⛶ Agrandir</button>
                 </div>
                 <canvas id="${chartId4}"></canvas>
+                <div class="ct-insight-block" id="insight-press-${cid}"></div>
             </div>
             <div class="ct-chart-block" id="matrix-block-${cid}">
                 <div class="ct-chart-header">
@@ -814,15 +796,7 @@ class KartingDashboard {
         });
         if (cid) {
             const el = document.getElementById('analysis-' + cid);
-            if (el && sessions.length >= 2) {
-                const gain = sessions[0].bestTime - best;
-                const last = sessions[sessions.length - 1].bestTime;
-                const prev = sessions[sessions.length - 2].bestTime;
-                const trend = last <= prev ? 'en progression 📈' : 'en légère régression 📉';
-                let phrase = gain > 0 ? `💡 Tu as gagné <strong>${self.formatTime(gain)}</strong> depuis ta 1ère session.` : `💡 Chrono stable sur ce circuit.`;
-                if (sessions.length >= 3) phrase += ` Ta dernière session est ${trend}.`;
-                el.innerHTML = phrase;
-            }
+            if (el) el.innerHTML = this.buildInsightEvolution(sessions, best, self);
         }
     }
 
@@ -859,6 +833,10 @@ class KartingDashboard {
                 });
             }}]
         });
+        // Insight pneu
+        const cidFromId = id.replace('chart-pneu-', '');
+        const insightPneuEl = document.getElementById('insight-pneu-' + cidFromId);
+        if (insightPneuEl) insightPneuEl.innerHTML = this.buildInsightPneu(labels, avgs, byTire, minAvg, self2);
     }
 
     // Graphique 3 — Pression vs Temps (scatter)
@@ -885,6 +863,140 @@ class KartingDashboard {
                 }
             }
         });
+        // Insight pression
+        const cidFromPressId = id.replace('chart-press-', '');
+        const insightPressEl = document.getElementById('insight-press-' + cidFromPressId);
+        if (insightPressEl) insightPressEl.innerHTML = this.buildInsightPression(data, best, self3);
+    }
+
+    // ── INSIGHTS ─────────────────────────────────────────────────────────
+
+    insightRow(icon, html) {
+        return `<div class="ct-insight-row"><span class="ct-insight-icon">${icon}</span><span class="ct-insight-text">${html}</span></div>`;
+    }
+
+    buildInsightEvolution(sessions, best, self) {
+        if (sessions.length < 2) return '';
+        const rows = [];
+        const gain = sessions[0].bestTime - best;
+        const gainStr = gain > 0 ? `<b style="color:#10b981">−${self.formatTime(gain)}</b>` : '';
+        if (gain > 0) rows.push(this.insightRow('📉', `Tu as gagné ${gainStr} depuis ta 1ère session sur ce circuit.`));
+
+        // Série consécutive d'améliorations
+        let streak = 0;
+        for (let i = sessions.length - 1; i > 0; i--) {
+            if (sessions[i].bestTime < sessions[i-1].bestTime) streak++;
+            else break;
+        }
+        if (streak >= 2) rows.push(this.insightRow('🔥', `<b style="color:#10b981">${streak} sessions consécutives</b> en amélioration. Continue comme ça !`));
+        else if (sessions[sessions.length-1].bestTime > sessions[sessions.length-2].bestTime)
+            rows.push(this.insightRow('📈', `La dernière session est en <b style="color:#f59e0b">légère régression</b> — ça arrive, reste concentré.`));
+
+        // Fréquence
+        if (sessions.length >= 3) {
+            const dates = sessions.map(s => new Date(s.date + ' ' + (s.time||'00:00')));
+            const diffs = [];
+            for (let i = 1; i < dates.length; i++) diffs.push((dates[i]-dates[i-1])/(1000*60*60*24));
+            const avgDays = Math.round(diffs.reduce((a,b)=>a+b,0)/diffs.length);
+            const lastDays = Math.round((new Date() - dates[dates.length-1])/(1000*60*60*24));
+            rows.push(this.insightRow('📅', `Tu roules en moyenne <b>tous les ${avgDays} jours</b> sur ce circuit. Dernière session il y a <b>${lastDays} jour${lastDays>1?'s':''}</b>.`));
+        }
+
+        // Projection
+        if (sessions.length >= 4 && gain > 0) {
+            const recent = sessions.slice(-3);
+            const recentGain = recent[0].bestTime - recent[recent.length-1].bestTime;
+            if (recentGain > 0) {
+                const proj = best - (recentGain / 2);
+                rows.push(this.insightRow('🎯', `À ce rythme, tu pourrais viser <b style="color:#667eea">${self.formatTime(Math.max(proj,0))}</b> dans 3–4 sessions.`));
+            }
+        }
+
+        if (rows.length === 0) return '';
+        return `<div class="ct-insight-label">📊 Analyse progression</div>${rows.join('')}`;
+    }
+
+    buildInsightPneu(labels, avgs, byTire, minAvg, self) {
+        if (labels.length === 0) return '';
+        const rows = [];
+        const bestTire = labels[avgs.indexOf(minAvg)];
+        const worstAvg = Math.max(...avgs);
+        const diff = worstAvg - minAvg;
+        rows.push(this.insightRow('🏆', `Meilleur pneu sur ce circuit : <b style="color:#10b981">${bestTire}</b> <span style="background:#10b98115;color:#10b981;border:1px solid #10b98130;border-radius:10px;font-size:0.82em;padding:1px 7px;margin-left:3px;">−${self.formatTime(diff)} vs autres</span>`));
+
+        // Pneus peu testés
+        labels.forEach(t => {
+            if (byTire[t] && byTire[t].length === 1) rows.push(this.insightRow('⚠️', `<b style="color:#f59e0b">${t}</b> testé seulement 1 fois — résultat peu fiable, à confirmer.`));
+        });
+
+        // Pneus jamais testés
+        const allTires = ['Soft','Medium','Hard','Pluie'];
+        const missing = allTires.filter(t => !labels.includes(t));
+        if (missing.length > 0) rows.push(this.insightRow('📌', `Jamais testé sur ce circuit : <b>${missing.join(', ')}</b>. Potentiel d'exploration.`));
+
+        return `<div class="ct-insight-label">🛞 Analyse pneus</div>${rows.join('')}`;
+    }
+
+    buildInsightPression(data, best, self) {
+        if (data.length < 3) return '';
+        const rows = [];
+        const sorted = [...data].sort((a,b)=>a.x-b.x);
+        const bestData = data.find(d=>d.y===best);
+
+        if (bestData) rows.push(this.insightRow('🎯', `Meilleure pression sur ce circuit : <b style="color:#10b981">${bestData.x} bar</b> → ${self.formatTime(best)}.`));
+
+        // Comparer haut vs bas
+        const pressures = [...new Set(data.map(d=>d.x))].sort((a,b)=>a-b);
+        if (pressures.length >= 3) {
+            const lowP = pressures[0], highP = pressures[pressures.length-1];
+            const lowAvg = data.filter(d=>d.x===lowP).reduce((a,d)=>a+d.y,0)/data.filter(d=>d.x===lowP).length;
+            const highAvg = data.filter(d=>d.x===highP).reduce((a,d)=>a+d.y,0)/data.filter(d=>d.x===highP).length;
+            if (lowAvg > best + 0.3) rows.push(this.insightRow('📉', `En dessous de <b style="color:#f59e0b">${lowP} bar</b> : chrono dégradé de <b style="color:#ef4444">+${self.formatTime(lowAvg-best)}</b> en moyenne.`));
+            if (highAvg > best + 0.3) rows.push(this.insightRow('📉', `Au-dessus de <b style="color:#f59e0b">${highP} bar</b> : chrono dégradé de <b style="color:#ef4444">+${self.formatTime(highAvg-best)}</b> en moyenne.`));
+        }
+
+        // Corrélation température
+        const withTemp = data.filter(d => d.temperature);
+        // Note: on ne peut pas accéder à la température ici facilement, on mentionne juste le nb de sessions
+        rows.push(this.insightRow('💡', `Analyse basée sur <b>${data.length} session${data.length>1?'s':''}</b> avec données de pression. Plus tu en ajoutes, plus l'analyse est fiable.`));
+
+        return `<div class="ct-insight-label">💨 Analyse pression</div>${rows.join('')}`;
+    }
+
+    buildInsightMatrice(sessions, matData, pneus, pressions, minT, allTimes) {
+        const rows = [];
+        const bestSess = sessions.find(s => s.bestTime === minT);
+
+        // Combo gagnant
+        if (bestSess && bestSess.tireType && bestSess.tirePressure) {
+            const count = sessions.filter(s => s.tireType===bestSess.tireType && String(parseFloat(s.tirePressure))===String(parseFloat(bestSess.tirePressure))).length;
+            rows.push(this.insightRow('🏆', `Combo gagnant : <b style="color:#10b981">${bestSess.tireType} + ${parseFloat(bestSess.tirePressure)} bar</b> — testé ${count} fois, c'est ta référence sur ce circuit.`));
+        }
+
+        // Combos non testés
+        let notTested = 0;
+        pressions.forEach(pr => pneus.forEach(p => { if (!matData[pr][p]) notTested++; }));
+        const total = pneus.length * pressions.length;
+        if (notTested > 0) rows.push(this.insightRow('🔬', `<b style="color:#f59e0b">${notTested} combo${notTested>1?'s':''} non testé${notTested>1?'s':''}</b> sur ${total} possibles. Potentiel d'exploration !`));
+
+        // Suggestion prochaine session
+        let suggestion = null;
+        pneus.forEach(p => {
+            pressions.forEach(pr => {
+                if (!matData[pr][p] && p !== bestSess?.tireType) {
+                    if (!suggestion) suggestion = `${p} + ${pr} bar`;
+                }
+            });
+        });
+        if (suggestion) rows.push(this.insightRow('📌', `À tester : <b style="color:#667eea">${suggestion}</b> — jamais essayé, pourrait surprendre.`));
+
+        // Fiabilité
+        let oneSession = 0;
+        pressions.forEach(pr => pneus.forEach(p => { if (matData[pr][p] && matData[pr][p].count === 1) oneSession++; }));
+        if (oneSession > 0) rows.push(this.insightRow('⚠️', `<b style="color:#f59e0b">${oneSession} case${oneSession>1?'s':''}</b> avec 1 seule session — peu fiable. Vise 2–3 sessions minimum pour confirmer.`));
+
+        if (rows.length === 0) return '';
+        return `<div class="ct-insight-label">🧩 Analyse combinaisons</div>${rows.join('')}`;
     }
 
     // Matrice pression (lignes) x pneu (colonnes)
@@ -934,18 +1046,7 @@ class KartingDashboard {
             });
         });
         const insightEl = document.getElementById('matrix-insight-'+cid);
-        if (insightEl) {
-            const bestSess = sessions.find(s => s.bestTime === minT);
-            if (bestSess && bestSess.tireType && bestSess.tirePressure) {
-                let insight = '💡 Combo optimal : <strong>'+bestSess.tireType+' + '+parseFloat(bestSess.tirePressure)+' bar</strong> → '+this.formatTime(minT)+'.';
-                const worstTime = Math.max(...allTimes);
-                const worstSess = sessions.find(s => s.bestTime === worstTime);
-                if (worstSess && worstSess.tireType && (worstSess.tireType!==bestSess.tireType || String(parseFloat(worstSess.tirePressure))!==String(parseFloat(bestSess.tirePressure)))) {
-                    insight += ' Évite <strong>'+worstSess.tireType+' + '+parseFloat(worstSess.tirePressure)+' bar</strong>.';
-                }
-                insightEl.innerHTML = insight;
-            }
-        }
+        if (insightEl) insightEl.innerHTML = this.buildInsightMatrice(sessions, matData, pneus, pressions, minT, allTimes);
     }
 
     // Plein écran graphique
@@ -1041,44 +1142,26 @@ class KartingDashboard {
         if (this.sessions.length === 0) {
             el.innerHTML = '<div class="empty-state"><p>🏎️ Aucune session</p></div>'; return;
         }
-        const fCircuit = (document.getElementById('historyFilterCircuit') || {}).value || 'all';
-        const fWeather = (document.getElementById('historyFilterWeather') || {}).value || 'all';
-        const fTire    = (document.getElementById('historyFilterTire')    || {}).value || 'all';
-        let filtered = [...this.sessions].sort((a, b) => new Date(b.date + ' ' + (b.time || '')) - new Date(a.date + ' ' + (a.time || '')));
-        if (fCircuit !== 'all') filtered = filtered.filter(s => s.circuit === fCircuit);
-        if (fWeather !== 'all') filtered = filtered.filter(s => s.weather === fWeather);
-        if (fTire    !== 'all') filtered = filtered.filter(s => s.tireType === fTire);
-        const countEl = document.getElementById('historyCount');
-        if (countEl) countEl.textContent = filtered.length + ' session' + (filtered.length > 1 ? 's' : '');
-        if (filtered.length === 0) { el.innerHTML = '<div class="empty-state"><p>🔍 Aucune session pour ces filtres</p></div>'; return; }
-        const groups = {};
-        filtered.forEach(s => {
-            const d = new Date(s.date);
-            const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
-            const label = d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-            if (!groups[key]) groups[key] = { label, sessions: [] };
-            groups[key].sessions.push(s);
-        });
-        let html = '';
-        Object.keys(groups).sort((a,b) => b.localeCompare(a)).forEach(key => {
-            const l = groups[key].label;
-            html += `<div class="history-month-sep">${l.charAt(0).toUpperCase()+l.slice(1)}</div>`;
-            html += groups[key].sessions.map(s => this.sessionItemHTML(s, true)).join('');
-        });
-        el.innerHTML = html;
+        const sorted = [...this.sessions].sort((a, b) => new Date(b.date + ' ' + (b.time || '')) - new Date(a.date + ' ' + (a.time || '')));
+        el.innerHTML = sorted.map(s => this.sessionItemHTML(s, true)).join('');
     }
 
     sessionItemHTML(s, showDelete) {
+        // Détecter si c'est le record du circuit
         const circuitSessions = this.sessions.filter(x => x.circuit === s.circuit);
         const bestTime = Math.min(...circuitSessions.map(x => x.bestTime));
         const isRecord = s.bestTime === bestTime;
+
+        // Ligne 2 : infos conditions dans le bon ordre
         const line2 = [
             s.tireType ? '🛞 ' + s.tireType : '',
             s.tirePressure ? s.tirePressure + ' bar' : '',
             s.temperature ? '🌡️ ' + s.temperature + '°C' : '',
             s.weather || ''
         ].filter(Boolean).join(' · ');
-        const deleteBtn = showDelete ? `<button class="btn-delete session-btn" data-id="${s.id}">🗑️ Suppr.</button>` : '';
+
+        const deleteBtn = showDelete ? `<button class="btn-delete session-btn" data-id="${s.id}">🗑️</button>` : '';
+
         return `<div class="session-item">
             <div class="session-content">
                 <div class="session-line1">
@@ -1089,11 +1172,11 @@ class KartingDashboard {
                     <span class="session-time ${isRecord ? 'session-record' : ''}">⏱️ ${this.formatTime(s.bestTime)}${isRecord ? ' 🏆' : ''}</span>
                     ${line2 ? `<span class="session-conditions">${line2}</span>` : ''}
                 </div>
-                <div class="session-actions-row">
-                    <button class="btn-details session-btn" data-id="${s.id}">👁️ Détail</button>
-                    <button class="btn-edit session-btn" data-id="${s.id}">✏️ Modifier</button>
-                    ${deleteBtn}
-                </div>
+            </div>
+            <div class="session-actions">
+                <button class="btn-details session-btn" data-id="${s.id}">👁️</button>
+                <button class="btn-edit session-btn" data-id="${s.id}">✏️</button>
+                ${deleteBtn}
             </div>
         </div>`;
     }
@@ -1108,7 +1191,6 @@ class KartingDashboard {
         document.querySelectorAll(`.nav-btn[data-view="${view}"]`).forEach(b => b.classList.add('active'));
         if (view === 'add-session') this.setCurrentTime();
         if (view === 'settings') this.displayProfile();
-        if (view === 'history') this.displaySessions();
     }
 
     // ── THEME ─────────────────────────────────────────────────────────────
@@ -1278,18 +1360,7 @@ class KartingDashboard {
 
         // Auth form
         document.getElementById('authSubmitBtn').addEventListener('click', handleEmailAuth);
-        document.getElementById('authToggleBtn').addEventListener('click', () => {
-            toggleAuthMode();
-            const link = document.getElementById('forgotPasswordLink');
-            if (link) link.style.display = authMode ? 'block' : 'none';
-        });
-        document.getElementById('forgotPasswordBtn').addEventListener('click', (e) => {
-            e.preventDefault(); resetPassword();
-        });
-        ['historyFilterCircuit','historyFilterWeather','historyFilterTire'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.addEventListener('change', () => this.displaySessions());
-        });
+        document.getElementById('authToggleBtn').addEventListener('click', toggleAuthMode);
         document.getElementById('authPassword').addEventListener('keypress', e => { if (e.key === 'Enter') handleEmailAuth(); });
 
         // Session form

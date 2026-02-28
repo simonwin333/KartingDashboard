@@ -788,7 +788,18 @@ section h2 {
         max-width: 100%;
     }
 
-    /* SESSIONS - boutons en ligne */
+    /* SESSIONS - layout identique mobile/desktop */
+    .session-item {
+        flex-direction: row;
+        align-items: stretch;
+        padding: 8px 10px;
+        gap: 8px;
+    }
+    .session-actions {
+        flex-direction: column;
+        width: auto;
+        gap: 4px;
+    }
     .btn-edit, .btn-delete, .btn-details {
         flex: none;
         width: 30px;
@@ -1500,38 +1511,10 @@ section h2 {
 .sessions-list { display: flex; flex-direction: column; gap: 6px; }
 .session-item {
     background: #0d0d0d; border-radius: 10px; padding: 8px 10px;
-    border: 1px solid #111;
+    display: flex; align-items: stretch;
+    border: 1px solid #111; gap: 8px;
 }
-.session-content { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-
-/* Boutons session en ligne */
-.session-actions-row { display: flex; gap: 5px; margin-top: 4px; }
-.session-actions-row .session-btn {
-    flex: 1; padding: 5px 4px; font-size: 0.68em; font-weight: 600;
-    background: #1a1a1a; border: 1px solid #222; border-radius: 6px;
-    color: #888; cursor: pointer; text-align: center; white-space: nowrap;
-    display: flex; align-items: center; justify-content: center; gap: 3px;
-}
-.session-actions-row .btn-details:hover { background: #10b98120; color: #10b981; border-color: #10b98140; }
-.session-actions-row .btn-edit:hover { background: #667eea20; color: #667eea; border-color: #667eea40; }
-.session-actions-row .btn-delete:hover { background: #ff475720; color: #ff4757; border-color: #ff475740; }
-
-/* Filtres historique */
-.history-filters { display: flex; gap: 6px; margin-bottom: 10px; }
-.history-select {
-    flex: 1; padding: 7px 6px; background: #0d0d0d;
-    border: 1.5px solid #111; border-radius: 8px;
-    color: #888; font-size: 0.72em; min-width: 0;
-    -webkit-appearance: none; -moz-appearance: none; appearance: none;
-}
-.history-select option { background: #0d0d0d; color: #ccc; }
-.history-count { font-size: 0.62em; color: #444; text-align: right; margin-bottom: 8px; font-style: italic; }
-.history-month-sep {
-    font-size: 0.6em; font-weight: 700; color: #444;
-    text-transform: capitalize; letter-spacing: 0.06em;
-    padding: 10px 2px 5px; display: flex; align-items: center; gap: 8px;
-}
-.history-month-sep::after { content:''; flex:1; height:1px; background:#1a1a1a; }
+.session-content { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .session-line1 { display: flex; align-items: center; gap: 8px; }
 .session-line2 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .session-circuit { font-size: 0.88em; color: #fff; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1707,13 +1690,32 @@ section h2 {
 }
 .ct-expand-btn:hover { background: rgba(102,126,234,0.15); border-color: #667eea; color: #667eea; }
 
-/* Phrase d'analyse sous graphique */
+/* Phrase d'analyse sous graphique (legacy) */
 .ct-analysis {
     font-size: 0.7em; color: #777; line-height: 1.5;
     margin-top: 8px; padding: 7px 10px;
     background: #0d0d0d; border-radius: 6px; border: 1px solid #1a1a1a;
 }
 .ct-analysis strong { color: #10b981; }
+
+/* Bloc insight enrichi */
+.ct-insight-block {
+    margin-top: 10px; background: #0d0d0d;
+    border-radius: 7px; border: 1px solid #1a1a1a; overflow: hidden;
+}
+.ct-insight-label {
+    font-size: 0.52em; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.09em; color: #333;
+    padding: 6px 11px 5px; border-bottom: 1px solid #151515;
+}
+.ct-insight-row {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 7px 11px; border-bottom: 1px solid #151515;
+}
+.ct-insight-row:last-child { border-bottom: none; }
+.ct-insight-icon { font-size: 0.82em; flex-shrink: 0; margin-top: 1px; }
+.ct-insight-text { font-size: 0.7em; color: #777; line-height: 1.55; flex: 1; }
+.ct-insight-text b { color: #fff; font-weight: 600; }
 
 /* Matrice */
 .ct-matrix-wrap { overflow-x: auto; padding-bottom: 4px; }
