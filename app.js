@@ -106,7 +106,7 @@ function closeFAQ() { hideModal('faqModal'); }
 async function resetPassword() {
     const email = document.getElementById('authEmail').value.trim();
     if (!email) {
-        showNotifGlobal('Entrez votre adresse e-mail d'abord', 'error');
+        showNotifGlobal("Entrez votre adresse e-mail d'abord", 'error');
         return;
     }
     try {
