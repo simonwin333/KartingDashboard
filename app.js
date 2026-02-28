@@ -723,7 +723,7 @@ class KartingDashboard {
                     <button class="ct-expand-btn" data-chart="${chartId1}" data-title="📈 Évolution des chronos">⛶ Agrandir</button>
                 </div>
                 <canvas id="${chartId1}"></canvas>
-                <div class="ct-analysis" id="analysis-${cid}"></div>
+                <div class="ct-insight-block" id="analysis-${cid}"></div>
             </div>
             <div class="ct-chart-block">
                 <div class="ct-chart-header">
@@ -753,7 +753,7 @@ class KartingDashboard {
                     <span class="ct-legend-r">Lent</span>
                 </div>
                 <div class="ct-matrix-tooltip" id="matrix-tooltip-${cid}"></div>
-                <div class="ct-analysis" id="matrix-insight-${cid}"></div>
+                <div class="ct-insight-block" id="matrix-insight-${cid}"></div>
             </div>`;
 
         tile.querySelector('.ct-eye-btn').addEventListener('click', () => this.showSessionDetails(bestSess.id));
