@@ -774,21 +774,44 @@ class KartingDashboard {
         }, 50);
     }
 
-    // Graphique 1 — Évolution des chronos
+    // Graphique 1 — Évolution des chronos (20 dernières sessions max)
     createChartEvolution(id, sessions, best, cid) {
         const canvas = document.getElementById(id);
         if (!canvas) return;
         if (this.circuitCharts[id]) this.circuitCharts[id].destroy();
-        const labels = sessions.map(s => { const d = new Date(s.date); return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' }) + (s.time ? ' ' + s.time.substring(0,5) : ''); });
-        const ptColors = sessions.map(s => s.bestTime === best ? '#10b981' : '#667eea');
+
+        // Limiter aux 20 dernières sessions
+        const MAX_SESSIONS = 20;
+        const totalSessions = sessions.length;
+        const display = totalSessions > MAX_SESSIONS ? sessions.slice(-MAX_SESSIONS) : sessions;
+        const isTruncated = totalSessions > MAX_SESSIONS;
+
+        // Axe Y : marge intelligente autour des données affichées
+        const times = display.map(s => s.bestTime);
+        const minT = Math.min(...times);
+        const maxT = Math.max(...times);
+        const range = maxT - minT || 2;
+        const yMin = Math.max(0, minT - range * 0.25);
+        const yMax = maxT + range * 0.25;
+
+        // Mettre à jour le titre si tronqué
+        const titleEl = canvas.closest('.ct-chart-block')?.querySelector('.ct-chart-title');
+        if (titleEl) {
+            titleEl.textContent = isTruncated
+                ? `📈 Évolution des chronos (20 dernières / ${totalSessions})`
+                : '📈 Évolution des chronos';
+        }
+
+        const labels = display.map(s => { const d = new Date(s.date); return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' }) + (s.time ? ' ' + s.time.substring(0,5) : ''); });
+        const ptColors = display.map(s => s.bestTime === best ? '#10b981' : '#667eea');
         const self = this;
         this.circuitCharts[id] = new Chart(canvas.getContext('2d'), {
             type: 'line',
-            data: { labels, datasets: [{ data: sessions.map(s => s.bestTime), borderColor: '#667eea', backgroundColor: 'rgba(102,126,234,0.08)', tension: 0.4, fill: true, pointRadius: 6, pointHoverRadius: 8, pointBackgroundColor: ptColors, pointBorderColor: '#0a0a0a', pointBorderWidth: 2 }] },
+            data: { labels, datasets: [{ data: display.map(s => s.bestTime), borderColor: '#667eea', backgroundColor: 'rgba(102,126,234,0.08)', tension: 0.4, fill: true, pointRadius: 6, pointHoverRadius: 8, pointBackgroundColor: ptColors, pointBorderColor: '#0a0a0a', pointBorderWidth: 2 }] },
             options: { responsive:true, maintainAspectRatio:false,
                 layout: { padding: { top: 26, left: 2, right: 2, bottom: 0 } },
-                plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: ctx => { const s = sessions[ctx.dataIndex]; return [self.formatTime(s.bestTime), s.tireType ? '🛞 '+s.tireType : '', s.weather||''].filter(Boolean); }}, backgroundColor:'#1a1a1a', titleColor:'#fff', bodyColor:'#ccc', borderColor:'#333', borderWidth:1 } },
-                scales: { y:{ beginAtZero:false, ticks:{ callback: v => self.formatTime(v), color:'#ccc', font:{size:9}, maxTicksLimit:6 }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#ccc', font:{size:9}, maxRotation:30}, grid:{color:'#1e1e1e'} } }
+                plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: ctx => { const s = display[ctx.dataIndex]; return [self.formatTime(s.bestTime), s.tireType ? '🛞 '+s.tireType : '', s.weather||''].filter(Boolean); }}, backgroundColor:'#1a1a1a', titleColor:'#fff', bodyColor:'#ccc', borderColor:'#333', borderWidth:1 } },
+                scales: { y:{ min: yMin, max: yMax, ticks:{ callback: v => self.formatTime(v), color:'#ccc', font:{size:9}, maxTicksLimit:6 }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#ccc', font:{size:9}, maxRotation:30}, grid:{color:'#1e1e1e'} } }
             },
             plugins: [{ id:'datalabels', afterDatasetsDraw(chart) {
                 const ctx = chart.ctx;
@@ -828,7 +851,7 @@ class KartingDashboard {
             options: { responsive:true, maintainAspectRatio:false,
                 layout: { padding: { top: 26, left: 2, right: 2, bottom: 0 } },
                 plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: ctx => self2.formatTime(ctx.raw) }, backgroundColor:'#1a1a1a', titleColor:'#fff', bodyColor:'#ccc', borderColor:'#333', borderWidth:1 }},
-                scales: { y:{ beginAtZero:false, suggestedMin: minAvg - (Math.max(...avgs) - minAvg) * 0.6, ticks:{ callback: v => self2.formatTime(v), color:'#ccc', font:{size:9}, maxTicksLimit:5 }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#ccc', font:{size:9}}, grid:{color:'#1e1e1e'} } }
+                scales: { y:{ min: minAvg - (Math.max(...avgs) - minAvg) * 1.2 - 0.5, max: Math.max(...avgs) + (Math.max(...avgs) - minAvg) * 0.5 + 0.5, ticks:{ callback: v => self2.formatTime(v), color:'#ccc', font:{size:9}, maxTicksLimit:5 }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#ccc', font:{size:9}}, grid:{color:'#1e1e1e'} } }
             },
             plugins: [{ id:'barLabels', afterDatasetsDraw(chart) {
                 const ctx = chart.ctx;
@@ -855,6 +878,10 @@ class KartingDashboard {
         const data = sessions.filter(s => s.tirePressure).map(s => ({ x: parseFloat(s.tirePressure), y: s.bestTime, tireType: s.tireType || '' }));
         if (data.length < 2) { canvas.parentElement.style.display='none'; return; }
         const best = Math.min(...data.map(d=>d.y));
+        const worstY = Math.max(...data.map(d=>d.y));
+        const rangeY = worstY - best || 1;
+        const yMinP = Math.max(0, best - rangeY * 0.25);
+        const yMaxP = worstY + rangeY * 0.25;
         const ptColors = data.map(d => d.y === best ? '#10b981cc' : '#667eeacc');
         const self3 = this;
         this.circuitCharts[id] = new Chart(canvas.getContext('2d'), {
@@ -866,7 +893,7 @@ class KartingDashboard {
                     label: ctx => { const d = ctx.raw; const lines = [self3.formatTime(d.y)]; if (d.tireType) lines.push('🛞 '+d.tireType); if (d.y === best) lines.push('🏆 Record'); return lines; }
                 }, backgroundColor:'#1a1a1a', titleColor:'#667eea', bodyColor:'#ccc', borderColor:'#333', borderWidth:1, padding:10 }},
                 scales: {
-                    y:{ beginAtZero:false, ticks:{ callback: v => self3.formatTime(v), color:'#ccc', font:{size:9}, maxTicksLimit:5 }, grid:{color:'#1e1e1e'} },
+                    y:{ min: yMinP, max: yMaxP, ticks:{ callback: v => self3.formatTime(v), color:'#ccc', font:{size:9}, maxTicksLimit:5 }, grid:{color:'#1e1e1e'} },
                     x:{ ticks:{ callback: v => v+' b', color:'#ccc', font:{size:9} }, grid:{color:'#1e1e1e'}, title:{ display:true, text:'Pression (bar)', color:'#ccc', font:{size:9} } }
                 }
             }
