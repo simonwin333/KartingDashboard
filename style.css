@@ -1600,13 +1600,13 @@ section h2 {
 }
 .form-group textarea { resize: vertical; }
 .circuit-select-row { display: flex; gap: 8px; align-items: center; }
-.circuit-select-row select { flex: 1; min-width: 0; }
+.circuit-select-row select { flex: 1; min-width: 0; height: 44px; }
 .btn-add-circuit, .btn-manage-circuit {
     background: #667eea; border: none; border-radius: 8px;
     color: #fff; cursor: pointer; font-size: 0.9em;
-    width: 38px; height: 38px; flex-shrink: 0;
+    width: 44px; height: 44px; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    padding: 0; align-self: center;
+    padding: 0;
 }
 .btn-manage-circuit { background: #2a2a2a; }
 .btn-manage-circuit:hover { background: #3a3a3a; }
