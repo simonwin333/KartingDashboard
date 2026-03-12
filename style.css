@@ -1553,8 +1553,9 @@ section h2 {
 /* SECTIONS */
 .view-section { padding: 15px; background: #1e1e1e; }
 .view-section h2 { font-size: 1.2em; margin: 0 0 15px; color: #fff; }
-.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
-.section-header h2 { margin: 0; }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: nowrap; gap: 10px; }
+.section-header h2 { margin: 0; flex-shrink: 1; min-width: 0; }
+.custom-select-wrapper { flex-shrink: 0; }
 
 /* SESSIONS */
 .sessions-list { display: flex; flex-direction: column; gap: 6px; }
