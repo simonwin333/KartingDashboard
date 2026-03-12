@@ -1147,17 +1147,32 @@ class KartingDashboard {
 
         setTimeout(drawOverlayChart, 50);
 
-        // Bloquer en paysage sur Android
-        if (screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('landscape').catch(() => {});
-        }
+        // Ajuster la rotation CSS selon l'orientation
+        const applyOrientation = () => {
+            const inner = document.querySelector('.chart-overlay-inner');
+            if (!inner) return;
+            const isLandscape = window.innerWidth > window.innerHeight;
+            if (isLandscape) {
+                // Téléphone déjà en paysage — pas besoin de rotation CSS
+                inner.style.transform = 'none';
+                inner.style.width = '100%';
+                inner.style.height = '100%';
+            } else {
+                // Téléphone en portrait — on applique la rotation CSS
+                inner.style.transform = 'rotate(90deg)';
+                inner.style.width = '100vh';
+                inner.style.height = '100vw';
+            }
+            setTimeout(drawOverlayChart, 100);
+        };
 
-        // Redessiner à chaque rotation (fallback iPhone)
+        setTimeout(applyOrientation, 60);
+
         if (this._orientationHandler) {
             window.removeEventListener('orientationchange', this._orientationHandler);
             window.removeEventListener('resize', this._orientationHandler);
         }
-        this._orientationHandler = () => { setTimeout(drawOverlayChart, 150); };
+        this._orientationHandler = () => { setTimeout(applyOrientation, 150); };
         window.addEventListener('orientationchange', this._orientationHandler);
         window.addEventListener('resize', this._orientationHandler);
     }
