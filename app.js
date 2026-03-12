@@ -1147,7 +1147,12 @@ class KartingDashboard {
 
         setTimeout(drawOverlayChart, 50);
 
-        // Redessiner à chaque rotation
+        // Bloquer en paysage sur Android
+        if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(() => {});
+        }
+
+        // Redessiner à chaque rotation (fallback iPhone)
         if (this._orientationHandler) {
             window.removeEventListener('orientationchange', this._orientationHandler);
             window.removeEventListener('resize', this._orientationHandler);
@@ -1166,6 +1171,10 @@ class KartingDashboard {
             window.removeEventListener('orientationchange', this._orientationHandler);
             window.removeEventListener('resize', this._orientationHandler);
             this._orientationHandler = null;
+        }
+        // Débloquer l'orientation
+        if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
         }
     }
 
