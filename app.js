@@ -1122,21 +1122,39 @@ class KartingDashboard {
         overlay.style.display = 'flex';
         document.body.style.overflow = 'hidden';
 
-        // Pas de forçage d'orientation — l'utilisateur tourne librement
         const rotateHint = document.getElementById('overlayRotateHint');
         if (rotateHint) rotateHint.style.display = 'none';
 
-        if (this._overlayChart) { this._overlayChart.destroy(); this._overlayChart = null; }
+        const self = this;
         const origCfg = sourceChart.config;
-        setTimeout(() => {
+
+        const drawOverlayChart = () => {
+            if (self._overlayChart) { self._overlayChart.destroy(); self._overlayChart = null; }
+            // Recréer le canvas pour éviter les conflits de taille
+            const wrap = document.querySelector('.chart-overlay-canvas-wrap');
+            if (wrap) {
+                wrap.innerHTML = '<canvas id="chartOverlayCanvas"></canvas>';
+            }
             const canvas = document.getElementById('chartOverlayCanvas');
-            this._overlayChart = new Chart(canvas.getContext('2d'), {
+            if (!canvas) return;
+            self._overlayChart = new Chart(canvas.getContext('2d'), {
                 type: origCfg.type,
                 data: JSON.parse(JSON.stringify(origCfg.data)),
-                options: Object.assign({}, origCfg.options, { responsive:true, maintainAspectRatio:false }),
+                options: Object.assign({}, origCfg.options, { responsive: true, maintainAspectRatio: false, animation: { duration: 200 } }),
                 plugins: origCfg.plugins || []
             });
-        }, 50);
+        };
+
+        setTimeout(drawOverlayChart, 50);
+
+        // Redessiner à chaque rotation
+        if (this._orientationHandler) {
+            window.removeEventListener('orientationchange', this._orientationHandler);
+            window.removeEventListener('resize', this._orientationHandler);
+        }
+        this._orientationHandler = () => { setTimeout(drawOverlayChart, 150); };
+        window.addEventListener('orientationchange', this._orientationHandler);
+        window.addEventListener('resize', this._orientationHandler);
     }
 
     closeChartFullscreen() {
@@ -1144,6 +1162,11 @@ class KartingDashboard {
         if (overlay) overlay.style.display = 'none';
         document.body.style.overflow = '';
         if (this._overlayChart) { this._overlayChart.destroy(); this._overlayChart = null; }
+        if (this._orientationHandler) {
+            window.removeEventListener('orientationchange', this._orientationHandler);
+            window.removeEventListener('resize', this._orientationHandler);
+            this._orientationHandler = null;
+        }
     }
 
     openMatrixFullscreen(cid, circuit) {
