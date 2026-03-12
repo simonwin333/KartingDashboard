@@ -430,6 +430,34 @@ section h2 {
 }
 .circuit-filter option { background: #1a1a1a; color: #ccc; }
 
+/* Dropdown custom circuits */
+.custom-select-wrapper { position: relative; }
+.custom-select-btn {
+    background: #1a1a1a; border: 1.5px solid #333; border-radius: 8px;
+    color: #ccc; padding: 7px 32px 7px 12px; font-size: 0.85em;
+    cursor: pointer; display: flex; align-items: center; gap: 6px;
+    min-width: 165px; justify-content: space-between;
+    transition: border-color 0.2s; font-family: inherit;
+}
+.custom-select-btn:hover, .custom-select-btn.open { border-color: #667eea; }
+.custom-select-arrow { color: #888; font-size: 0.75em; transition: transform 0.2s; display: inline-block; }
+.custom-select-btn.open .custom-select-arrow { transform: rotate(180deg); }
+.custom-select-dropdown {
+    display: none; position: absolute; top: calc(100% + 6px); right: 0;
+    background: #1a1a1a; border: 1.5px solid #333; border-radius: 8px;
+    overflow: hidden; z-index: 200; min-width: 100%;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+}
+.custom-select-dropdown.open { display: block; }
+.custom-select-option {
+    padding: 10px 14px; color: #ccc; cursor: pointer;
+    font-size: 0.88em; border-bottom: 1px solid #222; transition: background 0.15s;
+}
+.custom-select-option:last-child { border-bottom: none; }
+.custom-select-option:hover { background: rgba(102,126,234,0.08); }
+.custom-select-option.selected { color: #667eea; background: rgba(102,126,234,0.1); }
+
+
 .circuit-tile {
     background: #0f0f0f;
     padding: 20px;

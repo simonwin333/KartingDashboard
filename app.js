@@ -466,16 +466,37 @@ class KartingDashboard {
     }
 
     populateCircuitFilter() {
-        const sel = document.getElementById('circuitFilter');
-        if (!sel) return;
-        const val = sel.value;
-        sel.innerHTML = '<option value="all">Tous les circuits</option>';
+        const dropdown = document.getElementById('circuitFilterDropdown');
+        const label = document.getElementById('circuitFilterLabel');
+        if (!dropdown) return;
+        const currentVal = dropdown.querySelector('.selected')?.getAttribute('data-value') || 'all';
+        dropdown.innerHTML = '<div class="custom-select-option selected" data-value="all">🏁 Tous les circuits</div>';
         [...new Set(this.sessions.map(s => s.circuit))].sort().forEach(c => {
-            const o = document.createElement('option');
-            o.value = o.textContent = c;
-            sel.appendChild(o);
+            const div = document.createElement('div');
+            div.className = 'custom-select-option';
+            div.setAttribute('data-value', c);
+            div.textContent = '📍 ' + c;
+            dropdown.appendChild(div);
         });
-        if (val) sel.value = val;
+        // Restaurer la sélection
+        const toSelect = dropdown.querySelector(`[data-value="${currentVal}"]`);
+        if (toSelect) {
+            dropdown.querySelectorAll('.custom-select-option').forEach(o => o.classList.remove('selected'));
+            toSelect.classList.add('selected');
+            if (label) label.textContent = currentVal === 'all' ? 'Tous les circuits' : currentVal;
+        }
+        // Events sur les options
+        dropdown.querySelectorAll('.custom-select-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                const val = opt.getAttribute('data-value');
+                dropdown.querySelectorAll('.custom-select-option').forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+                if (label) label.textContent = val === 'all' ? 'Tous les circuits' : val;
+                document.getElementById('circuitFilterBtn')?.classList.remove('open');
+                dropdown.classList.remove('open');
+                this.filterCircuit(val);
+            });
+        });
     }
 
     filterCircuit(val) {
@@ -1409,7 +1430,20 @@ class KartingDashboard {
         });
 
         // Circuit filter
-        document.getElementById('circuitFilter').addEventListener('change', e => this.filterCircuit(e.target.value));
+        document.getElementById('circuitFilterBtn')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const btn = document.getElementById('circuitFilterBtn');
+            const dd = document.getElementById('circuitFilterDropdown');
+            btn.classList.toggle('open');
+            dd.classList.toggle('open');
+        });
+        document.addEventListener('click', (e) => {
+            const wrapper = document.getElementById('circuitFilterWrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                document.getElementById('circuitFilterBtn')?.classList.remove('open');
+                document.getElementById('circuitFilterDropdown')?.classList.remove('open');
+            }
+        });
 
         // Profile modal
         document.getElementById('saveProfileBtn').addEventListener('click', saveProfileModal);

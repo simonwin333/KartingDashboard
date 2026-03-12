@@ -253,7 +253,15 @@
     <section class="view-section" data-view="statistics" style="display:none;">
         <div class="section-header">
             <h2>📊 Analyse par circuit</h2>
-            <select id="circuitFilter"><option value="all">Tous les circuits</option></select>
+            <div class="custom-select-wrapper" id="circuitFilterWrapper">
+                <button class="custom-select-btn" id="circuitFilterBtn" type="button">
+                    <span id="circuitFilterLabel">Tous les circuits</span>
+                    <span class="custom-select-arrow">▼</span>
+                </button>
+                <div class="custom-select-dropdown" id="circuitFilterDropdown">
+                    <div class="custom-select-option selected" data-value="all">🏁 Tous les circuits</div>
+                </div>
+            </div>
         </div>
         <div id="circuitsAnalysis"></div>
     </section>
