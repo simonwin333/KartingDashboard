@@ -1861,24 +1861,10 @@ section h2 {
     align-items: center; justify-content: center;
 }
 .chart-overlay-inner {
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%) rotate(90deg);
-    transform-origin: center center;
-    width: 100vh;
-    height: 100vw;
+    width: 100%; height: 100%;
     display: flex; flex-direction: column;
     padding: 18px 22px;
     box-sizing: border-box;
-}
-@media (orientation: landscape) {
-    .chart-overlay-inner {
-        position: relative;
-        top: auto; left: auto;
-        transform: none;
-        width: 100%;
-        height: 100%;
-    }
 }
 .chart-overlay-header {
     display: flex; justify-content: space-between; align-items: center;
