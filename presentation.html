@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kart Dash | Performances Karting</title>
+    <style>
+        :root {
+            --bg-color: #0f0f12;
+            --card-bg: #18181b;
+            --accent-color: #7c4dff;
+            --text-color: #f4f4f5;
+            --secondary-text: #a1a1aa;
+            --success-green: #10b981;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header / Hero */
+        header {
+            text-align: center;
+            padding: 80px 0 40px;
+        }
+
+        .main-logo {
+            width: 180px;
+            height: auto;
+            border-radius: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        h1 { font-size: 3.5rem; margin: 0; letter-spacing: -1px; }
+        .tagline { font-size: 1.25rem; color: var(--secondary-text); margin: 15px 0 40px; }
+
+        .cta-button {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 16px 32px;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(124, 77, 255, 0.3);
+        }
+
+        /* Galerie de Screenshots */
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 60px;
+        }
+
+        .app-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            border: 1px solid #27272a;
+            overflow: hidden;
+            transition: 0.3s;
+        }
+
+        .app-card:hover {
+            border-color: var(--accent-color);
+        }
+
+        .app-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .card-label {
+            padding: 15px;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--secondary-text);
+        }
+
+        /* Features Section */
+        .specs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 80px 0;
+            text-align: center;
+        }
+
+        .spec-box {
+            padding: 30px;
+            background: linear-gradient(145deg, #1e1e22, #18181b);
+            border-radius: 20px;
+        }
+
+        .spec-box h2 { color: var(--success-green); margin-bottom: 10px; }
+
+        footer {
+            text-align: center;
+            padding: 60px 0;
+            border-top: 1px solid #27272a;
+            color: var(--secondary-text);
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            .specs { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <img src="Capture d’écran 2026-03-25 183917.png" alt="Logo Kart Dash" class="main-logo">
+            <h1>Kart Dash</h1>
+            <p class="tagline">L'application de télémétrie et de réglages pour les pilotes de karting exigeants.</p>
+            <a href="https://karting-95b36.web.app" class="cta-button" target="_blank">Accéder à l'application</a>
+        </header>
+
+        <div class="app-grid">
+            <div class="app-card">
+                <img src="Capture d’écran 2026-03-25 183854.png" alt="Dashboard global">
+                <div class="card-label">Dashboard Global</div>
+            </div>
+
+            <div class="app-card">
+                <img src="Capture d’écran 2026-03-25 183505.png" alt="Analyse circuit Mariembourg">
+                <div class="card-label">Analyse détaillée (Mariembourg)</div>
+            </div>
+
+            <div class="app-card">
+                <img src="Capture d’écran 2026-03-25 183601.png" alt="Évolution des chronos">
+                <div class="card-label">Graphiques d'évolution</div>
+            </div>
+
+            <div class="app-card">
+                <img src="Capture d’écran 2026-03-25 183626.png" alt="Saisie de session">
