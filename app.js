@@ -1,5 +1,5 @@
 // ============================================
-// KARTING DASHBOARD v4.0
+// KARTING DASHBOARD v4.5
 // ============================================
 
 const firebaseConfig = {
@@ -25,15 +25,10 @@ try {
 
 let deferredPrompt = null;
 
-// PWA Install prompt
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    setTimeout(() => {
-        if (window.dashboard) {
-            dashboard.setPwaInstructions();
-        }
-    }, 1000);
+    setTimeout(() => { if (window.dashboard) dashboard.setPwaInstructions(); }, 1000);
 });
 
 window.addEventListener('appinstalled', () => {
@@ -53,7 +48,6 @@ function installPWA() {
     }
 }
 
-// Service Worker
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('service-worker.js')
@@ -66,7 +60,7 @@ if ('serviceWorker' in navigator) {
 // FONCTIONS GLOBALES MODALS
 // ============================================
 
-let authMode = true; // true = login, false = signup
+let authMode = true;
 
 function showModal(id) { document.getElementById(id).style.display = 'flex'; }
 function hideModal(id) { document.getElementById(id).style.display = 'none'; }
@@ -106,7 +100,40 @@ function closeRecord() { document.getElementById('recordPopup').style.display = 
 function showNotifGlobal(msg, type) { if (window.dashboard) dashboard.showNotification(msg, type); }
 
 // ============================================
-// PROFIL MODAL - SAUVEGARDE DIRECTE FIREBASE
+// TOGGLE MODE SESSION (2t / location) — GLOBAL
+// ============================================
+
+function setSessionMode(mode) {
+    const btn2t  = document.getElementById('modeBtn2t');
+    const btnLoc = document.getElementById('modeBtnLoc');
+    const panel2t  = document.getElementById('fields2t');
+    const panelLoc = document.getElementById('fieldsLoc');
+    const submitBtn = document.getElementById('submitBtn');
+    const modeInput = document.getElementById('sessionMode');
+
+    if (mode === '2t') {
+        btn2t.classList.add('mode-btn-active-2t');
+        btn2t.classList.remove('mode-btn-inactive');
+        btnLoc.classList.add('mode-btn-inactive');
+        btnLoc.classList.remove('mode-btn-active-loc');
+        panel2t.style.display = 'block';
+        panelLoc.style.display = 'none';
+        if (submitBtn) submitBtn.textContent = '📊 Enregistrer la session 2t';
+        if (modeInput) modeInput.value = '2t';
+    } else {
+        btnLoc.classList.add('mode-btn-active-loc');
+        btnLoc.classList.remove('mode-btn-inactive');
+        btn2t.classList.add('mode-btn-inactive');
+        btn2t.classList.remove('mode-btn-active-2t');
+        panelLoc.style.display = 'block';
+        panel2t.style.display = 'none';
+        if (submitBtn) submitBtn.textContent = '📊 Enregistrer la session location';
+        if (modeInput) modeInput.value = 'location';
+    }
+}
+
+// ============================================
+// PROFIL MODAL
 // ============================================
 
 async function saveProfileModal() {
@@ -153,15 +180,12 @@ async function saveProfileModal() {
 
     try {
         await db.collection('users').doc(user.uid).collection('profile').doc('data').set(profile);
-        console.log('✅ Profil sauvegardé Firebase');
-
         dashboard.profile = profile;
         dashboard.displayProfile();
         hideModal('profileModal');
         document.getElementById('appContainer').style.display = 'block';
         dashboard.showNotification('Bienvenue ' + name + ' ! 🏎️', 'success');
     } catch(e) {
-        console.error('❌ Erreur Firebase:', e);
         errEl.textContent = '❌ Erreur sauvegarde: ' + e.message;
         errEl.style.display = 'block';
     }
@@ -200,7 +224,6 @@ class KartingDashboard {
         auth.onAuthStateChanged(user => {
             this.currentUser = user;
             if (user) {
-                console.log('✅ Connecté:', user.email);
                 hideModal('authModal');
                 this.loadFromFirebase();
             } else {
@@ -215,29 +238,20 @@ class KartingDashboard {
     async loadFromFirebase() {
         if (!this.currentUser || !db) return;
         const uid = this.currentUser.uid;
-
         try {
-            // Charger profil
             const profileDoc = await db.collection('users').doc(uid).collection('profile').doc('data').get();
-
             if (!profileDoc.exists || !profileDoc.data().pilotName) {
-                console.log('👶 Premier lancement - affichage profil obligatoire');
                 document.getElementById('regEmail').value = this.currentUser.email || '';
                 document.getElementById('appContainer').style.display = 'none';
                 showModal('profileModal');
                 return;
             }
-
             this.profile = profileDoc.data();
-            console.log('✅ Profil chargé:', this.profile.pilotName);
 
-            // Charger sessions
             const sessSnap = await db.collection('users').doc(uid).collection('sessions').get();
             this.sessions = [];
             sessSnap.forEach(doc => this.sessions.push(doc.data()));
-            console.log('✅ Sessions chargées:', this.sessions.length);
 
-            // Charger circuits
             const circDoc = await db.collection('users').doc(uid).collection('settings').doc('circuits').get();
             if (circDoc.exists) {
                 this.circuits = circDoc.data().list || [];
@@ -246,7 +260,6 @@ class KartingDashboard {
                 await this.saveCircuitsFirebase();
             }
 
-            // Afficher app
             document.getElementById('appContainer').style.display = 'block';
             this.isInitialized = true;
             this.displayProfile();
@@ -256,13 +269,10 @@ class KartingDashboard {
             this.setTodayDate();
             this.setCurrentTime();
 
-            // Email dans réglages
             const emailEl = document.getElementById('settingsUserEmail');
             if (emailEl) emailEl.textContent = '📧 ' + (this.currentUser.email || '');
 
-            // Instructions PWA selon plateforme
             this.setPwaInstructions();
-
             this.showNotification('Données synchronisées ✅', 'success');
 
         } catch(e) {
@@ -326,18 +336,24 @@ class KartingDashboard {
     // ── SESSIONS ──────────────────────────────────────────────────────────
 
     addSession() {
-        const date = document.getElementById('date').value;
-        const time = document.getElementById('time').value;
-        const circuit = document.getElementById('circuit').value;
-        const bestTime = parseFloat(document.getElementById('bestTime').value);
+        const date      = document.getElementById('date').value;
+        const time      = document.getElementById('time').value;
+        const circuit   = document.getElementById('circuit').value;
+        const bestTime  = parseFloat(document.getElementById('bestTime').value);
         const lapsCount = parseInt(document.getElementById('lapsCount').value) || 0;
-        const maxLaps = document.getElementById('maxLaps').value ? parseInt(document.getElementById('maxLaps').value) : null;
-        const crownUsed = document.getElementById('crownUsed').value || '';
-        const weather = document.getElementById('weather').value || '';
+        const weather   = document.getElementById('weather').value || '';
         const temperature = document.getElementById('temperature').value || '';
-        const tireType = document.getElementById('tireType').value || '';
-        const tirePressure = document.getElementById('tirePressure').value || '';
-        const notes = document.getElementById('notes').value || '';
+        const notes     = document.getElementById('notes').value || '';
+        const mode      = document.getElementById('sessionMode').value || '2t';
+
+        // Champs 2t uniquement
+        const maxLaps    = mode === '2t' ? (document.getElementById('maxLaps').value ? parseInt(document.getElementById('maxLaps').value) : null) : null;
+        const crownUsed  = mode === '2t' ? (document.getElementById('crownUsed').value || '') : '';
+        const tireType   = mode === '2t' ? (document.getElementById('tireType').value || '') : '';
+        const tirePressure = mode === '2t' ? (document.getElementById('tirePressure').value || '') : '';
+
+        // Champ location uniquement
+        const kartNumber = mode === 'location' ? (document.getElementById('kartNumber').value || '') : '';
 
         if (!date || !circuit || isNaN(bestTime)) {
             this.showNotification('Remplissez les champs obligatoires', 'error'); return;
@@ -346,7 +362,7 @@ class KartingDashboard {
         if (this.editingId) {
             const s = this.sessions.find(s => s.id === this.editingId);
             if (s) {
-                Object.assign(s, { date, time, circuit, bestTime, lapsCount, maxLaps, crownUsed, weather, temperature, tireType, tirePressure, notes });
+                Object.assign(s, { date, time, circuit, bestTime, lapsCount, maxLaps, crownUsed, weather, temperature, tireType, tirePressure, notes, mode, kartNumber });
                 this.saveSessionFirebase(s);
                 this.showNotification('Session modifiée ✏️');
                 this.editingId = null;
@@ -354,12 +370,12 @@ class KartingDashboard {
                 document.getElementById('cancelEditBtn').style.display = 'none';
             }
         } else {
-            const isRecord = this.checkIfNewRecord(circuit, bestTime);
-            const session = { id: Date.now(), date, time, circuit, bestTime, lapsCount, maxLaps, crownUsed, weather, temperature, tireType, tirePressure, notes };
+            const isRecord = this.checkIfNewRecord(circuit, bestTime, mode);
+            const session = { id: Date.now(), date, time, circuit, bestTime, lapsCount, maxLaps, crownUsed, weather, temperature, tireType, tirePressure, notes, mode, kartNumber };
             this.sessions.push(session);
             this.saveSessionFirebase(session);
             if (isRecord) {
-                this.showRecordPopup(circuit, bestTime);
+                this.showRecordPopup(circuit, bestTime, mode);
             } else {
                 this.showNotification('Session ajoutée ! 🏁');
             }
@@ -371,14 +387,16 @@ class KartingDashboard {
         this.switchView('dashboard');
     }
 
-    checkIfNewRecord(circuit, newTime) {
-        const circuitSessions = this.sessions.filter(s => s.circuit === circuit);
+    // Le record est séparé par mode : 2t vs location ne se mélangent pas
+    checkIfNewRecord(circuit, newTime, mode) {
+        const circuitSessions = this.sessions.filter(s => s.circuit === circuit && (s.mode || '2t') === mode);
         if (circuitSessions.length === 0) return true;
         return newTime < Math.min(...circuitSessions.map(s => s.bestTime));
     }
 
-    showRecordPopup(circuit, time) {
-        document.getElementById('recordCircuit').textContent = '🏎️ ' + circuit;
+    showRecordPopup(circuit, time, mode) {
+        const label = mode === 'location' ? '🎟️ ' + circuit + ' (location)' : '🏎️ ' + circuit;
+        document.getElementById('recordCircuit').textContent = label;
         document.getElementById('recordTime').textContent = this.formatTime(time);
         document.getElementById('recordPopup').style.display = 'flex';
         setTimeout(() => closeRecord(), 6000);
@@ -387,13 +405,31 @@ class KartingDashboard {
     editSession(id) {
         const s = this.sessions.find(s => s.id === id);
         if (!s) return;
+        const mode = s.mode || '2t';
+
+        // Appliquer le mode d'abord (toggle visuel)
+        setSessionMode(mode);
+
         const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-        setVal('date', s.date); setVal('time', s.time); setVal('circuit', s.circuit);
-        setVal('bestTime', s.bestTime); setVal('lapsCount', s.lapsCount);
-        setVal('maxLaps', s.maxLaps); setVal('crownUsed', s.crownUsed);
-        setVal('weather', s.weather); setVal('temperature', s.temperature);
-        setVal('tireType', s.tireType); setVal('tirePressure', s.tirePressure);
+        setVal('date', s.date);
+        setVal('time', s.time);
+        setVal('circuit', s.circuit);
+        setVal('bestTime', s.bestTime);
+        setVal('lapsCount', s.lapsCount);
+        setVal('weather', s.weather);
+        setVal('temperature', s.temperature);
         setVal('notes', s.notes);
+        setVal('sessionMode', mode);
+
+        if (mode === '2t') {
+            setVal('maxLaps', s.maxLaps);
+            setVal('crownUsed', s.crownUsed);
+            setVal('tireType', s.tireType);
+            setVal('tirePressure', s.tirePressure);
+        } else {
+            setVal('kartNumber', s.kartNumber);
+        }
+
         this.editingId = id;
         document.getElementById('submitBtn').textContent = '✏️ Enregistrer les modifications';
         document.getElementById('cancelEditBtn').style.display = 'block';
@@ -422,8 +458,10 @@ class KartingDashboard {
         this.setTodayDate();
         this.setCurrentTime();
         this.editingId = null;
+        // Remettre le mode par défaut (2t)
+        setSessionMode('2t');
         const sb = document.getElementById('submitBtn');
-        if (sb) sb.textContent = '📊 Enregistrer la session';
+        if (sb) sb.textContent = '📊 Enregistrer la session 2t';
         const cb = document.getElementById('cancelEditBtn');
         if (cb) cb.style.display = 'none';
     }
@@ -431,20 +469,27 @@ class KartingDashboard {
     showSessionDetails(id) {
         const s = this.sessions.find(s => s.id === id);
         if (!s) return;
+        const mode = s.mode || '2t';
         const rows = [
             ['📅 Date', this.formatDate(s.date)],
             ['🕐 Heure', s.time || '-'],
             ['🏁 Circuit', s.circuit],
+            ['🏷️ Mode', mode === 'location' ? '🎟️ Location' : '🔧 2t (kart perso)'],
             ['⏱️ Meilleur temps', this.formatTime(s.bestTime)],
             ['🔢 Tours', s.lapsCount || '-'],
-            ['🏎️ Tours moteur', s.maxLaps || '-'],
-            ['⚙️ Couronne', s.crownUsed || '-'],
-            ['🌦️ Météo', s.weather || '-'],
-            ['🌡️ Température', s.temperature ? s.temperature + '°C' : '-'],
-            ['🛞 Pneus', s.tireType || '-'],
-            ['⚡ Pression', s.tirePressure ? s.tirePressure + ' bar' : '-'],
-            ['📝 Notes', s.notes || '-']
         ];
+        if (mode === 'location') {
+            rows.push(['🎟️ Numéro kart', s.kartNumber ? '#' + s.kartNumber : '-']);
+        } else {
+            rows.push(['🏎️ Tours moteur', s.maxLaps || '-']);
+            rows.push(['⚙️ Couronne', s.crownUsed || '-']);
+            rows.push(['🛞 Pneus', s.tireType || '-']);
+            rows.push(['⚡ Pression', s.tirePressure ? s.tirePressure + ' bar' : '-']);
+        }
+        rows.push(['🌦️ Météo', s.weather || '-']);
+        rows.push(['🌡️ Température', s.temperature ? s.temperature + '°C' : '-']);
+        rows.push(['📝 Notes', s.notes || '-']);
+
         document.getElementById('sessionDetailsContent').innerHTML =
             rows.map(([l, v]) => `<div class="session-detail-row"><span class="session-detail-label">${l}</span><span class="session-detail-value">${v}</span></div>`).join('');
         showModal('sessionModal');
@@ -478,14 +523,12 @@ class KartingDashboard {
             div.textContent = '📍 ' + c;
             dropdown.appendChild(div);
         });
-        // Restaurer la sélection
         const toSelect = dropdown.querySelector(`[data-value="${currentVal}"]`);
         if (toSelect) {
             dropdown.querySelectorAll('.custom-select-option').forEach(o => o.classList.remove('selected'));
             toSelect.classList.add('selected');
             if (label) label.textContent = currentVal === 'all' ? 'Tous les circuits' : currentVal;
         }
-        // Events sur les options
         dropdown.querySelectorAll('.custom-select-option').forEach(opt => {
             opt.addEventListener('click', () => {
                 const val = opt.getAttribute('data-value');
@@ -540,7 +583,7 @@ class KartingDashboard {
                 <div class="circuit-manager-name" id="cm-name-${idx}"><span>${circuit}</span></div>
                 <button class="btn-circuit-rename" data-idx="${idx}" title="Renommer">✏️</button>
                 <button class="btn-circuit-delete" data-idx="${idx}" title="Supprimer">🗑️</button>`;
-            
+
             item.querySelector('.btn-circuit-rename').addEventListener('click', () => {
                 const nameDiv = document.getElementById('cm-name-' + idx);
                 const currentName = self.circuits[idx];
@@ -554,7 +597,6 @@ class KartingDashboard {
                     if (self.circuits.includes(newName) && newName !== currentName) {
                         self.showNotification('Ce nom existe déjà !', 'error'); return;
                     }
-                    // Mettre à jour dans les sessions aussi
                     self.sessions.forEach(s => { if (s.circuit === currentName) s.circuit = newName; });
                     self.sessions.forEach(s => { if (s.circuit === newName) self.saveSessionFirebase(s); });
                     self.circuits[idx] = newName;
@@ -570,8 +612,7 @@ class KartingDashboard {
                 const name = self.circuits[idx];
                 const sessionsCount = self.sessions.filter(s => s.circuit === name).length;
                 const msg = sessionsCount > 0
-                    ? `Supprimer "${name}" ?
-⚠️ ${sessionsCount} session(s) liée(s) seront aussi supprimées.`
+                    ? `Supprimer "${name}" ?\n⚠️ ${sessionsCount} session(s) liée(s) seront aussi supprimées.`
                     : `Supprimer le circuit "${name}" ?`;
                 if (!confirm(msg)) return;
                 if (sessionsCount > 0) {
@@ -669,75 +710,118 @@ class KartingDashboard {
         circuits.forEach(circuit => this.renderCircuitTile(el, circuit, data[circuit]));
     }
 
+    // ── CIRCUIT TILE — split 2t / location ────────────────────────────────
+
     renderCircuitTile(container, circuit, sessions) {
-        const sorted = [...sessions].sort((a, b) => new Date(a.date + ' ' + (a.time||'')) - new Date(b.date + ' ' + (b.time||'')));
-        const best = Math.min(...sessions.map(s => s.bestTime));
-        const avg = sessions.reduce((s, x) => s + x.bestTime, 0) / sessions.length;
-        const totalLaps = sessions.reduce((s, x) => s + (x.lapsCount || 0), 0);
-        const bestSess = sessions.find(s => s.bestTime === best);
-        const ecart = avg - best;
+        const sessions2t  = sessions.filter(s => (s.mode || '2t') === '2t');
+        const sessionsLoc = sessions.filter(s => (s.mode || '2t') === 'location');
+        const hasBoth = sessions2t.length > 0 && sessionsLoc.length > 0;
+        const has2t   = sessions2t.length > 0;
+        const hasLoc  = sessionsLoc.length > 0;
 
         const cid = circuit.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
-        const chartId1 = 'chart-evol-' + cid;
-        const chartId2 = 'chart-pneu-' + cid;
-        const chartId3 = 'chart-bvs-' + cid;
-        const chartId4 = 'chart-press-' + cid;
-
-        // Chips réglage optimal — toutes blanches
-        const optimalChips = [
-            bestSess.tireType ? '🛞 ' + bestSess.tireType : '',
-            bestSess.tirePressure ? bestSess.tirePressure + ' bar' : '',
-            bestSess.weather || '',
-            bestSess.temperature ? '🌡️ ' + bestSess.temperature + '°C' : '',
-            bestSess.crownUsed ? 'Couronne ' + bestSess.crownUsed : '',
-            bestSess.maxLaps ? '🔧 ' + bestSess.maxLaps + ' tr/min' : ''
-        ].filter(Boolean);
-
-        // Conditions du record : 2 lignes
-        const condLine1 = [
-            bestSess.tireType ? '🛞 ' + bestSess.tireType : '',
-            bestSess.tirePressure ? bestSess.tirePressure + ' bar' : ''
-        ].filter(Boolean).join(' · ');
-        const condLine2 = [
-            bestSess.temperature ? '🌡️ ' + bestSess.temperature + '°C' : '',
-            bestSess.weather || ''
-        ].filter(Boolean).join(' · ');
-
 
         const tile = document.createElement('div');
         tile.className = 'circuit-tile';
+
+        let tabsHTML = '';
+        if (hasBoth) {
+            tabsHTML = `
+            <div class="ct-mode-tabs" id="tabs-${cid}">
+                <button class="ct-mode-tab ct-mode-tab-2t ct-mode-tab-active" data-mode="2t" data-cid="${cid}">🔧 2t · ${sessions2t.length} sess.</button>
+                <button class="ct-mode-tab ct-mode-tab-loc" data-mode="location" data-cid="${cid}">🎟️ Location · ${sessionsLoc.length} sess.</button>
+            </div>`;
+        } else if (has2t) {
+            tabsHTML = `<div class="ct-mode-badge ct-mode-badge-2t">🔧 2t · ${sessions2t.length} session${sessions2t.length > 1 ? 's' : ''}</div>`;
+        } else {
+            tabsHTML = `<div class="ct-mode-badge ct-mode-badge-loc">🎟️ Location · ${sessionsLoc.length} session${sessionsLoc.length > 1 ? 's' : ''}</div>`;
+        }
+
         tile.innerHTML = `
             <div class="circuit-tile-name">🏁 ${circuit}</div>
+            ${tabsHTML}
+            <div id="panel-2t-${cid}"  class="ct-mode-panel" style="display:${has2t ? 'block' : 'none'}"></div>
+            <div id="panel-loc-${cid}" class="ct-mode-panel" style="display:${hasBoth ? 'none' : (hasLoc ? 'block' : 'none')}"></div>`;
 
-            <div class="ct-chart-block ct-record-block">
-                <div class="ct-record-line">
-                    <span class="ct-best-badge">${this.formatTime(best)} 🏆</span>
-                    <div class="ct-record-info">
-                        <div class="ct-record-label">Record personnel</div>
-                        ${condLine1 ? `<div class="ct-record-cond">${condLine1}</div>` : ''}
-                        ${condLine2 ? `<div class="ct-record-cond">${condLine2}</div>` : ''}
-                    </div>
-                    <button class="btn-details session-btn ct-eye-btn" data-id="${bestSess.id}">👁️</button>
-                </div>
-            </div>
+        container.appendChild(tile);
 
-            <div class="ct-chart-block ct-stats-block">
-                <div class="ct-stats-row">
-                    <div class="ct-stat"><div class="ct-stat-val">${sessions.length}</div><div class="ct-stat-lbl">Nb sessions</div></div>
-                    <div class="ct-stat-div"></div>
-                    <div class="ct-stat"><div class="ct-stat-val">${totalLaps}</div><div class="ct-stat-lbl">Nb tours</div></div>
-                    <div class="ct-stat-div"></div>
-                    <div class="ct-stat"><div class="ct-stat-val" style="color:#667eea">${this.formatTime(avg)}</div><div class="ct-stat-lbl">Moyenne</div></div>
-                    <div class="ct-stat-div"></div>
-                    <div class="ct-stat"><div class="ct-stat-val" style="color:#f59e0b">+${this.formatTime(ecart)}</div><div class="ct-stat-lbl">Écart moy.</div></div>
-                </div>
-            </div>
+        // Onglets interactifs
+        if (hasBoth) {
+            tile.querySelectorAll('.ct-mode-tab').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const mode = btn.getAttribute('data-mode');
+                    const c = btn.getAttribute('data-cid');
+                    tile.querySelectorAll('.ct-mode-tab').forEach(b => {
+                        b.classList.remove('ct-mode-tab-active');
+                    });
+                    btn.classList.add('ct-mode-tab-active');
+                    document.getElementById('panel-2t-' + c).style.display  = mode === '2t' ? 'block' : 'none';
+                    document.getElementById('panel-loc-' + c).style.display = mode === 'location' ? 'block' : 'none';
+                });
+            });
+        }
 
-            <div class="ct-reglage">
-                <div class="ct-reglage-title">⚙️ RÉGLAGE OPTIMAL</div>
-                <div class="ct-chips">${optimalChips.map(c => `<span class="ct-chip">${c}</span>`).join('')}</div>
-            </div>
+        setTimeout(() => {
+            if (has2t)  this.renderModePanel(document.getElementById('panel-2t-' + cid),  sessions2t,  cid + '-2t',  '2t');
+            if (hasLoc) this.renderModePanel(document.getElementById('panel-loc-' + cid), sessionsLoc, cid + '-loc', 'location');
+        }, 50);
+    }
 
+    renderModePanel(container, sessions, cid, mode) {
+        if (!container) return;
+        const sorted   = [...sessions].sort((a, b) => new Date(a.date + ' ' + (a.time||'')) - new Date(b.date + ' ' + (b.time||'')));
+        const best     = Math.min(...sessions.map(s => s.bestTime));
+        const avg      = sessions.reduce((s, x) => s + x.bestTime, 0) / sessions.length;
+        const totalLaps = sessions.reduce((s, x) => s + (x.lapsCount || 0), 0);
+        const bestSess = sessions.find(s => s.bestTime === best);
+        const ecart    = avg - best;
+
+        const chartId1 = 'chart-evol-' + cid;
+        const chartId2 = 'chart-pneu-' + cid;
+        const chartId4 = 'chart-press-' + cid;
+        const chartIdK = 'chart-kart-' + cid;
+
+        // Conditions du record
+        let condLine1 = '', condLine2 = '';
+        if (mode === '2t') {
+            condLine1 = [
+                bestSess.tireType ? '🛞 ' + bestSess.tireType : '',
+                bestSess.tirePressure ? bestSess.tirePressure + ' bar' : ''
+            ].filter(Boolean).join(' · ');
+            condLine2 = [
+                bestSess.temperature ? '🌡️ ' + bestSess.temperature + '°C' : '',
+                bestSess.weather || ''
+            ].filter(Boolean).join(' · ');
+        } else {
+            condLine1 = [
+                bestSess.kartNumber ? '🎟️ Kart #' + bestSess.kartNumber : '',
+                bestSess.weather || ''
+            ].filter(Boolean).join(' · ');
+            condLine2 = bestSess.temperature ? '🌡️ ' + bestSess.temperature + '°C' : '';
+        }
+
+        // Chips réglage optimal (2t seulement)
+        let optimalHTML = '';
+        if (mode === '2t') {
+            const chips = [
+                bestSess.tireType ? '🛞 ' + bestSess.tireType : '',
+                bestSess.tirePressure ? bestSess.tirePressure + ' bar' : '',
+                bestSess.weather || '',
+                bestSess.temperature ? '🌡️ ' + bestSess.temperature + '°C' : '',
+                bestSess.crownUsed ? 'Couronne ' + bestSess.crownUsed : '',
+                bestSess.maxLaps ? '🔧 ' + bestSess.maxLaps + ' tr/min' : ''
+            ].filter(Boolean);
+            if (chips.length) {
+                optimalHTML = `
+                <div class="ct-reglage">
+                    <div class="ct-reglage-title">⚙️ RÉGLAGE OPTIMAL</div>
+                    <div class="ct-chips">${chips.map(c => `<span class="ct-chip">${c}</span>`).join('')}</div>
+                </div>`;
+            }
+        }
+
+        // Graphiques à afficher selon le mode
+        const chartsHTML = mode === '2t' ? `
             <div class="ct-chart-block">
                 <div class="ct-chart-header">
                     <span class="ct-chart-title">📈 Évolution des chronos</span>
@@ -768,46 +852,88 @@ class KartingDashboard {
                     <button class="ct-expand-btn ct-expand-matrix-btn" data-cid="${cid}">⛶ Agrandir</button>
                 </div>
                 <div class="ct-matrix-wrap" id="matrix-${cid}"></div>
-                <div class="ct-matrix-legend">
-                    <span class="ct-legend-l">Rapide</span>
-                    <div class="ct-legend-gradient"></div>
-                    <span class="ct-legend-r">Lent</span>
-                </div>
+                <div class="ct-matrix-legend"><span class="ct-legend-l">Rapide</span><div class="ct-legend-gradient"></div><span class="ct-legend-r">Lent</span></div>
                 <div class="ct-matrix-tooltip" id="matrix-tooltip-${cid}"></div>
                 <div class="ct-insight-block" id="matrix-insight-${cid}"></div>
+            </div>` : `
+            <div class="ct-chart-block">
+                <div class="ct-chart-header">
+                    <span class="ct-chart-title">📈 Évolution des chronos</span>
+                    <button class="ct-expand-btn" data-chart="${chartId1}" data-title="📈 Évolution des chronos">⛶ Agrandir</button>
+                </div>
+                <canvas id="${chartId1}"></canvas>
+                <div class="ct-insight-block" id="analysis-${cid}"></div>
+            </div>
+            <div class="ct-chart-block" id="kart-block-${cid}">
+                <div class="ct-chart-header">
+                    <span class="ct-chart-title">🎟️ Meilleur temps par numéro de kart</span>
+                    <button class="ct-expand-btn" data-chart="${chartIdK}" data-title="🎟️ Meilleur temps par numéro de kart">⛶ Agrandir</button>
+                </div>
+                <canvas id="${chartIdK}"></canvas>
+                <div class="ct-insight-block" id="insight-kart-${cid}"></div>
             </div>`;
 
-        tile.querySelector('.ct-eye-btn').addEventListener('click', () => this.showSessionDetails(bestSess.id));
-        tile.querySelectorAll('.ct-expand-btn').forEach(btn => {
+        container.innerHTML = `
+            <div class="ct-chart-block ct-record-block">
+                <div class="ct-record-line">
+                    <span class="ct-best-badge">${this.formatTime(best)} 🏆</span>
+                    <div class="ct-record-info">
+                        <div class="ct-record-label">Record personnel${mode === 'location' ? ' location' : ' 2t'}</div>
+                        ${condLine1 ? `<div class="ct-record-cond">${condLine1}</div>` : ''}
+                        ${condLine2 ? `<div class="ct-record-cond">${condLine2}</div>` : ''}
+                    </div>
+                    <button class="btn-details session-btn ct-eye-btn" data-id="${bestSess.id}">👁️</button>
+                </div>
+            </div>
+            <div class="ct-chart-block ct-stats-block">
+                <div class="ct-stats-row">
+                    <div class="ct-stat"><div class="ct-stat-val">${sessions.length}</div><div class="ct-stat-lbl">Nb sessions</div></div>
+                    <div class="ct-stat-div"></div>
+                    <div class="ct-stat"><div class="ct-stat-val">${totalLaps}</div><div class="ct-stat-lbl">Nb tours</div></div>
+                    <div class="ct-stat-div"></div>
+                    <div class="ct-stat"><div class="ct-stat-val" style="color:#667eea">${this.formatTime(avg)}</div><div class="ct-stat-lbl">Moyenne</div></div>
+                    <div class="ct-stat-div"></div>
+                    <div class="ct-stat"><div class="ct-stat-val" style="color:#f59e0b">+${this.formatTime(ecart)}</div><div class="ct-stat-lbl">Écart moy.</div></div>
+                </div>
+            </div>
+            ${optimalHTML}
+            ${chartsHTML}`;
+
+        // Events boutons
+        container.querySelector('.ct-eye-btn').addEventListener('click', () => this.showSessionDetails(bestSess.id));
+        container.querySelectorAll('.ct-expand-btn:not(.ct-expand-matrix-btn)').forEach(btn => {
             btn.addEventListener('click', () => this.openChartFullscreen(btn.getAttribute('data-chart'), btn.getAttribute('data-title')));
         });
-        const matrixExpandBtn = tile.querySelector('.ct-expand-matrix-btn');
+        const matrixExpandBtn = container.querySelector('.ct-expand-matrix-btn');
         if (matrixExpandBtn) {
-            matrixExpandBtn.addEventListener('click', () => this.openMatrixFullscreen(cid, circuit));
+            matrixExpandBtn.addEventListener('click', () => this.openMatrixFullscreen(cid, cid));
         }
-        container.appendChild(tile);
 
+        // Graphiques
         setTimeout(() => {
             this.createChartEvolution(chartId1, sorted, best, cid);
-            this.createChartPneu(chartId2, sessions);
-            this.createChartPression(chartId4, sessions);
-            this.createMatrice(cid, sessions);
+            if (mode === '2t') {
+                this.createChartPneu(chartId2, sessions);
+                this.createChartPression(chartId4, sessions);
+                this.createMatrice(cid, sessions);
+            } else {
+                this.createChartKart(chartIdK, sessions, cid);
+            }
         }, 50);
     }
 
-    // Graphique 1 — Évolution des chronos (20 dernières sessions max)
+    // ── GRAPHIQUES ────────────────────────────────────────────────────────
+
     createChartEvolution(id, sessions, best, cid) {
         const canvas = document.getElementById(id);
         if (!canvas) return;
         if (this.circuitCharts[id]) this.circuitCharts[id].destroy();
 
-        // Limiter aux 20 dernières sessions
         const MAX_SESSIONS = 20;
         const totalSessions = sessions.length;
         const display = totalSessions > MAX_SESSIONS ? sessions.slice(-MAX_SESSIONS) : sessions;
         const isTruncated = totalSessions > MAX_SESSIONS;
 
-        // Axe Y : marge intelligente autour des données affichées
         const times = display.map(s => s.bestTime);
         const minT = Math.min(...times);
         const maxT = Math.max(...times);
@@ -815,7 +941,6 @@ class KartingDashboard {
         const yMin = Math.max(0, minT - range * 0.25);
         const yMax = maxT + range * 0.25;
 
-        // Mettre à jour le titre si tronqué
         const titleEl = canvas.closest('.ct-chart-block')?.querySelector('.ct-chart-title');
         if (titleEl) {
             titleEl.textContent = isTruncated
@@ -823,16 +948,20 @@ class KartingDashboard {
                 : '📈 Évolution des chronos';
         }
 
-        const labels = display.map(s => { const d = new Date(s.date); return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' }) + (s.time ? ' ' + s.time.substring(0,5) : ''); });
+        const labels = display.map(s => {
+            const d = new Date(s.date);
+            return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' }) + (s.time ? ' ' + s.time.substring(0,5) : '');
+        });
         const ptColors = display.map(s => s.bestTime === best ? '#10b981' : '#667eea');
         const self = this;
+
         this.circuitCharts[id] = new Chart(canvas.getContext('2d'), {
             type: 'line',
             data: { labels, datasets: [{ data: display.map(s => s.bestTime), borderColor: '#667eea', backgroundColor: 'rgba(102,126,234,0.08)', tension: 0.4, fill: true, pointRadius: 6, pointHoverRadius: 8, pointBackgroundColor: ptColors, pointBorderColor: '#0a0a0a', pointBorderWidth: 2 }] },
             options: { responsive:true, maintainAspectRatio:false,
-                layout: { padding: { top: 26, left: 2, right: 2, bottom: 0 } },
+                layout: { padding: { top:26, left:2, right:2, bottom:0 } },
                 plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: ctx => { const s = display[ctx.dataIndex]; return [self.formatTime(s.bestTime), s.tireType ? '🛞 '+s.tireType : '', s.weather||''].filter(Boolean); }}, backgroundColor:'#1a1a1a', titleColor:'#fff', bodyColor:'#ccc', borderColor:'#333', borderWidth:1 } },
-                scales: { y:{ min: yMin, max: yMax, ticks:{ callback: v => self.formatTime(v), color:'#ccc', font:{size:9}, maxTicksLimit:6 }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#ccc', font:{size:9}, maxRotation:30}, grid:{color:'#1e1e1e'} } }
+                scales: { y:{ min:yMin, max:yMax, ticks:{ callback: v => self.formatTime(v), color:'#ccc', font:{size:9}, maxTicksLimit:6 }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#ccc', font:{size:9}, maxRotation:30}, grid:{color:'#1e1e1e'} } }
             },
             plugins: [{ id:'datalabels', afterDatasetsDraw(chart) {
                 const ctx = chart.ctx;
@@ -846,13 +975,13 @@ class KartingDashboard {
                 });
             }}]
         });
+
         if (cid) {
             const el = document.getElementById('analysis-' + cid);
             if (el) el.innerHTML = this.buildInsightEvolution(sessions, best, self);
         }
     }
 
-    // Graphique 2 — Chrono moyen par pneu
     createChartPneu(id, sessions) {
         const canvas = document.getElementById(id);
         if (!canvas) return;
@@ -865,14 +994,14 @@ class KartingDashboard {
         const minAvg = Math.min(...avgs);
         const bgColors = avgs.map(v => v === minAvg ? 'rgba(16,185,129,0.35)' : 'rgba(102,126,234,0.35)');
         const bdColors = avgs.map(v => v === minAvg ? '#10b981' : '#667eea');
-        const self2 = this;
+        const self = this;
         this.circuitCharts[id] = new Chart(canvas.getContext('2d'), {
             type: 'bar',
             data: { labels, datasets: [{ data: avgs, backgroundColor: bgColors, borderColor: bdColors, borderWidth:2, borderRadius:6 }] },
             options: { responsive:true, maintainAspectRatio:false,
-                layout: { padding: { top: 26, left: 2, right: 2, bottom: 0 } },
-                plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: ctx => self2.formatTime(ctx.raw) }, backgroundColor:'#1a1a1a', titleColor:'#fff', bodyColor:'#ccc', borderColor:'#333', borderWidth:1 }},
-                scales: { y:{ min: minAvg - (Math.max(...avgs) - minAvg) * 1.2 - 0.5, max: Math.max(...avgs) + (Math.max(...avgs) - minAvg) * 0.5 + 0.5, ticks:{ callback: v => self2.formatTime(v), color:'#ccc', font:{size:9}, maxTicksLimit:5 }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#ccc', font:{size:9}}, grid:{color:'#1e1e1e'} } }
+                layout: { padding: { top:26, left:2, right:2, bottom:0 } },
+                plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: ctx => self.formatTime(ctx.raw) }, backgroundColor:'#1a1a1a', titleColor:'#fff', bodyColor:'#ccc', borderColor:'#333', borderWidth:1 }},
+                scales: { y:{ min: minAvg - (Math.max(...avgs) - minAvg) * 1.2 - 0.5, max: Math.max(...avgs) + (Math.max(...avgs) - minAvg) * 0.5 + 0.5, ticks:{ callback: v => self.formatTime(v), color:'#ccc', font:{size:9}, maxTicksLimit:5 }, grid:{color:'#1e1e1e'} }, x:{ ticks:{color:'#ccc', font:{size:9}}, grid:{color:'#1e1e1e'} } }
             },
             plugins: [{ id:'barLabels', afterDatasetsDraw(chart) {
                 const ctx = chart.ctx;
@@ -880,18 +1009,16 @@ class KartingDashboard {
                     chart.getDatasetMeta(i).data.forEach((bar, idx) => {
                         const val = ds.data[idx];
                         ctx.save(); ctx.fillStyle = val === minAvg ? '#10b981' : '#ccc'; ctx.font = 'bold 10px Segoe UI';
-                        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(self2.formatTime(val), bar.x, bar.y - 5); ctx.restore();
+                        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(self.formatTime(val), bar.x, bar.y - 5); ctx.restore();
                     });
                 });
             }}]
         });
-        // Insight pneu
         const cidFromId = id.replace('chart-pneu-', '');
-        const insightPneuEl = document.getElementById('insight-pneu-' + cidFromId);
-        if (insightPneuEl) insightPneuEl.innerHTML = this.buildInsightPneu(labels, avgs, byTire, minAvg, self2);
+        const insightEl = document.getElementById('insight-pneu-' + cidFromId);
+        if (insightEl) insightEl.innerHTML = this.buildInsightPneu(labels, avgs, byTire, minAvg, self);
     }
 
-    // Graphique 3 — Pression vs Temps (scatter)
     createChartPression(id, sessions) {
         const canvas = document.getElementById(id);
         if (!canvas) return;
@@ -904,25 +1031,73 @@ class KartingDashboard {
         const yMinP = Math.max(0, best - rangeY * 0.25);
         const yMaxP = worstY + rangeY * 0.25;
         const ptColors = data.map(d => d.y === best ? '#10b981cc' : '#667eeacc');
-        const self3 = this;
+        const self = this;
         this.circuitCharts[id] = new Chart(canvas.getContext('2d'), {
             type: 'scatter',
             data: { datasets: [{ data, backgroundColor: ptColors, pointRadius:10, pointHoverRadius:13, pointBorderColor:'#0a0a0a', pointBorderWidth:2 }] },
             options: { responsive:true, maintainAspectRatio:false,
                 plugins: { legend:{display:false}, tooltip:{ callbacks:{
                     title: ctx => ctx[0].raw.x + ' bar',
-                    label: ctx => { const d = ctx.raw; const lines = [self3.formatTime(d.y)]; if (d.tireType) lines.push('🛞 '+d.tireType); if (d.y === best) lines.push('🏆 Record'); return lines; }
+                    label: ctx => { const d = ctx.raw; const lines = [self.formatTime(d.y)]; if (d.tireType) lines.push('🛞 '+d.tireType); if (d.y === best) lines.push('🏆 Record'); return lines; }
                 }, backgroundColor:'#1a1a1a', titleColor:'#667eea', bodyColor:'#ccc', borderColor:'#333', borderWidth:1, padding:10 }},
                 scales: {
-                    y:{ min: yMinP, max: yMaxP, ticks:{ callback: v => self3.formatTime(v), color:'#ccc', font:{size:9}, maxTicksLimit:5 }, grid:{color:'#1e1e1e'} },
+                    y:{ min:yMinP, max:yMaxP, ticks:{ callback: v => self.formatTime(v), color:'#ccc', font:{size:9}, maxTicksLimit:5 }, grid:{color:'#1e1e1e'} },
                     x:{ ticks:{ callback: v => v+' b', color:'#ccc', font:{size:9} }, grid:{color:'#1e1e1e'}, title:{ display:true, text:'Pression (bar)', color:'#ccc', font:{size:9} } }
                 }
             }
         });
-        // Insight pression
         const cidFromPressId = id.replace('chart-press-', '');
         const insightPressEl = document.getElementById('insight-press-' + cidFromPressId);
-        if (insightPressEl) insightPressEl.innerHTML = this.buildInsightPression(data, best, self3);
+        if (insightPressEl) insightPressEl.innerHTML = this.buildInsightPression(data, best, self);
+    }
+
+    // Nouveau graphique : meilleur temps par numéro de kart (location)
+    createChartKart(id, sessions, cid) {
+        const canvas = document.getElementById(id);
+        if (!canvas) return;
+        if (this.circuitCharts[id]) this.circuitCharts[id].destroy();
+
+        // Grouper par numéro de kart
+        const byKart = {};
+        sessions.forEach(s => {
+            const k = s.kartNumber ? '#' + s.kartNumber : '?';
+            if (!byKart[k]) byKart[k] = [];
+            byKart[k].push(s.bestTime);
+        });
+        const labels = Object.keys(byKart).sort();
+        if (labels.length === 0) { canvas.parentElement.style.display='none'; return; }
+        const bests = labels.map(k => Math.min(...byKart[k]));
+        const minBest = Math.min(...bests);
+        const bgColors = bests.map(v => v === minBest ? 'rgba(16,185,129,0.35)' : 'rgba(15,110,86,0.25)');
+        const bdColors = bests.map(v => v === minBest ? '#10b981' : '#0F6E56');
+        const self = this;
+
+        this.circuitCharts[id] = new Chart(canvas.getContext('2d'), {
+            type: 'bar',
+            data: { labels, datasets: [{ data: bests, backgroundColor: bgColors, borderColor: bdColors, borderWidth:2, borderRadius:6 }] },
+            options: { responsive:true, maintainAspectRatio:false,
+                layout: { padding: { top:26, left:2, right:2, bottom:0 } },
+                plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: ctx => [self.formatTime(ctx.raw), byKart[labels[ctx.dataIndex]].length + ' session(s)'] }, backgroundColor:'#1a1a1a', titleColor:'#fff', bodyColor:'#ccc', borderColor:'#333', borderWidth:1 }},
+                scales: {
+                    y:{ min: minBest - (Math.max(...bests) - minBest) * 1.2 - 0.5, max: Math.max(...bests) + (Math.max(...bests) - minBest) * 0.5 + 0.5, ticks:{ callback: v => self.formatTime(v), color:'#ccc', font:{size:9}, maxTicksLimit:5 }, grid:{color:'#1e1e1e'} },
+                    x:{ ticks:{color:'#ccc', font:{size:9}}, grid:{color:'#1e1e1e'} }
+                }
+            },
+            plugins: [{ id:'barLabels', afterDatasetsDraw(chart) {
+                const ctx = chart.ctx;
+                chart.data.datasets.forEach((ds, i) => {
+                    chart.getDatasetMeta(i).data.forEach((bar, idx) => {
+                        const val = ds.data[idx];
+                        ctx.save(); ctx.fillStyle = val === minBest ? '#10b981' : '#ccc'; ctx.font = 'bold 10px Segoe UI';
+                        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(self.formatTime(val), bar.x, bar.y - 5); ctx.restore();
+                    });
+                });
+            }}]
+        });
+
+        // Insight kart
+        const insightEl = document.getElementById('insight-kart-' + cid);
+        if (insightEl) insightEl.innerHTML = this.buildInsightKart(labels, bests, byKart, minBest, self);
     }
 
     // ── INSIGHTS ─────────────────────────────────────────────────────────
@@ -935,10 +1110,8 @@ class KartingDashboard {
         if (sessions.length < 2) return '';
         const rows = [];
         const gain = sessions[0].bestTime - best;
-        const gainStr = gain > 0 ? `<b style="color:#10b981">−${self.formatTime(gain)}</b>` : '';
-        if (gain > 0) rows.push(this.insightRow('📉', `Tu as gagné ${gainStr} depuis ta 1ère session sur ce circuit.`));
+        if (gain > 0) rows.push(this.insightRow('📉', `Tu as gagné <b style="color:#10b981">−${self.formatTime(gain)}</b> depuis ta 1ère session sur ce circuit.`));
 
-        // Série consécutive d'améliorations
         let streak = 0;
         for (let i = sessions.length - 1; i > 0; i--) {
             if (sessions[i].bestTime < sessions[i-1].bestTime) streak++;
@@ -948,7 +1121,6 @@ class KartingDashboard {
         else if (sessions[sessions.length-1].bestTime > sessions[sessions.length-2].bestTime)
             rows.push(this.insightRow('📈', `La dernière session est en <b style="color:#f59e0b">légère régression</b> — ça arrive, reste concentré.`));
 
-        // Fréquence
         if (sessions.length >= 3) {
             const dates = sessions.map(s => new Date(s.date + ' ' + (s.time||'00:00')));
             const diffs = [];
@@ -958,7 +1130,6 @@ class KartingDashboard {
             rows.push(this.insightRow('📅', `Tu roules en moyenne <b>tous les ${avgDays} jours</b> sur ce circuit. Dernière session il y a <b>${lastDays} jour${lastDays>1?'s':''}</b>.`));
         }
 
-        // Projection
         if (sessions.length >= 4 && gain > 0) {
             const recent = sessions.slice(-3);
             const recentGain = recent[0].bestTime - recent[recent.length-1].bestTime;
@@ -967,8 +1138,6 @@ class KartingDashboard {
                 rows.push(this.insightRow('🎯', `À ce rythme, tu pourrais viser <b style="color:#667eea">${self.formatTime(Math.max(proj,0))}</b> dans 3–4 sessions.`));
             }
         }
-
-        if (rows.length === 0) return '';
         return rows.join('');
     }
 
@@ -979,29 +1148,20 @@ class KartingDashboard {
         const worstAvg = Math.max(...avgs);
         const diff = worstAvg - minAvg;
         rows.push(this.insightRow('🏆', `Meilleur pneu sur ce circuit : <b style="color:#10b981">${bestTire}</b> <span style="background:#10b98115;color:#10b981;border:1px solid #10b98130;border-radius:10px;font-size:0.82em;padding:1px 7px;margin-left:3px;">−${self.formatTime(diff)} vs autres</span>`));
-
-        // Pneus peu testés
         labels.forEach(t => {
             if (byTire[t] && byTire[t].length === 1) rows.push(this.insightRow('⚠️', `<b style="color:#f59e0b">${t}</b> testé seulement 1 fois — résultat peu fiable, à confirmer.`));
         });
-
-        // Pneus jamais testés
         const allTires = ['Soft','Medium','Hard','Pluie'];
         const missing = allTires.filter(t => !labels.includes(t));
         if (missing.length > 0) rows.push(this.insightRow('📌', `Jamais testé sur ce circuit : <b>${missing.join(', ')}</b>. Potentiel d'exploration.`));
-
         return rows.join('');
     }
 
     buildInsightPression(data, best, self) {
         if (data.length < 3) return '';
         const rows = [];
-        const sorted = [...data].sort((a,b)=>a.x-b.x);
         const bestData = data.find(d=>d.y===best);
-
         if (bestData) rows.push(this.insightRow('🎯', `Meilleure pression sur ce circuit : <b style="color:#10b981">${bestData.x} bar</b> → ${self.formatTime(best)}.`));
-
-        // Comparer haut vs bas
         const pressures = [...new Set(data.map(d=>d.x))].sort((a,b)=>a-b);
         if (pressures.length >= 3) {
             const lowP = pressures[0], highP = pressures[pressures.length-1];
@@ -1010,32 +1170,38 @@ class KartingDashboard {
             if (lowAvg > best + 0.3) rows.push(this.insightRow('📉', `En dessous de <b style="color:#f59e0b">${lowP} bar</b> : chrono dégradé de <b style="color:#ef4444">+${self.formatTime(lowAvg-best)}</b> en moyenne.`));
             if (highAvg > best + 0.3) rows.push(this.insightRow('📉', `Au-dessus de <b style="color:#f59e0b">${highP} bar</b> : chrono dégradé de <b style="color:#ef4444">+${self.formatTime(highAvg-best)}</b> en moyenne.`));
         }
-
-        // Corrélation température
-        const withTemp = data.filter(d => d.temperature);
-        // Note: on ne peut pas accéder à la température ici facilement, on mentionne juste le nb de sessions
         rows.push(this.insightRow('💡', `Analyse basée sur <b>${data.length} session${data.length>1?'s':''}</b> avec données de pression. Plus tu en ajoutes, plus l'analyse est fiable.`));
+        return rows.join('');
+    }
 
+    buildInsightKart(labels, bests, byKart, minBest, self) {
+        if (labels.length === 0) return '';
+        const rows = [];
+        const bestKart = labels[bests.indexOf(minBest)];
+        rows.push(this.insightRow('🏆', `Meilleur kart sur ce circuit : <b style="color:#10b981">${bestKart}</b> → ${self.formatTime(minBest)}`));
+        labels.forEach((k, i) => {
+            if (byKart[k].length === 1) rows.push(this.insightRow('⚠️', `Kart <b style="color:#f59e0b">${k}</b> testé 1 seule fois — peu fiable, à confirmer.`));
+        });
+        if (bests.length >= 2) {
+            const worst = Math.max(...bests);
+            const diff = worst - minBest;
+            if (diff > 0.5) rows.push(this.insightRow('📊', `Écart entre le meilleur et le moins bon kart : <b style="color:#ef4444">+${self.formatTime(diff)}</b> — les karts ne sont pas tous équivalents !`));
+        }
+        rows.push(this.insightRow('💡', `Analyse basée sur <b>${Object.values(byKart).reduce((a,b)=>a+b.length,0)} session${Object.values(byKart).reduce((a,b)=>a+b.length,0)>1?'s':''}</b>. Plus tu en ajoutes, plus c'est fiable.`));
         return rows.join('');
     }
 
     buildInsightMatrice(sessions, matData, pneus, pressions, minT, allTimes) {
         const rows = [];
         const bestSess = sessions.find(s => s.bestTime === minT);
-
-        // Combo gagnant
         if (bestSess && bestSess.tireType && bestSess.tirePressure) {
             const count = sessions.filter(s => s.tireType===bestSess.tireType && String(parseFloat(s.tirePressure))===String(parseFloat(bestSess.tirePressure))).length;
             rows.push(this.insightRow('🏆', `Combo gagnant : <b style="color:#10b981">${bestSess.tireType} + ${parseFloat(bestSess.tirePressure)} bar</b> — testé ${count} fois, c'est ta référence sur ce circuit.`));
         }
-
-        // Combos non testés
         let notTested = 0;
         pressions.forEach(pr => pneus.forEach(p => { if (!matData[pr][p]) notTested++; }));
         const total = pneus.length * pressions.length;
         if (notTested > 0) rows.push(this.insightRow('🔬', `<b style="color:#f59e0b">${notTested} combo${notTested>1?'s':''} non testé${notTested>1?'s':''}</b> sur ${total} possibles. Potentiel d'exploration !`));
-
-        // Suggestion prochaine session
         let suggestion = null;
         pneus.forEach(p => {
             pressions.forEach(pr => {
@@ -1045,17 +1211,12 @@ class KartingDashboard {
             });
         });
         if (suggestion) rows.push(this.insightRow('📌', `À tester : <b style="color:#667eea">${suggestion}</b> — jamais essayé, pourrait surprendre.`));
-
-        // Fiabilité
         let oneSession = 0;
         pressions.forEach(pr => pneus.forEach(p => { if (matData[pr][p] && matData[pr][p].count === 1) oneSession++; }));
         if (oneSession > 0) rows.push(this.insightRow('⚠️', `<b style="color:#f59e0b">${oneSession} case${oneSession>1?'s':''}</b> avec 1 seule session — peu fiable. Vise 2–3 sessions minimum pour confirmer.`));
-
-        if (rows.length === 0) return '';
         return rows.join('');
     }
 
-    // Matrice pression (lignes) x pneu (colonnes)
     createMatrice(cid, sessions) {
         const wrap = document.getElementById('matrix-' + cid);
         if (!wrap) return;
@@ -1097,7 +1258,7 @@ class KartingDashboard {
                 const tooltip = document.getElementById('matrix-tooltip-'+cell.dataset.cid);
                 if (!tooltip) return;
                 const b = parseFloat(cell.dataset.best), diff = b - minT;
-                tooltip.innerHTML = '<strong>'+cell.dataset.pneu+' + '+cell.dataset.pr+' bar</strong> · '+self.formatTime(b)+'<br>'+(diff===0?'<span style="color:#10b981">✓ Meilleure combinaison !</span>':'Écart vs optimal : <span style="color:#f59e0b">+'+self.formatTime(diff)+'</span>')+' · '+cell.dataset.count+' session(s)';
+                tooltip.innerHTML = '<strong>'+cell.dataset.pneu+' + '+cell.dataset.pr+' bar</strong> · '+self.formatTime(b)+'<br>'+(diff===0?'<span style="color:#10b981">✓ Meilleure combinaison !</span>':'Écart vs optimal : <span style="color:#f59e0b">+'+self.formatTime(diff)+'</span>')+' · '+cell.dataset.count+' session(s)';
                 tooltip.style.display = 'block';
             });
         });
@@ -1105,7 +1266,6 @@ class KartingDashboard {
         if (insightEl) insightEl.innerHTML = this.buildInsightMatrice(sessions, matData, pneus, pressions, minT, allTimes);
     }
 
-    // Plein écran graphique
     async openChartFullscreen(chartId, title) {
         const sourceChart = this.circuitCharts[chartId];
         if (!sourceChart) return;
@@ -1114,7 +1274,7 @@ class KartingDashboard {
             overlay = document.createElement('div');
             overlay.id = 'chartOverlay';
             overlay.className = 'chart-overlay';
-            overlay.innerHTML = '<div class="chart-overlay-inner"><div class="chart-overlay-header"><span class="chart-overlay-title" id="overlayTitle"></span><button class="chart-overlay-close" id="overlayClose">✕</button></div><div class="chart-overlay-canvas-wrap"><canvas id="chartOverlayCanvas"></canvas></div><div class="chart-overlay-rotate-hint" id="overlayRotateHint">📱 Tourne ton téléphone pour voir le graphique en grand</div><div class="chart-overlay-hint">Appuie sur ✕ pour revenir</div></div>';
+            overlay.innerHTML = '<div class="chart-overlay-inner"><div class="chart-overlay-header"><span class="chart-overlay-title" id="overlayTitle"></span><button class="chart-overlay-close" id="overlayClose">✕</button></div><div class="chart-overlay-canvas-wrap"><canvas id="chartOverlayCanvas"></canvas></div><div class="chart-overlay-hint">Appuie sur ✕ pour revenir</div></div>';
             document.body.appendChild(overlay);
             document.getElementById('overlayClose').addEventListener('click', () => this.closeChartFullscreen());
         }
@@ -1122,29 +1282,21 @@ class KartingDashboard {
         overlay.style.display = 'flex';
         document.body.style.overflow = 'hidden';
 
-        const rotateHint = document.getElementById('overlayRotateHint');
-        if (rotateHint) rotateHint.style.display = 'none';
-
         const self = this;
         const origCfg = sourceChart.config;
-
         const drawOverlayChart = () => {
             if (self._overlayChart) { self._overlayChart.destroy(); self._overlayChart = null; }
-            // Recréer le canvas pour éviter les conflits de taille
             const wrap = document.querySelector('.chart-overlay-canvas-wrap');
-            if (wrap) {
-                wrap.innerHTML = '<canvas id="chartOverlayCanvas"></canvas>';
-            }
+            if (wrap) wrap.innerHTML = '<canvas id="chartOverlayCanvas"></canvas>';
             const canvas = document.getElementById('chartOverlayCanvas');
             if (!canvas) return;
             self._overlayChart = new Chart(canvas.getContext('2d'), {
                 type: origCfg.type,
                 data: JSON.parse(JSON.stringify(origCfg.data)),
-                options: Object.assign({}, origCfg.options, { responsive: true, maintainAspectRatio: false, animation: { duration: 200 } }),
+                options: Object.assign({}, origCfg.options, { responsive:true, maintainAspectRatio:false, animation:{ duration:200 } }),
                 plugins: origCfg.plugins || []
             });
         };
-
         setTimeout(drawOverlayChart, 50);
 
         if (this._orientationHandler) {
@@ -1166,10 +1318,7 @@ class KartingDashboard {
             window.removeEventListener('resize', this._orientationHandler);
             this._orientationHandler = null;
         }
-        // Débloquer l'orientation
-        if (screen.orientation && screen.orientation.unlock) {
-            screen.orientation.unlock();
-        }
+        if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
     }
 
     openMatrixFullscreen(cid, circuit) {
@@ -1180,35 +1329,22 @@ class KartingDashboard {
             overlay = document.createElement('div');
             overlay.id = 'matrixOverlay';
             overlay.style.cssText = 'display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#0a0a0a;z-index:9999;overflow-y:auto;padding:16px;box-sizing:border-box;';
-            overlay.innerHTML = `
-                <div style="max-width:700px;margin:0 auto;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                        <span style="font-size:0.85em;font-weight:700;color:#ccc;" id="matrixOverlayTitle"></span>
-                        <button id="matrixOverlayClose" style="background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#ccc;font-size:1em;padding:6px 14px;cursor:pointer;">✕ Fermer</button>
-                    </div>
-                    <div id="matrixOverlayContent"></div>
-                </div>`;
+            overlay.innerHTML = `<div style="max-width:700px;margin:0 auto;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><span style="font-size:0.85em;font-weight:700;color:#ccc;" id="matrixOverlayTitle"></span><button id="matrixOverlayClose" style="background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#ccc;font-size:1em;padding:6px 14px;cursor:pointer;">✕ Fermer</button></div><div id="matrixOverlayContent"></div></div>`;
             document.body.appendChild(overlay);
-            document.getElementById('matrixOverlayClose').addEventListener('click', () => {
-                overlay.style.display = 'none';
-                document.body.style.overflow = '';
-            });
+            document.getElementById('matrixOverlayClose').addEventListener('click', () => { overlay.style.display='none'; document.body.style.overflow=''; });
         }
         document.getElementById('matrixOverlayTitle').textContent = '⚙️ Matrice pression pneu — ' + circuit;
-        // Clone la matrice avec une version agrandie
         const content = document.getElementById('matrixOverlayContent');
         content.innerHTML = matrixWrap.innerHTML;
-        // Agrandir les cellules
-        content.querySelectorAll('.ct-matrix-cell').forEach(c => { c.style.minWidth = '90px'; c.style.padding = '10px 8px'; });
-        content.querySelectorAll('.ct-matrix-time').forEach(c => { c.style.fontSize = '0.9em'; });
-        content.querySelectorAll('.ct-matrix-n').forEach(c => { c.style.fontSize = '0.65em'; });
-        content.querySelectorAll('.ct-matrix-table th').forEach(c => { c.style.fontSize = '0.7em'; });
+        content.querySelectorAll('.ct-matrix-cell').forEach(c => { c.style.minWidth='90px'; c.style.padding='10px 8px'; });
+        content.querySelectorAll('.ct-matrix-time').forEach(c => { c.style.fontSize='0.9em'; });
+        content.querySelectorAll('.ct-matrix-n').forEach(c => { c.style.fontSize='0.65em'; });
+        content.querySelectorAll('.ct-matrix-table th').forEach(c => { c.style.fontSize='0.7em'; });
         overlay.style.display = 'block';
         document.body.style.overflow = 'hidden';
     }
 
-    // Legacy createChart — garde pour compatibilité
-    createChart(id, sessions) { this.createChartEvolution(id, sessions, Math.min(...sessions.map(s=>s.bestTime))); }
+    // ── SESSIONS LIST ─────────────────────────────────────────────────────
 
     displaySessions() {
         const el = document.getElementById('sessionsList');
@@ -1221,26 +1357,42 @@ class KartingDashboard {
     }
 
     sessionItemHTML(s, showDelete) {
-        // Détecter si c'est le record du circuit
-        const circuitSessions = this.sessions.filter(x => x.circuit === s.circuit);
+        const mode = s.mode || '2t';
+        // Record séparé par mode
+        const circuitSessions = this.sessions.filter(x => x.circuit === s.circuit && (x.mode || '2t') === mode);
         const bestTime = Math.min(...circuitSessions.map(x => x.bestTime));
         const isRecord = s.bestTime === bestTime;
 
-        // Ligne 2 : infos conditions dans le bon ordre
-        const line2 = [
-            s.tireType ? '🛞 ' + s.tireType : '',
-            s.tirePressure ? s.tirePressure + ' bar' : '',
-            s.temperature ? '🌡️ ' + s.temperature + '°C' : '',
-            s.weather || ''
-        ].filter(Boolean).join(' · ');
+        // Badge mode
+        const modeBadge = mode === 'location'
+            ? `<span class="session-mode-badge session-mode-badge-loc">loc</span>`
+            : `<span class="session-mode-badge session-mode-badge-2t">2t</span>`;
 
+        // Ligne 2 : conditions
+        let line2Parts = [];
+        if (mode === '2t') {
+            line2Parts = [
+                s.tireType ? '🛞 ' + s.tireType : '',
+                s.tirePressure ? s.tirePressure + ' bar' : '',
+                s.temperature ? '🌡️ ' + s.temperature + '°C' : '',
+                s.weather || ''
+            ].filter(Boolean);
+        } else {
+            line2Parts = [
+                s.kartNumber ? '🎟️ #' + s.kartNumber : '',
+                s.temperature ? '🌡️ ' + s.temperature + '°C' : '',
+                s.weather || ''
+            ].filter(Boolean);
+        }
+        const line2 = line2Parts.join(' · ');
         const deleteBtn = showDelete ? `<button class="btn-delete session-btn" data-id="${s.id}">🗑️</button>` : '';
 
         return `<div class="session-item">
             <div class="session-content">
                 <div class="session-line1">
-                    <span class="session-date">${this.formatDateShort(s.date)} ${s.time || ''}</span>
+                    ${modeBadge}
                     <span class="session-circuit">📍 ${s.circuit}</span>
+                    <span class="session-date">${this.formatDateShort(s.date)} ${s.time || ''}</span>
                 </div>
                 <div class="session-line2">
                     <span class="session-time ${isRecord ? 'session-record' : ''}">⏱️ ${this.formatTime(s.bestTime)}${isRecord ? ' 🏆' : ''}</span>
@@ -1296,50 +1448,23 @@ class KartingDashboard {
         const inst = document.getElementById('pwaInstructions');
         const btn = document.getElementById('installBtn');
         if (!inst) return;
-
         const ua = navigator.userAgent;
         const isIOS = /iPhone|iPad|iPod/.test(ua);
         const isAndroid = /Android/.test(ua);
         const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua);
-
         if (deferredPrompt && btn) {
             btn.style.display = 'block';
-            inst.innerHTML = '<p style="color:#10b981; font-size:0.9em; margin-bottom:10px;">✅ Prêt à installer sur votre écran d\'accueil</p>';
+            inst.innerHTML = '<p style="color:#10b981;font-size:0.9em;margin-bottom:10px;">✅ Prêt à installer sur votre écran d\'accueil</p>';
             return;
         }
-
         if (isIOS || isSafari) {
-            inst.innerHTML = `
-                <div style="background:#1a1a1a; border-radius:8px; padding:15px; border:1px solid #2a2a2a;">
-                    <p style="color:#667eea; font-weight:600; margin:0 0 10px;">📱 Installation iOS/Safari :</p>
-                    <ol style="color:#ccc; font-size:0.85em; margin:0; padding-left:20px; line-height:1.6;">
-                        <li>Appuyez sur le bouton <strong>Partager</strong> (📤) en bas</li>
-                        <li>Faites défiler et sélectionnez <strong>"Sur l'écran d'accueil"</strong></li>
-                        <li>Appuyez sur <strong>"Ajouter"</strong></li>
-                    </ol>
-                </div>`;
+            inst.innerHTML = `<div style="background:#1a1a1a;border-radius:8px;padding:15px;border:1px solid #2a2a2a;"><p style="color:#667eea;font-weight:600;margin:0 0 10px;">📱 Installation iOS/Safari :</p><ol style="color:#ccc;font-size:0.85em;margin:0;padding-left:20px;line-height:1.6;"><li>Appuyez sur le bouton <strong>Partager</strong> (📤) en bas</li><li>Faites défiler et sélectionnez <strong>"Sur l'écran d'accueil"</strong></li><li>Appuyez sur <strong>"Ajouter"</strong></li></ol></div>`;
             if (btn) btn.style.display = 'none';
-        }
-        else if (isAndroid) {
-            inst.innerHTML = `
-                <div style="background:#1a1a1a; border-radius:8px; padding:15px; border:1px solid #2a2a2a;">
-                    <p style="color:#667eea; font-weight:600; margin:0 0 10px;">📱 Installation Android :</p>
-                    <ol style="color:#ccc; font-size:0.85em; margin:0; padding-left:20px; line-height:1.6;">
-                        <li>Appuyez sur les <strong>3 points</strong> (⋮) du menu Chrome</li>
-                        <li>Sélectionnez <strong>"Ajouter à l'écran d'accueil"</strong></li>
-                        <li>Confirmez avec <strong>"Ajouter"</strong></li>
-                    </ol>
-                </div>`;
+        } else if (isAndroid) {
+            inst.innerHTML = `<div style="background:#1a1a1a;border-radius:8px;padding:15px;border:1px solid #2a2a2a;"><p style="color:#667eea;font-weight:600;margin:0 0 10px;">📱 Installation Android :</p><ol style="color:#ccc;font-size:0.85em;margin:0;padding-left:20px;line-height:1.6;"><li>Appuyez sur les <strong>3 points</strong> (⋮) du menu Chrome</li><li>Sélectionnez <strong>"Ajouter à l'écran d'accueil"</strong></li><li>Confirmez avec <strong>"Ajouter"</strong></li></ol></div>`;
             if (btn) btn.style.display = 'none';
-        }
-        else {
-            inst.innerHTML = `
-                <div style="background:#1a1a1a; border-radius:8px; padding:15px; border:1px solid #2a2a2a;">
-                    <p style="color:#667eea; font-weight:600; margin:0 0 10px;">💻 Installation Desktop :</p>
-                    <p style="color:#ccc; font-size:0.85em; margin:0; line-height:1.6;">
-                        Cherchez l'icône <strong>⊕</strong> ou <strong>🖥️</strong> dans la barre d'adresse (à droite) et cliquez dessus pour installer l'application.
-                    </p>
-                </div>`;
+        } else {
+            inst.innerHTML = `<div style="background:#1a1a1a;border-radius:8px;padding:15px;border:1px solid #2a2a2a;"><p style="color:#667eea;font-weight:600;margin:0 0 10px;">💻 Installation Desktop :</p><p style="color:#ccc;font-size:0.85em;margin:0;line-height:1.6;">Cherchez l'icône <strong>⊕</strong> ou <strong>🖥️</strong> dans la barre d'adresse (à droite) et cliquez dessus pour installer l'application.</p></div>`;
             if (btn) btn.style.display = 'none';
         }
     }
@@ -1391,11 +1516,11 @@ class KartingDashboard {
     }
 
     formatDate(d) {
-        return new Date(d).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        return new Date(d).toLocaleDateString('fr-FR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
     }
 
     formatDateShort(d) {
-        return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        return new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' });
     }
 
     setTodayDate() {
@@ -1416,52 +1541,43 @@ class KartingDashboard {
         n.style.cssText = `position:fixed;top:20px;right:20px;background:${type==='success'?'#10b981':'#ef4444'};color:#fff;padding:14px 22px;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.4);z-index:9999;font-size:0.95em;font-weight:500;max-width:300px;`;
         n.textContent = msg;
         document.body.appendChild(n);
-        setTimeout(() => { n.style.opacity = '0'; n.style.transition = 'opacity 0.3s'; setTimeout(() => n.remove(), 300); }, 3000);
+        setTimeout(() => { n.style.opacity='0'; n.style.transition='opacity 0.3s'; setTimeout(() => n.remove(), 300); }, 3000);
     }
 
     // ── SETUP EVENT LISTENERS ─────────────────────────────────────────────
 
     setupEventListeners() {
-        // Google signin
         document.getElementById('googleSignInBtn').addEventListener('click', async () => {
             try {
                 const provider = new firebase.auth.GoogleAuthProvider();
                 await auth.signInWithPopup(provider);
-            } catch(e) {
-                showNotifGlobal('Erreur Google : ' + e.message, 'error');
-            }
+            } catch(e) { showNotifGlobal('Erreur Google : ' + e.message, 'error'); }
         });
 
-        // Auth form
         document.getElementById('authSubmitBtn').addEventListener('click', handleEmailAuth);
         document.getElementById('authToggleBtn').addEventListener('click', toggleAuthMode);
         document.getElementById('authPassword').addEventListener('keypress', e => { if (e.key === 'Enter') handleEmailAuth(); });
 
-        // Session form
         document.getElementById('sessionForm').addEventListener('submit', e => { e.preventDefault(); this.addSession(); });
-
-        // Cancel edit
         document.getElementById('cancelEditBtn').addEventListener('click', () => this.cancelEdit());
 
-        // Add circuit
+        // Toggle mode 2t / location
+        document.getElementById('modeBtn2t').addEventListener('click', () => setSessionMode('2t'));
+        document.getElementById('modeBtnLoc').addEventListener('click', () => setSessionMode('location'));
+
         document.getElementById('addCircuitBtn').addEventListener('click', () => this.addNewCircuit());
         document.getElementById('manageCircuitBtn').addEventListener('click', () => this.openCircuitManager());
         document.getElementById('closeCircuitManagerBtn').addEventListener('click', () => {
             document.getElementById('circuitManagerModal').style.display = 'none';
         });
         document.getElementById('circuitManagerModal').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('circuitManagerModal')) {
-                document.getElementById('circuitManagerModal').style.display = 'none';
-            }
+            if (e.target === document.getElementById('circuitManagerModal')) document.getElementById('circuitManagerModal').style.display = 'none';
         });
 
-        // Circuit filter
         document.getElementById('circuitFilterBtn')?.addEventListener('click', (e) => {
             e.stopPropagation();
-            const btn = document.getElementById('circuitFilterBtn');
-            const dd = document.getElementById('circuitFilterDropdown');
-            btn.classList.toggle('open');
-            dd.classList.toggle('open');
+            document.getElementById('circuitFilterBtn').classList.toggle('open');
+            document.getElementById('circuitFilterDropdown').classList.toggle('open');
         });
         document.addEventListener('click', (e) => {
             const wrapper = document.getElementById('circuitFilterWrapper');
@@ -1471,37 +1587,26 @@ class KartingDashboard {
             }
         });
 
-        // Profile modal
         document.getElementById('saveProfileBtn').addEventListener('click', saveProfileModal);
         document.getElementById('cguLink').addEventListener('click', e => { e.preventDefault(); showModal('cguModal'); });
         document.getElementById('closeCguBtn').addEventListener('click', () => hideModal('cguModal'));
-
-        // Session modal
         document.getElementById('closeSessionBtn').addEventListener('click', () => hideModal('sessionModal'));
-
-        // FAQ
         document.getElementById('faqBtn').addEventListener('click', () => showModal('faqModal'));
         document.getElementById('closeFaqBtn').addEventListener('click', () => hideModal('faqModal'));
-
-        // Record popup
         document.getElementById('closeRecordBtn').addEventListener('click', closeRecord);
 
-        // Nav buttons
         document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
             btn.addEventListener('click', () => this.switchView(btn.getAttribute('data-view')));
         });
 
-        // Settings buttons
         document.getElementById('saveProfileSettingsBtn').addEventListener('click', () => this.saveProfileSettings());
         document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
         document.getElementById('clearDataBtn').addEventListener('click', () => this.clearAllData());
         document.getElementById('themeMode').addEventListener('change', () => this.saveTheme());
 
-        // Install PWA
         const installBtn = document.getElementById('installBtn');
         if (installBtn) installBtn.addEventListener('click', installPWA);
 
-        // Délégation pour boutons sessions (edit/delete/details)
         document.getElementById('recentSessionsList').addEventListener('click', e => {
             const btn = e.target.closest('[data-id]');
             if (!btn) return;

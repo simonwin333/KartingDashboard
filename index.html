@@ -209,6 +209,18 @@
     <section class="view-section" data-view="add-session" style="display:none;">
         <h2>➕ Nouvelle session</h2>
         <form id="sessionForm">
+
+            <!-- TOGGLE 2t / LOCATION -->
+            <div class="form-group">
+                <label>🏷️ Type de session</label>
+                <div class="session-mode-toggle">
+                    <button type="button" class="mode-btn mode-btn-active-2t" id="modeBtn2t">🔧 2t (kart perso)</button>
+                    <button type="button" class="mode-btn mode-btn-inactive" id="modeBtnLoc">🎟️ Location</button>
+                </div>
+                <input type="hidden" id="sessionMode" value="2t">
+            </div>
+
+            <!-- CHAMPS COMMUNS -->
             <div class="form-row">
                 <div class="form-group"><label>📅 Date</label><input type="date" id="date" required></div>
                 <div class="form-group"><label>🕐 Heure</label><input type="time" id="time"></div>
@@ -225,25 +237,41 @@
                 <div class="form-group"><label>⏱️ Meilleur temps (sec)</label><input type="number" id="bestTime" step="0.001" min="0" placeholder="Ex: 65.412" required></div>
                 <div class="form-group"><label>🔢 Tours</label><input type="number" id="lapsCount" min="0" placeholder="Ex: 20"></div>
             </div>
-            <div class="form-row">
-                <div class="form-group"><label>⚙️ Couronne</label><input type="number" id="crownUsed" min="0" placeholder="Ex: 82"></div>
-                <div class="form-group"><label>🏎️ Tours moteur</label><input type="number" id="maxLaps" min="0" placeholder="Ex: 1400"></div>
+
+            <!-- CHAMPS SPÉCIFIQUES 2t -->
+            <div id="fields2t">
+                <div class="form-mode-label form-mode-label-2t">🔧 Réglages kart</div>
+                <div class="form-row">
+                    <div class="form-group"><label>⚙️ Couronne</label><input type="number" id="crownUsed" min="0" placeholder="Ex: 82"></div>
+                    <div class="form-group"><label>🏎️ Tours moteur</label><input type="number" id="maxLaps" min="0" placeholder="Ex: 1400"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>🛞 Pneus</label>
+                        <select id="tireType"><option value="">--</option><option>Soft</option><option>Medium</option><option>Hard</option><option>Pluie</option></select>
+                    </div>
+                    <div class="form-group"><label>⚡ Pression (bar)</label><input type="number" id="tirePressure" step="0.001" min="0" max="5" placeholder="Ex: 0.851"></div>
+                </div>
             </div>
+
+            <!-- CHAMPS SPÉCIFIQUES LOCATION -->
+            <div id="fieldsLoc" style="display:none;">
+                <div class="form-mode-label form-mode-label-loc">🎟️ Infos kart de location</div>
+                <div class="form-group">
+                    <label>🎟️ Numéro du kart</label>
+                    <input type="text" id="kartNumber" placeholder="Ex: 7" maxlength="10">
+                </div>
+            </div>
+
+            <!-- MÉTÉO — COMMUN -->
             <div class="form-row">
                 <div class="form-group"><label>🌦️ Météo</label>
                     <select id="weather"><option value="">--</option><option>☀️ Sec</option><option>🌤️ Nuageux</option><option>🌧️ Pluie</option></select>
                 </div>
                 <div class="form-group"><label>🌡️ Température (°C)</label><input type="number" id="temperature" min="-20" max="50" placeholder="Ex: 18"></div>
             </div>
-            <div class="form-row">
-                <div class="form-group"><label>🛞 Pneus</label>
-                    <select id="tireType"><option value="">--</option><option>Soft</option><option>Medium</option><option>Hard</option><option>Pluie</option></select>
-                </div>
-                <div class="form-group"><label>⚡ Pression (bar)</label><input type="number" id="tirePressure" step="0.001" min="0" max="5" placeholder="Ex: 0.851"></div>
-            </div>
             <div class="form-group"><label>📝 Notes</label><textarea id="notes" rows="3" placeholder="Observations, réglages..."></textarea></div>
             <div class="form-actions">
-                <button type="submit" class="btn-primary" id="submitBtn">📊 Enregistrer la session</button>
+                <button type="submit" class="btn-primary" id="submitBtn">📊 Enregistrer la session 2t</button>
                 <button type="button" class="btn-secondary" id="cancelEditBtn" style="display:none;">✕ Annuler</button>
             </div>
         </form>
