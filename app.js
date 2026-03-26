@@ -51,8 +51,20 @@ function installPWA() {
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('service-worker.js')
-            .then(() => console.log('✅ Service Worker actif'))
+            .then(reg => {
+                console.log('✅ Service Worker actif');
+                // Vérifier les mises à jour toutes les 60 secondes
+                setInterval(() => reg.update(), 60000);
+            })
             .catch(e => console.log('SW non disponible (local):', e.message));
+
+        // Quand le SW envoie SW_UPDATED → recharger automatiquement
+        navigator.serviceWorker.addEventListener('message', event => {
+            if (event.data && event.data.type === 'SW_UPDATED') {
+                console.log('🔄 Nouvelle version:', event.data.version);
+                setTimeout(() => window.location.reload(), 500);
+            }
+        });
     });
 }
 
