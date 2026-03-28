@@ -593,18 +593,26 @@ class KartingDashboard {
             item.className = 'circuit-manager-item';
             item.innerHTML = `
                 <div class="circuit-manager-name" id="cm-name-${idx}"><span>${circuit}</span></div>
-                <button class="btn-circuit-rename" data-idx="${idx}" title="Renommer">✏️</button>
+                <button class="btn-circuit-rename" id="cm-btn-${idx}" title="Renommer">✏️</button>
                 <button class="btn-circuit-delete" data-idx="${idx}" title="Supprimer">🗑️</button>`;
 
-            item.querySelector('.btn-circuit-rename').addEventListener('click', () => {
-                const nameDiv = document.getElementById('cm-name-' + idx);
-                const currentName = self.circuits[idx];
-                nameDiv.innerHTML = `<input type="text" value="${currentName}" id="cm-input-${idx}" maxlength="40">`;
-                const renameBtn = item.querySelector('.btn-circuit-rename');
-                renameBtn.textContent = '💾';
-                renameBtn.className = 'btn-circuit-save';
-                renameBtn.onclick = () => {
-                    const newName = document.getElementById('cm-input-' + idx).value.trim();
+            const actionBtn = item.querySelector('#cm-btn-' + idx);
+            let isEditing = false;
+
+            actionBtn.addEventListener('click', () => {
+                if (!isEditing) {
+                    // Passer en mode édition
+                    isEditing = true;
+                    const currentName = self.circuits[idx];
+                    const nameDiv = document.getElementById('cm-name-' + idx);
+                    nameDiv.innerHTML = `<input type="text" value="${currentName}" id="cm-input-${idx}" maxlength="40">`;
+                    document.getElementById('cm-input-' + idx).focus();
+                    actionBtn.textContent = '💾';
+                    actionBtn.className = 'btn-circuit-save';
+                } else {
+                    // Sauvegarder
+                    const currentName = self.circuits[idx];
+                    const newName = (document.getElementById('cm-input-' + idx)?.value || '').trim();
                     if (!newName) return;
                     if (self.circuits.includes(newName) && newName !== currentName) {
                         self.showNotification('Ce nom existe déjà !', 'error'); return;
@@ -617,7 +625,7 @@ class KartingDashboard {
                     self.updateDashboard();
                     self.showNotification('Circuit renommé ✅');
                     self.renderCircuitManagerList();
-                };
+                }
             });
 
             item.querySelector('.btn-circuit-delete').addEventListener('click', () => {
