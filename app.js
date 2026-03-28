@@ -53,16 +53,40 @@ if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('service-worker.js')
             .then(reg => {
                 console.log('✅ Service Worker actif');
+
                 // Vérifier les mises à jour toutes les 60 secondes
                 setInterval(() => reg.update(), 60000);
+
+                // Détecter quand un nouveau SW vient de s'activer
+                // (cas PWA Android : le message arrive trop tôt, on surveille le changement de controleur)
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    console.log('🔄 Nouveau service worker actif — rechargement');
+                    window.location.reload();
+                });
+
+                // Surveiller si un nouveau SW est en attente dès l'enregistrement
+                if (reg.waiting) {
+                    console.log('🔄 Mise à jour en attente — rechargement');
+                    window.location.reload();
+                }
+
+                reg.addEventListener('updatefound', () => {
+                    const newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'activated') {
+                            console.log('🔄 Nouveau SW installé — rechargement');
+                            window.location.reload();
+                        }
+                    });
+                });
             })
             .catch(e => console.log('SW non disponible (local):', e.message));
 
-        // Quand le SW envoie SW_UPDATED → recharger automatiquement
+        // Fallback : écoute aussi le message direct (PC / navigateur standard)
         navigator.serviceWorker.addEventListener('message', event => {
             if (event.data && event.data.type === 'SW_UPDATED') {
-                console.log('🔄 Nouvelle version:', event.data.version);
-                setTimeout(() => window.location.reload(), 500);
+                console.log('🔄 Message SW_UPDATED reçu:', event.data.version);
+                window.location.reload();
             }
         });
     });

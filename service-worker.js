@@ -1,5 +1,5 @@
 // Service Worker - Karting Dashboard v4.5
-const CACHE_NAME = 'karting-v4.46';
+const CACHE_NAME = 'karting-v4.47';
 
 const ASSETS = [
   './',
